@@ -1,16 +1,15 @@
-# paintmanager_app
+# PaintManager App
 
-A new Flutter project.
+Aplicativo de Gestão de Serviços de Pintura (TFC II - UniRV), desenvolvido em Flutter/Dart com Firebase.
 
-## Getting Started
+Este trabalho propõe o desenvolvimento de um aplicativo multiplataforma voltado à gestão de serviços de pintura, direcionado a profissionais autônomos e microempresários do setor.
 
-This project is a starting point for a Flutter application.
+## Stack
+- Flutter / Dart
+- Firebase Authentication
+- Cloud Firestore
 
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Como rodar
+```bash
+flutter pub get
+flutter run
