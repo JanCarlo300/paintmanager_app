@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "431719662285",
+    "project_id": "paintmanager-21dad",
+    "storage_bucket": "paintmanager-21dad.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:431719662285:android:2df962f1dab95fb14f1f84",
+        "android_client_info": {
+          "package_name": "com.example.paintmanager_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "431719662285-d1cin8ps83auc1vrli9fo6h1qoquubn4.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDDQNt_KvjrkD6xgU64f0X-q8GfsZ_AEL4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "431719662285-d1cin8ps83auc1vrli9fo6h1qoquubn4.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
