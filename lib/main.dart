@@ -5,17 +5,26 @@ import 'firebase_options.dart';
 import 'src/apresentacao/paginas/login_page.dart';
 import 'src/apresentacao/controllers/auth_controller.dart';
 import 'src/dados/repositorios/repositorio_autenticacao_impl.dart';
+import 'src/apresentacao/paginas/cliente_list_page.dart';
+import 'src/apresentacao/controllers/cliente_controller.dart';
+import 'src/dados/repositorios/repositorio_cliente_impl.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Inicializa o Firebase usando as opções automáticas [cite: 632]
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   runApp(
-    // Provedor para injetar o controlador de autenticação em todo o app
-    ChangeNotifierProvider(
-      create: (_) => AuthController(RepositorioAutenticacaoImpl()),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (_) => AuthController(RepositorioAutenticacaoImpl()),
+        ),
+
+        ChangeNotifierProvider(
+          create: (_) => ClienteController(RepositorioClienteImpl()),
+        ),
+      ],
       child: const PaintManagerApp(),
     ),
   );
@@ -33,13 +42,12 @@ class PaintManagerApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
         useMaterial3: true,
       ),
-      // Definição das rotas para navegação após o login
+
       initialRoute: '/',
       routes: {
         '/': (context) => const LoginPage(),
-        '/home': (context) => const Scaffold(
-          body: Center(child: Text("Bem-vindo ao PaintManager!")),
-        ),
+
+        '/home': (context) => const ClienteListPage(),
       },
     );
   }
