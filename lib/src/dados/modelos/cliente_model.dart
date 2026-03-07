@@ -15,8 +15,8 @@ class ClienteModel extends Cliente {
       id: id,
       nome: mapa['nome'] ?? '',
       telefone: mapa['telefone'] ?? '',
-      email: mapa['email'],
-      endereco: mapa['endereco'],
+      email: mapa['emaiI'] ?? '',
+      endereco: mapa['endereço'],
     );
   }
 
@@ -25,8 +25,8 @@ class ClienteModel extends Cliente {
     return {
       'nome': nome,
       'telefone': telefone,
-      'email': email,
-      'endereco': endereco,
+      'emaiI': email,
+      'endereço': endereco,
     };
   }
 }

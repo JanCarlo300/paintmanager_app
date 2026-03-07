@@ -1,11 +1,13 @@
 import '../entidades/usuario.dart';
 
 abstract class RepositorioAutenticacao {
-  // RF001 - Realizar Login [cite: 223]
-  Future<Usuario?> entrarComEmailESenha(String email, String senha);
+  // RF001 - Realizar Login utilizando CPF para buscar o e-mail no Firestore
+  // Alterado de entrarComEmailESenha para entrarComCpfESenha para alinhar com o Controller
+  Future<Usuario?> entrarComCpfESenha(String cpf, String senha);
 
-  // RF002 - Recuperar Senha [cite: 226]
-  Future<void> recuperarSenha(String emailOuCpf);
+  // RF002 - Recuperar Senha
+  // Mantemos o e-mail aqui, pois o Firebase Auth exige e-mail para o link de redefinição
+  Future<void> recuperarSenha(String email);
 
   // Finalizar sessão
   Future<void> sair();
