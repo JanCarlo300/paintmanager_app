@@ -6,7 +6,8 @@ class Usuario {
   final String telefone;
   final String funcao;
   final bool status;
-  final String senha; // Verifique se esta linha existe
+  final String senha;
+  final bool primeiroAcesso; // NOVO CAMPO
   final DateTime criadoEm;
 
   Usuario({
@@ -17,7 +18,8 @@ class Usuario {
     required this.telefone,
     required this.funcao,
     this.status = true,
-    required this.senha, // Verifique aqui
+    required this.senha,
+    this.primeiroAcesso = true, // Padrão é true para novos cadastros
     required this.criadoEm,
   });
 }

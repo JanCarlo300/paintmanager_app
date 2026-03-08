@@ -5,6 +5,8 @@ import 'firebase_options.dart';
 
 // Imports de Autenticação
 import 'src/apresentacao/paginas/login_page.dart';
+import 'src/apresentacao/paginas/recuperar_senha_page.dart'; // ADICIONADO
+import 'src/apresentacao/paginas/auth_check.dart'; // ADICIONADO
 import 'src/apresentacao/controllers/auth_controller.dart';
 import 'src/dados/repositorios/repositorio_autenticacao_impl.dart';
 
@@ -37,7 +39,7 @@ void main() async {
         ChangeNotifierProvider(
           create: (_) => UsuarioController(
             RepositorioUsuarioImpl(),
-          ), // Agora ele vai reconhecer a classe
+          ),
         ),
       ],
       child: const PaintManagerApp(),
@@ -57,9 +59,11 @@ class PaintManagerApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
         useMaterial3: true,
       ),
-      initialRoute: '/',
+      // MUDANÇA: O 'home' agora é o AuthCheck, que decide se vai para Login ou Home
+      home: const AuthCheck(), 
       routes: {
-        '/': (context) => const LoginPage(),
+        '/login': (context) => const LoginPage(),
+        '/recuperar-senha': (context) => RecuperarSenhaPage(), // ADICIONADO
         '/home': (context) => const ClienteListPage(),
         '/financeiro': (context) => const FinanceiroPage(),
         '/usuarios': (context) => const UsuarioListPage(),

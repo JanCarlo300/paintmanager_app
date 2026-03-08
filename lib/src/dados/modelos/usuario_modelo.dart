@@ -11,6 +11,7 @@ class UsuarioModelo extends Usuario {
     required super.funcao,
     super.status,
     required super.senha,
+    required super.primeiroAcesso, // Garantindo a consistência com a Entidade
     required super.criadoEm,
   });
 
@@ -24,10 +25,12 @@ class UsuarioModelo extends Usuario {
       funcao: mapa['funcao'] ?? 'Funcionário',
       status: mapa['status'] ?? true,
       senha: mapa['senha'] ?? '',
+      primeiroAcesso: mapa['primeiroAcesso'] ?? true, 
       criadoEm: (mapa['criadoEm'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
   }
 
+  // REMOVIDO @override: A entidade 'Usuario' em dominio não possui este método
   Map<String, dynamic> paraMapa() {
     return {
       'nome': nome,
@@ -37,6 +40,7 @@ class UsuarioModelo extends Usuario {
       'funcao': funcao,
       'status': status,
       'senha': senha,
+      'primeiroAcesso': primeiroAcesso,
       'criadoEm': Timestamp.fromDate(criadoEm),
     };
   }

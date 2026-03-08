@@ -32,18 +32,49 @@ class RepositorioAutenticacaoImpl implements RepositorioAutenticacao {
       );
 
       if (credencial.user != null) {
-        // Retorna o modelo preenchido com os dados do Firestore
         return UsuarioModelo.deMapa(dadosUsuario, consulta.docs.first.id);
       }
       return null;
     } on FirebaseAuthException catch (e) {
-      // Tratamento de erros específicos do Firebase
-      if (e.code == 'user-not-found') throw 'Usuário não encontrado para este e-mail.';
+      if (e.code == 'user-not-found') throw 'Usuário não encontrado.';
       if (e.code == 'wrong-password' || e.code == 'invalid-credential') throw 'Senha incorreta.';
       if (e.code == 'network-request-failed') throw 'Sem conexão com a internet.';
       throw e.message ?? 'Erro ao realizar login.';
     } catch (e) {
       throw e.toString();
+    }
+  }
+
+  // NOVO: Método para redefinir a senha e atualizar o status de primeiro acesso
+  @override
+  Future<void> atualizarSenhaPrimeiroAcesso(String novaSenha) async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) throw 'Sessão expirada. Refaça o login.';
+
+      // 1. Atualiza a senha no Firebase Authentication
+      await user.updatePassword(novaSenha);
+
+      // 2. Localiza o documento do usuário pelo e-mail e atualiza a flag
+      final consulta = await _firestore
+          .collection('usuarios')
+          .where('email', isEqualTo: user.email)
+          .limit(1)
+          .get();
+
+      if (consulta.docs.isNotEmpty) {
+        await _firestore.collection('usuarios').doc(consulta.docs.first.id).update({
+          'primeiroAcesso': false,
+          'senha': novaSenha, // Opcional: Mantém a senha atualizada no Firestore
+        });
+      }
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'requires-recent-login') {
+        throw 'Por segurança, faça login novamente para trocar a senha.';
+      }
+      throw e.message ?? 'Erro ao atualizar senha.';
+    } catch (e) {
+      throw 'Erro técnico: ${e.toString()}';
     }
   }
 
@@ -63,11 +94,9 @@ class RepositorioAutenticacaoImpl implements RepositorioAutenticacao {
 
   @override
   Stream<Usuario?> get usuarioAtual {
-    // Monitora o estado da autenticação (Persistent Session)
     return _auth.authStateChanges().asyncMap((user) async {
       if (user == null) return null;
 
-      // Busca os dados do usuário no Firestore pelo e-mail (mais seguro que o UID se o cadastro for híbrido)
       final snapshot = await _firestore
           .collection('usuarios')
           .where('email', isEqualTo: user.email)

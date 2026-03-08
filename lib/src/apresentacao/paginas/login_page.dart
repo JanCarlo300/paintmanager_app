@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:mask_text_input_formatter/mask_text_input_formatter.dart'; // Importe o pacote
+import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import '../controllers/auth_controller.dart';
 
 class LoginPage extends StatefulWidget {
@@ -11,12 +11,11 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  // Alterado de _emailController para _cpfController
   final _cpfController = TextEditingController();
   final _senhaController = TextEditingController();
   bool _senhaVisivel = false;
 
-  // 1. Definição da Máscara de CPF
+  // 1. Definição da Máscara de CPF para entrada de dados
   final cpfMask = MaskTextInputFormatter(
     mask: '###.###.###-##', 
     filter: {"#": RegExp(r'[0-9]')},
@@ -43,6 +42,7 @@ class _LoginPageState extends State<LoginPage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                // Logo Circular do PaintManager
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: const BoxDecoration(
@@ -62,6 +62,7 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 const SizedBox(height: 32),
 
+                // Card de Login Principal
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
@@ -88,12 +89,12 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       const SizedBox(height: 24),
 
-                      // 2. Campo CPF com a Máscara Aplicada
+                      // Campo CPF com Máscara
                       const Text("CPF", style: TextStyle(fontWeight: FontWeight.bold)),
                       const SizedBox(height: 8),
                       TextField(
                         controller: _cpfController,
-                        inputFormatters: [cpfMask], // Aplica a máscara aqui
+                        inputFormatters: [cpfMask],
                         keyboardType: TextInputType.number,
                         decoration: InputDecoration(
                           hintText: "000.000.000-00",
@@ -107,6 +108,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       const SizedBox(height: 16),
 
+                      // Campo Senha
                       const Text("Senha", style: TextStyle(fontWeight: FontWeight.bold)),
                       const SizedBox(height: 8),
                       TextField(
@@ -131,6 +133,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       const SizedBox(height: 24),
 
+                      // Botão Entrar
                       SizedBox(
                         width: double.infinity,
                         height: 50,
@@ -139,7 +142,7 @@ class _LoginPageState extends State<LoginPage> {
                               ? null
                               : () => authController.realizarLogin(
                                     context,
-                                    cpfMask.getUnmaskedText(), // 3. Envia apenas os números
+                                    cpfMask.getUnmaskedText(), // Envia apenas números
                                     _senhaController.text,
                                   ),
                           style: ElevatedButton.styleFrom(
@@ -160,15 +163,26 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       const SizedBox(height: 16),
 
-                      Center(
-                        child: TextButton(
-                          // 4. Preparado para a futura tela de recuperação
-                          onPressed: () => Navigator.pushNamed(context, '/recuperar-senha'),
-                          child: const Text(
-                            "Esqueci minha senha",
-                            style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                      // Links de Apoio: Esqueci Senha e Primeiro Acesso
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          TextButton(
+                            onPressed: () => Navigator.pushNamed(context, '/recuperar-senha'),
+                            child: const Text(
+                              "Esqueci minha senha",
+                              style: TextStyle(color: Colors.black, fontSize: 13),
+                            ),
                           ),
-                        ),
+                          // Botão de Dica para Primeiro Acesso atualizado
+                          TextButton(
+                            onPressed: () => _mostrarDicaPrimeiroAcesso(context),
+                            child: const Text(
+                              "Primeiro Acesso?",
+                              style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold, fontSize: 13),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -177,6 +191,56 @@ class _LoginPageState extends State<LoginPage> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  // Função atualizada para orientar sobre o login inicial e troca posterior de senha
+  void _mostrarDicaPrimeiroAcesso(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.info_outline, color: Colors.blue),
+            SizedBox(width: 10),
+            Text("Instruções de Acesso"),
+          ],
+        ),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Para realizar seu primeiro login:",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 12),
+            Text("1. Digite seu CPF no campo indicado."),
+            Text("2. No campo Senha, use inicialmente apenas os números do seu CPF."),
+            SizedBox(height: 16),
+            Divider(),
+            SizedBox(height: 16),
+            Text(
+              "Deseja definir uma senha pessoal?",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 8),
+            Text(
+              "Após entrar no sistema pela primeira vez, recomendamos que saia e utilize a opção 'Esqueci minha senha' para cadastrar uma senha definitiva de sua preferência.",
+              style: TextStyle(color: Colors.black87),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              "Entendi",
+              style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
       ),
     );
   }
