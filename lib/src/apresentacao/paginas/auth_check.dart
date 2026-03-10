@@ -3,8 +3,7 @@ import 'package:provider/provider.dart';
 import '../../dominio/entidades/usuario.dart';
 import '../controllers/auth_controller.dart';
 import 'login_page.dart';
-// Substitua pela importação da sua página inicial real (ex: cliente_list_page.dart)
-import 'usuario_list_page.dart'; 
+import 'dashboard_page.dart';
 
 class AuthCheck extends StatelessWidget {
   const AuthCheck({super.key});
@@ -26,7 +25,7 @@ class AuthCheck extends StatelessWidget {
 
         if (snapshot.hasData && snapshot.data != null) {
           // Usuário está logado: Vai para a tela principal
-          return const UsuarioListPage(); // Troque para a sua Home definitiva depois
+          return const DashboardPage();
         }
 
         // Usuário não está logado: Vai para o Login

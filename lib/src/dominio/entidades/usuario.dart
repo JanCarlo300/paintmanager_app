@@ -7,7 +7,7 @@ class Usuario {
   final String funcao;
   final bool status;
   final String senha;
-  final bool primeiroAcesso; // NOVO CAMPO
+  final bool? primeiroAcesso; // NOVO CAMPO (null = primeiro acesso)
   final DateTime criadoEm;
 
   Usuario({
@@ -19,7 +19,7 @@ class Usuario {
     required this.funcao,
     this.status = true,
     required this.senha,
-    this.primeiroAcesso = true, // Padrão é true para novos cadastros
+    this.primeiroAcesso, // null = primeiro acesso, false = já redefiniu a senha
     required this.criadoEm,
   });
 }

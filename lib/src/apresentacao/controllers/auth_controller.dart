@@ -27,8 +27,9 @@ class AuthController extends ChangeNotifier {
       final usuario = await _repositorio.entrarComCpfESenha(cpf, senha);
 
       if (usuario != null && context.mounted) {
-        // VERIFICAÇÃO DE SEGURANÇA: Se for primeiro acesso, obriga a troca de senha
-        if (usuario.primeiroAcesso) {
+        // VERIFICAÇÃO DE SEGURANÇA: Se primeiroAcesso for null (campo não existe no Firestore)
+        // E não for Administrador, obriga a troca de senha
+        if (usuario.primeiroAcesso == null && usuario.funcao != 'Administrador') {
           Navigator.of(context).pushReplacementNamed('/redefinir-senha-obrigatoria');
         } else {
           Navigator.of(context).pushReplacementNamed('/home');

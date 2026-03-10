@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../widgets/menu_lateral.dart';
+import '../widgets/drawer_comum.dart';
 
 class FinanceiroPage extends StatelessWidget {
   const FinanceiroPage({super.key});
@@ -7,12 +7,20 @@ class FinanceiroPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      drawer: const MenuLateral(),
+      backgroundColor: const Color(0xFFF8F9FA),
+      drawer: const DrawerComum(),
       appBar: AppBar(
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: const Icon(Icons.menu),
+            onPressed: () => Scaffold.of(context).openDrawer(),
+          ),
+        ),
         title: const Text("Financeiro", style: TextStyle(fontWeight: FontWeight.bold)),
+        centerTitle: false,
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
-        elevation: 0,
+        elevation: 0.5,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),

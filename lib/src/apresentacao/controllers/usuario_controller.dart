@@ -9,7 +9,9 @@ class UsuarioController extends ChangeNotifier {
   bool _carregando = false;
   bool get carregando => _carregando;
 
-  Stream<List<Usuario>> get listaUsuarios => _repositorio.listarUsuarios();
+  // AJUSTADO: Nome alterado de 'listaUsuarios' para 'usuarios' 
+  // para coincidir com a chamada no DashboardPage
+  Stream<List<Usuario>> get usuarios => _repositorio.listarUsuarios();
 
   Future<void> salvar(Usuario usuario) async {
     _carregando = true;
@@ -22,7 +24,7 @@ class UsuarioController extends ChangeNotifier {
     }
   }
 
-  // NOVO MÉTODO: Em vez de excluir, ele apenas inverte o status
+  // RF003 - Inativação de Usuário (Soft Delete)
   Future<void> alternarStatus(Usuario usuario) async {
     final usuarioEditado = Usuario(
       id: usuario.id,
@@ -31,8 +33,9 @@ class UsuarioController extends ChangeNotifier {
       cpf: usuario.cpf,
       telefone: usuario.telefone,
       funcao: usuario.funcao,
-      status: !usuario.status, // Se está ativo, inativa. Se está inativo, ativa.
+      status: !usuario.status, // Inverte o status atual
       senha: usuario.senha,
+      primeiroAcesso: usuario.primeiroAcesso, // Mantém a flag original
       criadoEm: usuario.criadoEm,
     );
     

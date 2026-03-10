@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../dominio/entidades/usuario.dart';
 import '../controllers/usuario_controller.dart';
-import '../widgets/menu_lateral.dart';
+import '../widgets/drawer_comum.dart';
 
 class UsuarioListPage extends StatelessWidget {
   const UsuarioListPage({super.key});
@@ -13,12 +13,20 @@ class UsuarioListPage extends StatelessWidget {
     final controller = context.watch<UsuarioController>();
 
     return Scaffold(
-      drawer: const MenuLateral(),
+      backgroundColor: const Color(0xFFF8F9FA),
+      drawer: const DrawerComum(),
       appBar: AppBar(
-        title: const Text("Usuários"),
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: const Icon(Icons.menu),
+            onPressed: () => Scaffold.of(context).openDrawer(),
+          ),
+        ),
+        title: const Text("Usuários", style: TextStyle(fontWeight: FontWeight.bold)),
+        centerTitle: false,
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
-        elevation: 0,
+        elevation: 0.5,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -69,7 +77,7 @@ class UsuarioListPage extends StatelessWidget {
         border: Border.all(color: Colors.grey.shade200),
       ),
       child: StreamBuilder<List<Usuario>>(
-        stream: controller.listaUsuarios,
+        stream: controller.usuarios, 
         builder: (context, snapshot) {
           final usuarios = snapshot.data ?? [];
           return Column(
@@ -132,19 +140,15 @@ class UsuarioListPage extends StatelessWidget {
                                   usuario: user,
                                 ),
                               ),
-                              // ATUALIZADO: Lógica de Inativar/Ativar em vez de excluir
                               IconButton(
                                 icon: Icon(
                                   user.status
                                       ? Icons.block_flipped
                                       : Icons.check_circle_outline,
                                   size: 20,
-                                  color:
-                                      user.status ? Colors.orange : Colors.green,
+                                  color: user.status ? Colors.orange : Colors.green,
                                 ),
-                                tooltip: user.status
-                                    ? "Inativar Usuário"
-                                    : "Ativar Usuário",
+                                tooltip: user.status ? "Inativar Usuário" : "Ativar Usuário",
                                 onPressed: () => controller.alternarStatus(user),
                               ),
                             ],
@@ -163,9 +167,7 @@ class UsuarioListPage extends StatelessWidget {
   }
 
   Widget _buildFuncaoBadge(String funcao) {
-    Color cor = funcao == "Administrador"
-        ? const Color(0xFFC04651)
-        : Colors.black;
+    Color cor = funcao == "Administrador" ? const Color(0xFFC04651) : Colors.black;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
@@ -238,6 +240,8 @@ class UsuarioListPage extends StatelessWidget {
                   keyboardType: TextInputType.phone,
                 ),
                 const SizedBox(height: 10),
+                
+                // CORREÇÃO: initialValue aplicado conforme o aviso de depreciação
                 DropdownButtonFormField<String>(
                   initialValue: funcaoSelecionada,
                   items: ["Funcionário", "Gerente", "Administrador"]
@@ -248,6 +252,7 @@ class UsuarioListPage extends StatelessWidget {
                   },
                   decoration: const InputDecoration(labelText: "Função"),
                 ),
+                
                 SwitchListTile(
                   title: const Text("Status Ativo"),
                   value: statusAtivo,
@@ -273,7 +278,8 @@ class UsuarioListPage extends StatelessWidget {
                   telefone: telefoneController.text,
                   funcao: funcaoSelecionada,
                   status: statusAtivo,
-                  senha: usuario?.senha ?? cpfController.text,
+                  senha: usuario?.senha ?? cpfController.text.replaceAll(RegExp(r'[^0-9]'), ''),
+                  primeiroAcesso: usuario?.primeiroAcesso ?? true,
                   criadoEm: usuario?.criadoEm ?? DateTime.now(),
                 );
                 context.read<UsuarioController>().salvar(novoUser);

@@ -11,7 +11,7 @@ class UsuarioModelo extends Usuario {
     required super.funcao,
     super.status,
     required super.senha,
-    required super.primeiroAcesso, // Garantindo a consistência com a Entidade
+    super.primeiroAcesso, // null = primeiro acesso
     required super.criadoEm,
   });
 
@@ -25,7 +25,7 @@ class UsuarioModelo extends Usuario {
       funcao: mapa['funcao'] ?? 'Funcionário',
       status: mapa['status'] ?? true,
       senha: mapa['senha'] ?? '',
-      primeiroAcesso: mapa['primeiroAcesso'] ?? true, 
+      primeiroAcesso: mapa['primeiroAcesso'], // mantém null se não existir no Firestore
       criadoEm: (mapa['criadoEm'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
   }
