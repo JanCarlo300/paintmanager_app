@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'firebase_options.dart';
 
 // Imports de Autenticação
@@ -26,15 +27,40 @@ import 'src/apresentacao/paginas/usuario_list_page.dart';
 import 'src/apresentacao/controllers/usuario_controller.dart';
 import 'src/dados/repositorios/repositorio_usuario_impl.dart';
 
-// Imports de Financeiro (se houver página real, importe aqui. Se não, use o placeholder abaixo)
+// Imports de Financeiro
 import 'src/apresentacao/paginas/financeiro_page.dart';
+import 'src/apresentacao/paginas/transacao_form_page.dart';
+import 'src/apresentacao/controllers/financeiro_controller.dart';
+import 'src/dados/repositorios/repositorio_transacao_impl.dart';
+import 'src/dominio/entidades/transacao.dart';
+
+// Imports de Orçamento
+import 'src/apresentacao/paginas/orcamento_list_page.dart';
+import 'src/apresentacao/paginas/orcamento_form_page.dart';
+import 'src/apresentacao/controllers/orcamento_controller.dart';
+import 'src/dados/repositorios/repositorio_orcamento_impl.dart';
+import 'src/dominio/entidades/orcamento.dart';
+
+// Imports de Obras
+import 'src/apresentacao/paginas/obra_list_page.dart';
+import 'src/apresentacao/paginas/obra_form_page.dart';
+import 'src/apresentacao/paginas/obra_detalhes_page.dart';
+import 'src/apresentacao/controllers/obra_controller.dart';
+import 'src/dados/repositorios/repositorio_obra_impl.dart';
+import 'src/dominio/entidades/obra.dart';
 
 // Import da página placeholder
 import 'src/apresentacao/paginas/em_construcao_page.dart';
 
+// Imports de Relatórios
+import 'src/apresentacao/paginas/relatorios_page.dart';
+import 'src/apresentacao/controllers/relatorio_controller.dart';
+import 'src/dados/repositorios/repositorio_relatorio_impl.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await initializeDateFormatting('pt_BR', null);
 
   runApp(
     MultiProvider(
@@ -47,6 +73,18 @@ void main() async {
         ),
         ChangeNotifierProvider(
           create: (_) => UsuarioController(RepositorioUsuarioImpl()),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => OrcamentoController(RepositorioOrcamentoImpl()),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => ObraController(RepositorioObraImpl()),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => FinanceiroController(RepositorioTransacaoImpl()),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => RelatorioController(RepositorioRelatorioImpl()),
         ),
       ],
       child: const PaintManagerApp(),
@@ -76,10 +114,14 @@ class PaintManagerApp extends StatelessWidget {
         '/usuarios': (context) => const UsuarioListPage(),
         '/financeiro': (context) => const FinanceiroPage(),
 
-        // Telas em construção
-        '/obras': (context) => const EmConstrucaoPage(titulo: 'Obras'),
-        '/orcamentos': (context) => const EmConstrucaoPage(titulo: 'Orçamentos'),
-        '/relatorios': (context) => const EmConstrucaoPage(titulo: 'Relatórios'),
+        // Orçamentos
+        '/orcamentos': (context) => const OrcamentoListPage(),
+
+        // Obras
+        '/obras': (context) => const ObraListPage(),
+
+        // Relatórios
+        '/relatorios': (context) => const RelatoriosPage(),
         '/configuracoes': (context) => const EmConstrucaoPage(titulo: 'Configurações'),
       },
       onGenerateRoute: (settings) {
@@ -87,6 +129,40 @@ class PaintManagerApp extends StatelessWidget {
           final cliente = settings.arguments as Cliente?;
           return MaterialPageRoute(
             builder: (context) => ClienteFormPage(clienteParaEdicao: cliente),
+          );
+        }
+        if (settings.name == '/orcamento-formulario') {
+          final orcamento = settings.arguments as Orcamento?;
+          return MaterialPageRoute(
+            builder: (context) => OrcamentoFormPage(orcamentoParaEdicao: orcamento),
+          );
+        }
+        if (settings.name == '/obra-formulario') {
+          final obra = settings.arguments as Obra?;
+          return MaterialPageRoute(
+            builder: (context) => ObraFormPage(obraParaEdicao: obra),
+          );
+        }
+        if (settings.name == '/obra-detalhes') {
+          final obra = settings.arguments as Obra;
+          return MaterialPageRoute(
+            builder: (context) => ObraDetalhesPage(obra: obra),
+          );
+        }
+        if (settings.name == '/transacao-formulario') {
+          final args = settings.arguments;
+          Transacao? transacao;
+          String? tipoInicial;
+          if (args is Transacao) {
+            transacao = args;
+          } else if (args is Map) {
+            tipoInicial = args['tipo'] as String?;
+          }
+          return MaterialPageRoute(
+            builder: (context) => TransacaoFormPage(
+              transacaoParaEdicao: transacao,
+              tipoInicial: tipoInicial,
+            ),
           );
         }
         return null;

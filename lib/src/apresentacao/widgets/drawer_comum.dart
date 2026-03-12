@@ -48,17 +48,22 @@ class DrawerComum extends StatelessWidget {
           const Divider(height: 1),
           const SizedBox(height: 8),
 
-          // Itens de Navegação
-          _buildMenuItem(context, icon: Icons.dashboard_outlined, title: "Dashboard", route: '/home', rotaAtual: rotaAtual),
-          _buildMenuItem(context, icon: Icons.people_outline, title: "Usuários", route: '/usuarios', rotaAtual: rotaAtual),
-          _buildMenuItem(context, icon: Icons.person_outline, title: "Clientes", route: '/clientes', rotaAtual: rotaAtual),
-          _buildMenuItem(context, icon: Icons.construction_outlined, title: "Obras", route: '/obras', rotaAtual: rotaAtual),
-          _buildMenuItem(context, icon: Icons.request_quote_outlined, title: "Orçamentos", route: '/orcamentos', rotaAtual: rotaAtual),
-          _buildMenuItem(context, icon: Icons.attach_money, title: "Financeiro", route: '/financeiro', rotaAtual: rotaAtual),
-          _buildMenuItem(context, icon: Icons.bar_chart_outlined, title: "Relatórios", route: '/relatorios', rotaAtual: rotaAtual),
-          _buildMenuItem(context, icon: Icons.settings_outlined, title: "Configurações", route: '/configuracoes', rotaAtual: rotaAtual),
-
-          const Spacer(),
+          // Itens de Navegação (scrollable para evitar overflow)
+          Expanded(
+            child: ListView(
+              padding: EdgeInsets.zero,
+              children: [
+                _buildMenuItem(context, icon: Icons.dashboard_outlined, title: "Dashboard", route: '/home', rotaAtual: rotaAtual),
+                _buildMenuItem(context, icon: Icons.people_outline, title: "Usuários", route: '/usuarios', rotaAtual: rotaAtual),
+                _buildMenuItem(context, icon: Icons.person_outline, title: "Clientes", route: '/clientes', rotaAtual: rotaAtual),
+                _buildMenuItem(context, icon: Icons.construction_outlined, title: "Obras", route: '/obras', rotaAtual: rotaAtual),
+                _buildMenuItem(context, icon: Icons.request_quote_outlined, title: "Orçamentos", route: '/orcamentos', rotaAtual: rotaAtual),
+                _buildMenuItem(context, icon: Icons.attach_money, title: "Financeiro", route: '/financeiro', rotaAtual: rotaAtual),
+                _buildMenuItem(context, icon: Icons.bar_chart_outlined, title: "Relatórios", route: '/relatorios', rotaAtual: rotaAtual),
+                _buildMenuItem(context, icon: Icons.settings_outlined, title: "Configurações", route: '/configuracoes', rotaAtual: rotaAtual),
+              ],
+            ),
+          ),
           const Divider(height: 1),
 
           // Botão de Sair

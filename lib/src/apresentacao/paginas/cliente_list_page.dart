@@ -63,35 +63,28 @@ class _ClienteListPageState extends State<ClienteListPage> {
           final totalClientes = todosClientes.length;
 
           return SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
+            padding: EdgeInsets.all(isWide ? 24 : 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // --- HEADER ---
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text("Gestão de Clientes", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-                        SizedBox(height: 4),
-                        Text("Gerencie informações e histórico dos seus clientes.", style: TextStyle(color: Colors.grey)),
-                      ],
+                const Text("Gestão de Clientes", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 4),
+                const Text("Gerencie informações e histórico dos seus clientes.", style: TextStyle(color: Colors.grey, fontSize: 13)),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: isWide ? null : double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () => Navigator.pushNamed(context, '/cliente-formulario'),
+                    icon: const Icon(Icons.person_add_alt_1, size: 18),
+                    label: const Text("Novo Cliente"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.black,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     ),
-                    ElevatedButton.icon(
-                      onPressed: () => Navigator.pushNamed(context, '/cliente-formulario'),
-                      icon: const Icon(Icons.person_add_alt_1, size: 18),
-                      label: const Text("Novo Cliente"),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.black,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
                 const SizedBox(height: 24),
 
@@ -114,23 +107,18 @@ class _ClienteListPageState extends State<ClienteListPage> {
                     children: [
                       // Table Header
                       Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text("Clientes Cadastrados", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                                const SizedBox(height: 2),
-                                Text(
-                                  "${clientesFiltrados.length} cliente(s) encontrado(s)",
-                                  style: TextStyle(color: Colors.grey[600], fontSize: 13),
-                                ),
-                              ],
+                            const Text("Clientes Cadastrados", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                            const SizedBox(height: 2),
+                            Text(
+                              "${clientesFiltrados.length} cliente(s) encontrado(s)",
+                              style: TextStyle(color: Colors.grey[600], fontSize: 13),
                             ),
+                            const SizedBox(height: 12),
                             SizedBox(
-                              width: 220,
                               height: 40,
                               child: TextField(
                                 onChanged: (v) => setState(() => _termoBusca = v),
