@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../controllers/auth_controller.dart';
+import '../../dominio/entidades/usuario.dart';
 
 class DrawerComum extends StatelessWidget {
   const DrawerComum({super.key});
@@ -14,38 +15,67 @@ class DrawerComum extends StatelessWidget {
       backgroundColor: Colors.white,
       child: Column(
         children: [
-          // Cabeçalho do Menu
-          UserAccountsDrawerHeader(
-            decoration: const BoxDecoration(color: Colors.white),
-            currentAccountPicture: Container(
-              decoration: BoxDecoration(
-                color: Colors.black,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(Icons.format_paint, color: Colors.white, size: 30),
-            ),
-            accountName: const Text(
-              "PaintManager",
-              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black, fontSize: 16),
-            ),
-            accountEmail: null,
-          ),
+          // Cabeçalho com Logo + Info do Usuário
+          StreamBuilder<Usuario?>(
+            stream: authController.usuarioAtual,
+            builder: (context, snapshot) {
+              final usuario = snapshot.data;
+              final nome = usuario?.nome ?? '...';
+              final funcao = usuario?.funcao ?? '';
 
-          // Info do Usuário
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text("João Silva", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                Text("admin@pinturas.com", style: TextStyle(color: Colors.grey, fontSize: 12)),
-                SizedBox(height: 4),
-                Text("Administrador", style: TextStyle(color: Colors.orange, fontSize: 12, fontWeight: FontWeight.w600)),
-              ],
-            ),
+              return Container(
+                width: double.infinity,
+                padding: EdgeInsets.only(
+                  top: MediaQuery.of(context).padding.top + 24,
+                  bottom: 20,
+                  left: 20,
+                  right: 20,
+                ),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  border: Border(
+                    bottom: BorderSide(color: Color(0xFFEEEEEE), width: 1),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Logo como avatar circular
+                    Container(
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        color: Colors.black,
+                        borderRadius: BorderRadius.circular(28),
+                      ),
+                      child: const Icon(Icons.format_paint, color: Colors.white, size: 28),
+                    ),
+                    const SizedBox(height: 14),
+                    // Nome do usuário logado
+                    Text(
+                      nome,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                        color: Color(0xFF212121),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    // Cargo / Função
+                    if (funcao.isNotEmpty)
+                      Text(
+                        funcao,
+                        style: const TextStyle(
+                          color: Color(0xFFFF9800),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                  ],
+                ),
+              );
+            },
           ),
-          const SizedBox(height: 16),
-          const Divider(height: 1),
           const SizedBox(height: 8),
 
           // Itens de Navegação (scrollable para evitar overflow)

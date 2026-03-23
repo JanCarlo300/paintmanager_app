@@ -10,6 +10,7 @@ class ClienteModelo extends Cliente {
     required super.endereco,
     required super.cpfOuCnpj,
     required super.criadoEm,
+    super.ativo = true,
   });
 
   factory ClienteModelo.deMapa(Map<String, dynamic> mapa, String id) {
@@ -21,6 +22,7 @@ class ClienteModelo extends Cliente {
       endereco: mapa['endereco'] ?? '',
       cpfOuCnpj: mapa['cpfOuCnpj'] ?? '',
       criadoEm: (mapa['criadoEm'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      ativo: mapa['ativo'] ?? true,
     );
   }
 
@@ -32,6 +34,7 @@ class ClienteModelo extends Cliente {
       'endereco': endereco,
       'cpfOuCnpj': cpfOuCnpj,
       'criadoEm': Timestamp.fromDate(criadoEm),
+      'ativo': ativo,
     };
   }
 }

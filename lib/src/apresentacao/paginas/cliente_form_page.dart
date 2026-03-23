@@ -58,6 +58,7 @@ class _ClienteFormPageState extends State<ClienteFormPage> {
         endereco: _enderecoController.text.trim(),
         cpfOuCnpj: _documentoController.text.trim(),
         criadoEm: widget.clienteParaEdicao?.criadoEm ?? DateTime.now(),
+        ativo: widget.clienteParaEdicao?.ativo ?? true,
       );
 
       try {

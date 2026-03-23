@@ -204,7 +204,7 @@ class _LoginPageState extends State<LoginPage> {
           children: [
             Icon(Icons.info_outline, color: Colors.blue),
             SizedBox(width: 10),
-            Text("Instruções de Acesso"),
+            Flexible(child: Text("Instruções de Acesso")),
           ],
         ),
         content: const Column(

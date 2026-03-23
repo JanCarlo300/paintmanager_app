@@ -22,7 +22,11 @@ class ClienteController extends ChangeNotifier {
     }
   }
 
-  Future<void> excluir(String id) async {
-    await _repositorio.excluirCliente(id);
+  Future<void> inativar(String id) async {
+    await _repositorio.atualizarStatus(id, false);
+  }
+
+  Future<void> ativar(String id) async {
+    await _repositorio.atualizarStatus(id, true);
   }
 }

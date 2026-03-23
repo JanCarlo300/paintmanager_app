@@ -22,7 +22,7 @@ class ObraModelo extends Obra {
 
   /// Converte um documento do Firestore para ObraModelo
   factory ObraModelo.deMapa(Map<String, dynamic> mapa, String id) {
-    final etapasRaw = mapa['etapasServico'] as List<dynamic>? ?? [];
+    final etapasRaw = mapa['etapasServico'] is List ? mapa['etapasServico'] as List<dynamic> : <dynamic>[];
     final etapas = etapasRaw.map((e) {
       final m = e as Map<String, dynamic>;
       return EtapaServico(
@@ -31,7 +31,7 @@ class ObraModelo extends Obra {
       );
     }).toList();
 
-    final materiaisRaw = mapa['materiaisFaltantes'] as List<dynamic>? ?? [];
+    final materiaisRaw = mapa['materiaisFaltantes'] is List ? mapa['materiaisFaltantes'] as List<dynamic> : <dynamic>[];
     final materiais = materiaisRaw.map((m) => m.toString()).toList();
 
     return ObraModelo(

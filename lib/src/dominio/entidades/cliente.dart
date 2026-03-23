@@ -6,6 +6,7 @@ class Cliente {
   final String endereco;
   final String cpfOuCnpj;
   final DateTime criadoEm;
+  final bool ativo;
 
   Cliente({
     this.id,
@@ -15,6 +16,7 @@ class Cliente {
     required this.endereco,
     required this.cpfOuCnpj,
     required this.criadoEm,
+    this.ativo = true,
   });
 
   @override

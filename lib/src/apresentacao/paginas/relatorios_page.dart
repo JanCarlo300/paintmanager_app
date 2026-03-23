@@ -53,9 +53,9 @@ class _RelatoriosPageState extends State<RelatoriosPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // --- HEADER ---
-            const Text("Dashboard Analítico", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+            const Text("Análise Financeira", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
             const SizedBox(height: 4),
-            const Text("Acompanhe os indicadores do seu negócio.", style: TextStyle(color: Colors.grey)),
+            const Text("Relatório financeiro do seu negócio.", style: TextStyle(color: Colors.grey, fontSize: 13)),
             const SizedBox(height: 24),
 
             // --- FILTRO DE PERÍODO ---
@@ -82,54 +82,74 @@ class _RelatoriosPageState extends State<RelatoriosPage> {
 
   // === FILTRO DE PERÍODO ===
   Widget _buildFiltroPeriodo(RelatorioController controller) {
-    final filtros = ['Últimos 7 dias', 'Este Mês', 'Últimos 30 dias', 'Últimos 90 dias', 'Este Ano'];
+    final filtros = ['7 dias', 'Este Mês', '30 dias', '90 dias', 'Este Ano'];
+    final filtrosValor = ['Últimos 7 dias', 'Este Mês', 'Últimos 30 dias', 'Últimos 90 dias', 'Este Ano'];
 
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white, borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.date_range, size: 20, color: Colors.grey[700]),
-              const SizedBox(width: 8),
-              const Text("Período", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              const Spacer(),
-              Text("${_formatoData.format(controller.inicio)} - ${_formatoData.format(controller.fim)}",
-                  style: TextStyle(color: Colors.grey[600], fontSize: 12)),
-            ],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Data do período selecionado
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: Colors.grey[200]!),
           ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8, runSpacing: 8,
+          child: Row(
             children: [
-              ...filtros.map((f) => ChoiceChip(
-                label: Text(f, style: TextStyle(fontSize: 12, fontWeight: controller.filtroSelecionado == f ? FontWeight.bold : FontWeight.normal)),
-                selected: controller.filtroSelecionado == f,
-                selectedColor: Colors.black,
-                labelStyle: TextStyle(color: controller.filtroSelecionado == f ? Colors.white : Colors.grey[700]),
-                backgroundColor: Colors.grey[100],
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                side: BorderSide.none,
-                onSelected: (_) => controller.alterarFiltro(f),
-              )),
-              ActionChip(
-                label: const Text("Personalizado", style: TextStyle(fontSize: 12)),
-                avatar: const Icon(Icons.edit_calendar, size: 16),
-                backgroundColor: controller.filtroSelecionado == 'Personalizado' ? Colors.black : Colors.grey[100],
-                labelStyle: TextStyle(color: controller.filtroSelecionado == 'Personalizado' ? Colors.white : Colors.grey[700]),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                side: BorderSide.none,
-                onPressed: () => _selecionarPeriodoPersonalizado(controller),
+              Icon(Icons.calendar_today_outlined, size: 16, color: Colors.grey[500]),
+              const SizedBox(width: 8),
+              Text(
+                "${_formatoData.format(controller.inicio)}  —  ${_formatoData.format(controller.fim)}",
+                style: TextStyle(fontSize: 13, color: Colors.grey[700], fontWeight: FontWeight.w500),
               ),
             ],
           ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 12),
+        // Chips de filtro
+        Wrap(
+          spacing: 6, runSpacing: 6,
+          children: [
+            ...List.generate(filtros.length, (i) {
+              final selecionado = controller.filtroSelecionado == filtrosValor[i];
+              return ChoiceChip(
+                label: Text(filtros[i], style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: selecionado ? FontWeight.bold : FontWeight.normal,
+                )),
+                selected: selecionado,
+                selectedColor: Colors.black,
+                labelStyle: TextStyle(color: selecionado ? Colors.white : Colors.grey[700]),
+                backgroundColor: Colors.grey[100],
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                side: BorderSide.none,
+                showCheckmark: false,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                visualDensity: VisualDensity.compact,
+                onSelected: (_) => controller.alterarFiltro(filtrosValor[i]),
+              );
+            }),
+            ActionChip(
+              label: Text("Personalizado", style: TextStyle(
+                fontSize: 12,
+                fontWeight: controller.filtroSelecionado == 'Personalizado' ? FontWeight.bold : FontWeight.normal,
+              )),
+              avatar: Icon(Icons.edit_calendar, size: 14,
+                  color: controller.filtroSelecionado == 'Personalizado' ? Colors.white : Colors.grey[600]),
+              backgroundColor: controller.filtroSelecionado == 'Personalizado' ? Colors.black : Colors.grey[100],
+              labelStyle: TextStyle(color: controller.filtroSelecionado == 'Personalizado' ? Colors.white : Colors.grey[700]),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              side: BorderSide.none,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              visualDensity: VisualDensity.compact,
+              onPressed: () => _selecionarPeriodoPersonalizado(controller),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -178,49 +198,75 @@ class _RelatoriosPageState extends State<RelatoriosPage> {
 
   // === CARDS KPI ===
   Widget _buildKPIs(RelatorioGeral rel) {
-    return Column(
-      children: [
-        Row(
-          children: [
-            Expanded(child: _kpiCard("Receitas", _formatoMoeda.format(rel.totalReceitas), Colors.green, Icons.trending_up)),
-            const SizedBox(width: 12),
-            Expanded(child: _kpiCard("Despesas", _formatoMoeda.format(rel.totalDespesas), Colors.red, Icons.trending_down)),
-          ],
-        ),
-        const SizedBox(height: 12),
-        _kpiCard(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isNarrow = constraints.maxWidth < 400;
+        final receitaCard = _kpiCard("Receitas", _formatoMoeda.format(rel.totalReceitas), Colors.green, Icons.trending_up);
+        final despesaCard = _kpiCard("Despesas", _formatoMoeda.format(rel.totalDespesas), Colors.red, Icons.trending_down);
+        final lucroCard = _kpiCard(
           "Lucro Líquido",
           _formatoMoeda.format(rel.lucroLiquido),
           rel.lucroLiquido >= 0 ? Colors.blue : Colors.red,
           rel.lucroLiquido >= 0 ? Icons.sentiment_satisfied_alt : Icons.sentiment_dissatisfied,
-        ),
-      ],
+        );
+
+        if (isNarrow) {
+          return Column(
+            children: [
+              receitaCard,
+              const SizedBox(height: 12),
+              despesaCard,
+              const SizedBox(height: 12),
+              lucroCard,
+            ],
+          );
+        }
+        return Column(
+          children: [
+            Row(
+              children: [
+                Expanded(child: receitaCard),
+                const SizedBox(width: 12),
+                Expanded(child: despesaCard),
+              ],
+            ),
+            const SizedBox(height: 12),
+            lucroCard,
+          ],
+        );
+      },
     );
   }
 
   Widget _kpiCard(String titulo, String valor, Color cor, IconData icone) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white, borderRadius: BorderRadius.circular(12),
         boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)],
-        border: Border(top: BorderSide(color: cor, width: 3)),
+        border: Border(left: BorderSide(color: cor, width: 3)),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(titulo, style: TextStyle(color: Colors.grey[600], fontSize: 13)),
-              const SizedBox(height: 8),
-              Text(valor, style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: cor)),
-            ],
-          ),
           Container(
             padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: cor.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(10)),
-            child: Icon(icone, color: cor, size: 24),
+            decoration: BoxDecoration(color: cor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
+            child: Icon(icone, color: cor, size: 22),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(titulo, style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+                const SizedBox(height: 4),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(valor, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: cor)),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -473,21 +519,42 @@ class _RelatoriosPageState extends State<RelatoriosPage> {
             ],
           ),
           const SizedBox(height: 20),
-
-          Row(
-            children: [
-              Expanded(child: _metricaCard("Obras Concluídas", rel.quantidadeObrasConcluidas.toString(), Icons.check_circle_outline, Colors.green)),
-              const SizedBox(width: 12),
-              Expanded(child: _metricaCard("Obras em Andamento", rel.quantidadeObrasEmAndamento.toString(), Icons.construction, Colors.orange)),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(child: _metricaCard("Orçamentos Gerados", rel.totalOrcamentosGerados.toString(), Icons.request_quote_outlined, Colors.blue)),
-              const SizedBox(width: 12),
-              Expanded(child: _metricaCard("Taxa de Conversão", "${rel.taxaConversaoOrcamentos.toStringAsFixed(1)}%", Icons.trending_up, Colors.purple)),
-            ],
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isNarrow = constraints.maxWidth < 340;
+              if (isNarrow) {
+                return Column(
+                  children: [
+                    _metricaCard("Obras Concluídas", rel.quantidadeObrasConcluidas.toString(), Icons.check_circle_outline, Colors.green),
+                    const SizedBox(height: 12),
+                    _metricaCard("Obras em Andamento", rel.quantidadeObrasEmAndamento.toString(), Icons.construction, Colors.orange),
+                    const SizedBox(height: 12),
+                    _metricaCard("Orçamentos Gerados", rel.totalOrcamentosGerados.toString(), Icons.request_quote_outlined, Colors.blue),
+                    const SizedBox(height: 12),
+                    _metricaCard("Taxa de Conversão", "${rel.taxaConversaoOrcamentos.toStringAsFixed(1)}%", Icons.trending_up, Colors.purple),
+                  ],
+                );
+              }
+              return Column(
+                children: [
+                  Row(
+                    children: [
+                      Expanded(child: _metricaCard("Obras Concluídas", rel.quantidadeObrasConcluidas.toString(), Icons.check_circle_outline, Colors.green)),
+                      const SizedBox(width: 12),
+                      Expanded(child: _metricaCard("Obras em Andamento", rel.quantidadeObrasEmAndamento.toString(), Icons.construction, Colors.orange)),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(child: _metricaCard("Orçamentos Gerados", rel.totalOrcamentosGerados.toString(), Icons.request_quote_outlined, Colors.blue)),
+                      const SizedBox(width: 12),
+                      Expanded(child: _metricaCard("Taxa de Conversão", "${rel.taxaConversaoOrcamentos.toStringAsFixed(1)}%", Icons.trending_up, Colors.purple)),
+                    ],
+                  ),
+                ],
+              );
+            },
           ),
         ],
       ),
@@ -496,7 +563,7 @@ class _RelatoriosPageState extends State<RelatoriosPage> {
 
   Widget _metricaCard(String label, String valor, IconData icone, Color cor) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: cor.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(10),
@@ -504,11 +571,14 @@ class _RelatoriosPageState extends State<RelatoriosPage> {
       ),
       child: Column(
         children: [
-          Icon(icone, color: cor, size: 28),
-          const SizedBox(height: 8),
-          Text(valor, style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: cor)),
+          Icon(icone, color: cor, size: 24),
+          const SizedBox(height: 6),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(valor, style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: cor)),
+          ),
           const SizedBox(height: 4),
-          Text(label, style: TextStyle(fontSize: 12, color: Colors.grey[600]), textAlign: TextAlign.center),
+          Text(label, style: TextStyle(fontSize: 11, color: Colors.grey[600]), textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis),
         ],
       ),
     );
