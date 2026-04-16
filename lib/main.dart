@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'firebase_options.dart';
 import 'src/core/config/supabase_config.dart';
 
 // ============================
@@ -33,12 +31,12 @@ import 'src/modules/clientes/dominio/entidades/cliente.dart';
 // Imports de Usuários (página de listagem)
 import 'src/apresentacao/paginas/usuario_list_page.dart';
 
-// Imports de Financeiro (ainda Firebase — será migrado em etapa futura)
+// Imports de Financeiro (Supabase — módulo migrado)
 import 'src/apresentacao/paginas/financeiro_page.dart';
 import 'src/apresentacao/paginas/transacao_form_page.dart';
-import 'src/apresentacao/controllers/financeiro_controller.dart';
-import 'src/dados/repositorios/repositorio_transacao_impl.dart';
-import 'src/dominio/entidades/transacao.dart';
+import 'src/modules/financeiro/apresentacao/controllers/financeiro_controller.dart';
+import 'src/modules/financeiro/dados/repositorios/repositorio_transacao_impl.dart';
+import 'src/modules/financeiro/dominio/entidades/transacao.dart';
 
 // Imports de Orçamento (Supabase — módulo migrado)
 import 'src/apresentacao/paginas/orcamento_list_page.dart';
@@ -58,19 +56,16 @@ import 'src/modules/obras/dominio/entidades/obra.dart';
 // Import da página placeholder
 import 'src/apresentacao/paginas/em_construcao_page.dart';
 
-// Imports de Relatórios (ainda Firebase — será migrado em etapa futura)
+// Imports de Relatórios (Supabase — módulo migrado)
 import 'src/apresentacao/paginas/relatorios_page.dart';
-import 'src/apresentacao/controllers/relatorio_controller.dart';
-import 'src/dados/repositorios/repositorio_relatorio_impl.dart';
+import 'src/modules/relatorios/apresentacao/controllers/relatorio_controller.dart';
+import 'src/modules/relatorios/dados/repositorios/repositorio_relatorio_impl.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Carrega variáveis de ambiente
   await dotenv.load(fileName: '.env');
-
-  // Inicializa Firebase (temporário — necessário até migrar todos os módulos)
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   // Inicializa Supabase (único backend para Auth & Usuários)
   await Supabase.initialize(
@@ -106,11 +101,11 @@ void main() async {
         ChangeNotifierProvider(
           create: (_) => ObraController(RepositorioObraImpl()),
         ),
-        // Financeiro — ainda Firebase (migração futura)
+        // Financeiro — Supabase (módulo migrado)
         ChangeNotifierProvider(
           create: (_) => FinanceiroController(RepositorioTransacaoImpl()),
         ),
-        // Relatórios — ainda Firebase (migração futura)
+        // Relatórios — Supabase (módulo migrado)
         ChangeNotifierProvider(
           create: (_) => RelatorioController(RepositorioRelatorioImpl()),
         ),

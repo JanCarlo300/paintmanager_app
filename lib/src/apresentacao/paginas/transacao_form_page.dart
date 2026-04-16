@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import '../../dominio/entidades/transacao.dart';
+import '../../modules/financeiro/dominio/entidades/transacao.dart';
 import '../../modules/clientes/dominio/entidades/cliente.dart';
 import '../../modules/obras/dominio/entidades/obra.dart';
-import '../controllers/financeiro_controller.dart';
+import '../../modules/financeiro/apresentacao/controllers/financeiro_controller.dart';
 import '../../modules/clientes/apresentacao/controllers/cliente_controller.dart';
 import '../../modules/obras/apresentacao/controllers/obra_controller.dart';
 
@@ -80,9 +80,9 @@ class _TransacaoFormPageState extends State<TransacaoFormPage> {
         dataTransacao: _dataTransacao,
         status: _status,
         formaPagamento: _formaPagamento,
-        clienteId: _clienteSelecionado?.id?.toString() ?? widget.transacaoParaEdicao?.clienteId,
+        idCliente: _clienteSelecionado?.id ?? widget.transacaoParaEdicao?.idCliente,
         clienteNome: _clienteSelecionado?.nome ?? widget.transacaoParaEdicao?.clienteNome,
-        obraId: _obraSelecionada?.id?.toString() ?? widget.transacaoParaEdicao?.obraId,
+        idOrcamento: widget.transacaoParaEdicao?.idOrcamento,
         obraTitulo: _obraSelecionada?.tituloDaObra ?? widget.transacaoParaEdicao?.obraTitulo,
       );
 
@@ -302,9 +302,9 @@ class _TransacaoFormPageState extends State<TransacaoFormPage> {
     ),
   );
 
-  Widget _buildDropdown(String label, String value, List<String> options, IconData icon, Function(String?) onChanged) {
+  Widget _buildDropdown(String label, String currentValue, List<String> options, IconData icon, Function(String?) onChanged) {
     return DropdownButtonFormField<String>(
-      initialValue: options.contains(value) ? value : options.first,
+      initialValue: options.contains(currentValue) ? currentValue : options.first,
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: Icon(icon, size: 20, color: Colors.grey[600]),
@@ -321,7 +321,7 @@ class _TransacaoFormPageState extends State<TransacaoFormPage> {
     final cc = context.watch<ClienteController>();
     final clientes = cc.clientes;
     return DropdownButtonFormField<Cliente>(
-      value: _clienteSelecionado,
+      initialValue: _clienteSelecionado,
       decoration: InputDecoration(
         labelText: "Vincular ao Cliente (opcional)",
         prefixIcon: Icon(Icons.person_outline, size: 20, color: Colors.grey[600]),
@@ -341,7 +341,7 @@ class _TransacaoFormPageState extends State<TransacaoFormPage> {
     final oc = context.watch<ObraController>();
     final obras = oc.obras;
     return DropdownButtonFormField<Obra>(
-      value: _obraSelecionada,
+      initialValue: _obraSelecionada,
       decoration: InputDecoration(
         labelText: "Vincular à Obra (opcional)",
         prefixIcon: Icon(Icons.construction, size: 20, color: Colors.grey[600]),

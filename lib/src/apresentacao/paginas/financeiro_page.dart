@@ -1,14 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import '../../dominio/entidades/transacao.dart';
-import '../controllers/financeiro_controller.dart';
+import '../../modules/financeiro/dominio/entidades/transacao.dart';
+import '../../modules/financeiro/apresentacao/controllers/financeiro_controller.dart';
 import '../widgets/drawer_comum.dart';
 
-class FinanceiroPage extends StatelessWidget {
+class FinanceiroPage extends StatefulWidget {
   const FinanceiroPage({super.key});
 
+  @override
+  State<FinanceiroPage> createState() => _FinanceiroPageState();
+}
+
+class _FinanceiroPageState extends State<FinanceiroPage> {
   static const _meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+
+  @override
+  void initState() {
+    super.initState();
+    // Carrega as transações do Supabase de forma segura pós-build
+    final controller = context.read<FinanceiroController>();
+    Future.microtask(() => controller.carregarTransacoes());
+  }
 
   Color _corStatus(String status) {
     switch (status) {
@@ -48,45 +61,42 @@ class FinanceiroPage extends StatelessWidget {
         icon: const Icon(Icons.add),
         label: const Text("Nova Transação", style: TextStyle(fontWeight: FontWeight.bold)),
       ),
-      body: StreamBuilder<List<Transacao>>(
-        stream: controller.transacoes,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator(color: Colors.black));
-          }
+      body: controller.carregando
+          ? const Center(child: CircularProgressIndicator(color: Colors.black))
+          : _buildConteudo(controller, formatoMoeda, formatoData),
+    );
+  }
 
-          final todas = snapshot.data ?? [];
-          final doMes = controller.filtrarPorMes(todas);
-          final receitas = controller.calcularReceitas(doMes);
-          final despesas = controller.calcularDespesas(doMes);
-          final saldo = controller.calcularSaldo(doMes);
-          final pendentes = controller.calcularPendentes(doMes);
+  Widget _buildConteudo(FinanceiroController controller, NumberFormat formatoMoeda, DateFormat formatoData) {
+    final todas = controller.transacoes;
+    final doMes = controller.filtrarPorMes(todas);
+    final receitas = controller.calcularReceitas(doMes);
+    final despesas = controller.calcularDespesas(doMes);
+    final saldo = controller.calcularSaldo(doMes);
+    final pendentes = controller.calcularPendentes(doMes);
 
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // --- HEADER ---
-                const Text("Gestão Financeira", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 4),
-                const Text("Controle receitas, despesas e fluxo de caixa.", style: TextStyle(color: Colors.grey)),
-                const SizedBox(height: 24),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // --- HEADER ---
+          const Text("Gestão Financeira", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 4),
+          const Text("Controle receitas, despesas e fluxo de caixa.", style: TextStyle(color: Colors.grey)),
+          const SizedBox(height: 24),
 
-                // --- SELETOR DE MÊS ---
-                _buildSeletorMes(controller),
-                const SizedBox(height: 24),
+          // --- SELETOR DE MÊS ---
+          _buildSeletorMes(controller),
+          const SizedBox(height: 24),
 
-                // --- CARDS DE RESUMO ---
-                _buildCardsResumo(formatoMoeda, receitas, despesas, saldo, pendentes),
-                const SizedBox(height: 24),
+          // --- CARDS DE RESUMO ---
+          _buildCardsResumo(formatoMoeda, receitas, despesas, saldo, pendentes),
+          const SizedBox(height: 24),
 
-                // --- LISTA DE TRANSAÇÕES ---
-                _buildListaTransacoes(context, doMes, formatoMoeda, formatoData, controller),
-              ],
-            ),
-          );
-        },
+          // --- LISTA DE TRANSAÇÕES ---
+          _buildListaTransacoes(context, doMes, formatoMoeda, formatoData, controller),
+        ],
       ),
     );
   }
@@ -269,7 +279,11 @@ class FinanceiroPage extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           InkWell(
-                            onTap: () => Navigator.pushNamed(context, '/transacao-formulario', arguments: t),
+                            onTap: () async {
+                              final ctrl = context.read<FinanceiroController>();
+                              await Navigator.pushNamed(context, '/transacao-formulario', arguments: t);
+                              if (mounted) ctrl.carregarTransacoes();
+                            },
                             child: Icon(Icons.edit_outlined, size: 16, color: Colors.grey[500]),
                           ),
                           const SizedBox(width: 8),
@@ -310,9 +324,11 @@ class FinanceiroPage extends StatelessWidget {
                 ),
                 title: const Text("Nova Receita", style: TextStyle(fontWeight: FontWeight.w600)),
                 subtitle: const Text("Pagamento de cliente, adiantamento..."),
-                onTap: () {
+                onTap: () async {
+                  final ctrl = context.read<FinanceiroController>();
                   Navigator.pop(ctx);
-                  Navigator.pushNamed(context, '/transacao-formulario', arguments: {'tipo': 'Receita'});
+                  await Navigator.pushNamed(context, '/transacao-formulario', arguments: {'tipo': 'Receita'});
+                  if (mounted) ctrl.carregarTransacoes();
                 },
               ),
               const SizedBox(height: 8),
@@ -324,9 +340,11 @@ class FinanceiroPage extends StatelessWidget {
                 ),
                 title: const Text("Nova Despesa", style: TextStyle(fontWeight: FontWeight.w600)),
                 subtitle: const Text("Material, transporte, alimentação..."),
-                onTap: () {
+                onTap: () async {
+                  final ctrl = context.read<FinanceiroController>();
                   Navigator.pop(ctx);
-                  Navigator.pushNamed(context, '/transacao-formulario', arguments: {'tipo': 'Despesa'});
+                  await Navigator.pushNamed(context, '/transacao-formulario', arguments: {'tipo': 'Despesa'});
+                  if (mounted) ctrl.carregarTransacoes();
                 },
               ),
             ],

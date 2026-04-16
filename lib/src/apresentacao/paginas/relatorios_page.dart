@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
-import '../../dominio/entidades/relatorio_geral.dart';
-import '../controllers/relatorio_controller.dart';
+import '../../modules/relatorios/dominio/entidades/relatorio_geral.dart';
+import '../../modules/relatorios/apresentacao/controllers/relatorio_controller.dart';
 import '../widgets/drawer_comum.dart';
 
 class RelatoriosPage extends StatefulWidget {
@@ -27,9 +27,8 @@ class _RelatoriosPageState extends State<RelatoriosPage> {
   void initState() {
     super.initState();
     // Carregar relatório ao abrir a tela
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<RelatorioController>().carregarRelatorio();
-    });
+    final controller = context.read<RelatorioController>();
+    Future.microtask(() => controller.carregarRelatorio());
   }
 
   @override
