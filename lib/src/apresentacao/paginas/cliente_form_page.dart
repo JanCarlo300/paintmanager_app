@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
-import '../../dominio/entidades/cliente.dart';
-import '../controllers/cliente_controller.dart';
+import '../../modules/clientes/dominio/entidades/cliente.dart';
+import '../../modules/clientes/apresentacao/controllers/cliente_controller.dart';
 
 class ClienteFormPage extends StatefulWidget {
   final Cliente? clienteParaEdicao;

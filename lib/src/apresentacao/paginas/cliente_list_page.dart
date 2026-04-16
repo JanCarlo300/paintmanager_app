@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import '../../dominio/entidades/cliente.dart';
-import '../../dominio/entidades/obra.dart';
-import '../controllers/cliente_controller.dart';
-import '../controllers/obra_controller.dart';
+import '../../modules/clientes/dominio/entidades/cliente.dart';
+import '../../modules/obras/dominio/entidades/obra.dart';
+import '../../modules/clientes/apresentacao/controllers/cliente_controller.dart';
+import '../../modules/obras/apresentacao/controllers/obra_controller.dart';
 import '../widgets/drawer_comum.dart';
 
 /// Filtros disponíveis na tela de clientes
@@ -21,6 +21,16 @@ class _ClienteListPageState extends State<ClienteListPage> {
   String _termoBusca = '';
   FiltroCliente _filtroAtual = FiltroCliente.comObraAtiva;
 
+  @override
+  void initState() {
+    super.initState();
+    // Carrega a lista de clientes ao abrir a página (padrão Supabase)
+    Future.microtask(() {
+      if (!mounted) return;
+      context.read<ClienteController>().carregarClientes();
+    });
+  }
+
   /// Aplica filtro de busca por texto
   List<Cliente> _filtrarPorTexto(List<Cliente> clientes) {
     if (_termoBusca.isEmpty) return clientes;
@@ -36,7 +46,7 @@ class _ClienteListPageState extends State<ClienteListPage> {
   List<Cliente> _filtrarPorStatus(List<Cliente> clientes, Set<String> clienteIdsComObraAtiva) {
     switch (_filtroAtual) {
       case FiltroCliente.comObraAtiva:
-        return clientes.where((c) => c.ativo && clienteIdsComObraAtiva.contains(c.id)).toList();
+        return clientes.where((c) => c.ativo && clienteIdsComObraAtiva.contains(c.id.toString())).toList();
       case FiltroCliente.todosAtivos:
         return clientes.where((c) => c.ativo).toList();
       case FiltroCliente.inativos:
@@ -46,8 +56,28 @@ class _ClienteListPageState extends State<ClienteListPage> {
 
   @override
   Widget build(BuildContext context) {
-    final clienteCtrl = context.read<ClienteController>();
-    final obraCtrl = context.read<ObraController>();
+    final clienteCtrl = context.watch<ClienteController>();
+
+    if (clienteCtrl.carregando) {
+      return Scaffold(
+        backgroundColor: const Color(0xFFF8F9FA),
+        drawer: const DrawerComum(),
+        appBar: AppBar(
+          leading: Builder(
+            builder: (ctx) => IconButton(
+              icon: const Icon(Icons.menu),
+              onPressed: () => Scaffold.of(ctx).openDrawer(),
+            ),
+          ),
+          title: const Text("Clientes", style: TextStyle(fontWeight: FontWeight.bold)),
+          centerTitle: false,
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black,
+          elevation: 0.5,
+        ),
+        body: const Center(child: CircularProgressIndicator(color: Colors.black)),
+      );
+    }
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
@@ -65,85 +95,72 @@ class _ClienteListPageState extends State<ClienteListPage> {
         foregroundColor: Colors.black,
         elevation: 0.5,
       ),
-      body: StreamBuilder<List<Obra>>(
-        stream: obraCtrl.obras,
-        builder: (context, obraSnapshot) {
-          // Trata erro no stream de obras silenciosamente (usa lista vazia)
-          final obras = obraSnapshot.hasError ? <Obra>[] : (obraSnapshot.data ?? <Obra>[]);
+      body: Builder(
+        builder: (context) {
+          final obraCtrlLocal = context.watch<ObraController>();
+          final obras = obraCtrlLocal.obras;
           final clienteIdsComObraAtiva = obras
               .where((o) => o.status != 'Concluída')
-              .map((o) => o.clienteId)
+              .map((o) => o.idCliente.toString())
               .toSet();
 
-          return StreamBuilder<List<Cliente>>(
-            stream: clienteCtrl.clientes,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
-                return const Center(child: CircularProgressIndicator(color: Colors.black));
-              }
-              if (snapshot.hasError) {
-                return const Center(child: Text("Erro ao carregar clientes."));
-              }
+          final todosClientes = clienteCtrl.clientes;
+          final clientesFiltradosPorStatus = _filtrarPorStatus(todosClientes, clienteIdsComObraAtiva);
+          final clientesFiltrados = _filtrarPorTexto(clientesFiltradosPorStatus);
 
-              final todosClientes = snapshot.data ?? [];
-              final clientesFiltradosPorStatus = _filtrarPorStatus(todosClientes, clienteIdsComObraAtiva);
-              final clientesFiltrados = _filtrarPorTexto(clientesFiltradosPorStatus);
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // --- HEADER ---
+                const Text("Gestão de Clientes", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 4),
+                const Text("Gerencie informações e histórico dos seus clientes.",
+                    style: TextStyle(color: Colors.grey, fontSize: 13)),
+                const SizedBox(height: 16),
 
-              return SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // --- HEADER ---
-                    const Text("Gestão de Clientes", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 4),
-                    const Text("Gerencie informações e histórico dos seus clientes.",
-                        style: TextStyle(color: Colors.grey, fontSize: 13)),
-                    const SizedBox(height: 16),
-
-                    // --- BOTÃO NOVO CLIENTE ---
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: () => Navigator.pushNamed(context, '/cliente-formulario'),
-                        icon: const Icon(Icons.person_add_alt_1, size: 18),
-                        label: const Text("Novo Cliente"),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.black,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                        ),
-                      ),
+                // --- BOTÃO NOVO CLIENTE ---
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () => Navigator.pushNamed(context, '/cliente-formulario'),
+                    icon: const Icon(Icons.person_add_alt_1, size: 18),
+                    label: const Text("Novo Cliente"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.black,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     ),
-                    const SizedBox(height: 20),
-
-                    // --- FILTRO POR STATUS ---
-                    _buildFiltroChips(todosClientes, clienteIdsComObraAtiva),
-                    const SizedBox(height: 16),
-
-                    // --- BARRA DE BUSCA ---
-                    _buildBarraBusca(),
-                    const SizedBox(height: 8),
-
-                    // --- CONTADOR ---
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      child: Text(
-                        "${clientesFiltrados.length} cliente(s) encontrado(s)",
-                        style: TextStyle(color: Colors.grey[600], fontSize: 13),
-                      ),
-                    ),
-
-                    // --- LISTA DE CARDS ---
-                    if (clientesFiltrados.isEmpty)
-                      _buildVazio()
-                    else
-                      ...clientesFiltrados.map((c) => _buildClienteCard(c, clienteCtrl, clienteIdsComObraAtiva)),
-                  ],
+                  ),
                 ),
-              );
-            },
+                const SizedBox(height: 20),
+
+                // --- FILTRO POR STATUS ---
+                _buildFiltroChips(todosClientes, clienteIdsComObraAtiva),
+                const SizedBox(height: 16),
+
+                // --- BARRA DE BUSCA ---
+                _buildBarraBusca(),
+                const SizedBox(height: 8),
+
+                // --- CONTADOR ---
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Text(
+                    "${clientesFiltrados.length} cliente(s) encontrado(s)",
+                    style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                  ),
+                ),
+
+                // --- LISTA DE CARDS ---
+                if (clientesFiltrados.isEmpty)
+                  _buildVazio()
+                else
+                  ...clientesFiltrados.map((c) => _buildClienteCard(c, clienteCtrl, clienteIdsComObraAtiva)),
+              ],
+            ),
           );
         },
       ),
@@ -152,7 +169,7 @@ class _ClienteListPageState extends State<ClienteListPage> {
 
   // === FILTRO CHIPS ===
   Widget _buildFiltroChips(List<Cliente> todosClientes, Set<String> idsComObra) {
-    final qtdComObra = todosClientes.where((c) => c.ativo && idsComObra.contains(c.id)).length;
+    final qtdComObra = todosClientes.where((c) => c.ativo && idsComObra.contains(c.id.toString())).length;
     final qtdAtivos = todosClientes.where((c) => c.ativo).length;
     final qtdInativos = todosClientes.where((c) => !c.ativo).length;
 
@@ -239,7 +256,7 @@ class _ClienteListPageState extends State<ClienteListPage> {
   // === CARD DO CLIENTE ===
   Widget _buildClienteCard(Cliente cliente, ClienteController controller, Set<String> idsComObra) {
     final dataCriacao = DateFormat('dd/MM/yyyy').format(cliente.criadoEm);
-    final temObraAtiva = idsComObra.contains(cliente.id);
+    final temObraAtiva = idsComObra.contains(cliente.id.toString());
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
