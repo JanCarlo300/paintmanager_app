@@ -3,11 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../dominio/entidades/orcamento.dart';
-import '../../dominio/entidades/item_servico.dart';
-import '../../dominio/entidades/cliente.dart';
-import '../controllers/orcamento_controller.dart';
-import '../controllers/cliente_controller.dart';
+import '../../modules/orcamentos/dominio/entidades/orcamento.dart';
+import '../../modules/orcamentos/dominio/entidades/item_servico.dart';
+import '../../modules/clientes/dominio/entidades/cliente.dart';
+import '../../modules/orcamentos/apresentacao/controllers/orcamento_controller.dart';
+import '../../modules/clientes/apresentacao/controllers/cliente_controller.dart';
 
 class OrcamentoFormPage extends StatefulWidget {
   final Orcamento? orcamentoParaEdicao;
@@ -154,7 +154,7 @@ class _OrcamentoFormPageState extends State<OrcamentoFormPage> {
 
       final orcamento = Orcamento(
         id: widget.orcamentoParaEdicao?.id,
-        clienteId: _clienteSelecionado?.id ?? widget.orcamentoParaEdicao?.clienteId ?? '',
+        idObra: widget.orcamentoParaEdicao?.idObra,
         clienteNome: _clienteSelecionado?.nome ?? widget.orcamentoParaEdicao?.clienteNome ?? '',
         descricao: _descricaoController.text.trim(),
         dataCriacao: widget.orcamentoParaEdicao?.dataCriacao ?? DateTime.now(),
@@ -224,12 +224,10 @@ _Orçamento gerado pelo PaintManager_
   // === ENVIAR POR WHATSAPP ===
   Future<void> _enviarWhatsApp(Orcamento orc) async {
     final clienteController = context.read<ClienteController>();
-    Cliente? cliente;
-    await clienteController.clientes.first.then((clientes) {
-      cliente = clientes.where((c) => c.id == orc.clienteId).firstOrNull;
-    });
+    final clientes = clienteController.clientes;
+    final cliente = clientes.where((c) => c.nome == orc.clienteNome).firstOrNull;
 
-    if (cliente == null || cliente!.telefone.isEmpty) {
+    if (cliente == null || cliente.telefone.isEmpty) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Cliente sem telefone cadastrado."), backgroundColor: Colors.red, behavior: SnackBarBehavior.floating),
@@ -238,7 +236,7 @@ _Orçamento gerado pelo PaintManager_
       return;
     }
 
-    final telefone = cliente!.telefone.replaceAll(RegExp(r'[^0-9]'), '');
+    final telefone = cliente.telefone.replaceAll(RegExp(r'[^0-9]'), '');
     final telefoneCompleto = telefone.length <= 11 ? '55$telefone' : telefone;
     final mensagem = _formatarMensagem(orc);
     final url = Uri.parse('https://wa.me/$telefoneCompleto?text=${Uri.encodeComponent(mensagem)}');
@@ -257,12 +255,10 @@ _Orçamento gerado pelo PaintManager_
   // === ENVIAR POR E-MAIL ===
   Future<void> _enviarEmail(Orcamento orc) async {
     final clienteController = context.read<ClienteController>();
-    Cliente? cliente;
-    await clienteController.clientes.first.then((clientes) {
-      cliente = clientes.where((c) => c.id == orc.clienteId).firstOrNull;
-    });
+    final clientes = clienteController.clientes;
+    final cliente = clientes.where((c) => c.nome == orc.clienteNome).firstOrNull;
 
-    if (cliente == null || cliente!.email.isEmpty) {
+    if (cliente == null || cliente.email.isEmpty) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Cliente sem e-mail cadastrado."), backgroundColor: Colors.red, behavior: SnackBarBehavior.floating),
@@ -275,7 +271,7 @@ _Orçamento gerado pelo PaintManager_
     final assunto = 'Orçamento - ${orc.descricao} | PaintManager';
     final url = Uri(
       scheme: 'mailto',
-      path: cliente!.email,
+      path: cliente.email,
       query: 'subject=${Uri.encodeComponent(assunto)}&body=${Uri.encodeComponent(mensagemEmail)}',
     );
 
@@ -460,7 +456,7 @@ _Orçamento gerado pelo PaintManager_
                             title: const Text("Materiais inclusos no orçamento?", style: TextStyle(fontWeight: FontWeight.w500)),
                             subtitle: const Text("Marque se o pintor fornecerá o material", style: TextStyle(fontSize: 12)),
                             value: _materiaisInclusos,
-                            activeColor: Colors.black,
+                            activeThumbColor: Colors.black,
                             onChanged: (val) => setState(() => _materiaisInclusos = val),
                           ),
                           if (_materiaisInclusos) ...[
@@ -552,26 +548,21 @@ _Orçamento gerado pelo PaintManager_
   }
 
   Widget _buildClienteDropdown() {
-    final clienteController = context.read<ClienteController>();
-    return StreamBuilder<List<Cliente>>(
-      stream: clienteController.clientes,
-      builder: (context, snapshot) {
-        final clientes = snapshot.data ?? [];
-        return DropdownButtonFormField<Cliente>(
-          value: _clienteSelecionado,
-          decoration: InputDecoration(
-            labelText: "Selecione o Cliente",
-            prefixIcon: Icon(Icons.person_outline, size: 20, color: Colors.grey[600]),
-            filled: true,
-            fillColor: Colors.grey[50],
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
-            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
-          ),
-          items: clientes.map((c) => DropdownMenuItem(value: c, child: Text(c.nome))).toList(),
-          onChanged: (val) => setState(() => _clienteSelecionado = val),
-          validator: (val) => val == null ? "Selecione um cliente" : null,
-        );
-      },
+    final clienteController = context.watch<ClienteController>();
+    final clientes = clienteController.clientes;
+    return DropdownButtonFormField<Cliente>(
+      value: _clienteSelecionado,
+      decoration: InputDecoration(
+        labelText: "Selecione o Cliente",
+        prefixIcon: Icon(Icons.person_outline, size: 20, color: Colors.grey[600]),
+        filled: true,
+        fillColor: Colors.grey[50],
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
+      ),
+      items: clientes.map((c) => DropdownMenuItem(value: c, child: Text(c.nome))).toList(),
+      onChanged: (val) => setState(() => _clienteSelecionado = val),
+      validator: (val) => val == null ? "Selecione um cliente" : null,
     );
   }
 
@@ -634,7 +625,7 @@ _Orçamento gerado pelo PaintManager_
 
   Widget _buildDropdownPagamento() {
     return DropdownButtonFormField<String>(
-      value: _formaPagamento,
+      initialValue: _formaPagamento,
       decoration: InputDecoration(
         labelText: "Forma de Pagamento",
         prefixIcon: Icon(Icons.payment, size: 20, color: Colors.grey[600]),
@@ -652,7 +643,7 @@ _Orçamento gerado pelo PaintManager_
 
   Widget _buildDropdownStatus() {
     return DropdownButtonFormField<String>(
-      value: _status,
+      initialValue: _status,
       decoration: InputDecoration(
         labelText: "Status do Orçamento",
         prefixIcon: Icon(Icons.flag_outlined, size: 20, color: Colors.grey[600]),

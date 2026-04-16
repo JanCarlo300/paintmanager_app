@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../dominio/entidades/orcamento.dart';
-import '../../dominio/entidades/cliente.dart';
-import '../controllers/orcamento_controller.dart';
-import '../controllers/cliente_controller.dart';
+import '../../modules/orcamentos/dominio/entidades/orcamento.dart';
+import '../../modules/clientes/dominio/entidades/cliente.dart';
+import '../../modules/orcamentos/apresentacao/controllers/orcamento_controller.dart';
+import '../../modules/clientes/apresentacao/controllers/cliente_controller.dart';
 import '../widgets/drawer_comum.dart';
 
 /// Filtros disponíveis na tela de orçamentos
@@ -106,7 +106,7 @@ _Orçamento gerado pelo PaintManager_
 
   // === ENVIAR POR WHATSAPP ===
   Future<void> _enviarWhatsApp(Orcamento orc, List<Cliente> clientes) async {
-    final cliente = clientes.where((c) => c.id == orc.clienteId).firstOrNull;
+    final cliente = clientes.where((c) => c.nome == orc.clienteNome).firstOrNull;
 
     if (cliente == null || cliente.telefone.isEmpty) {
       if (mounted) {
@@ -136,7 +136,7 @@ _Orçamento gerado pelo PaintManager_
 
   // === ENVIAR POR E-MAIL ===
   Future<void> _enviarEmail(Orcamento orc, List<Cliente> clientes) async {
-    final cliente = clientes.where((c) => c.id == orc.clienteId).firstOrNull;
+    final cliente = clientes.where((c) => c.nome == orc.clienteNome).firstOrNull;
 
     if (cliente == null || cliente.email.isEmpty) {
       if (mounted) {
@@ -168,9 +168,45 @@ _Orçamento gerado pelo PaintManager_
   }
 
   @override
+  void initState() {
+    super.initState();
+    Future.microtask(() {
+      if (!mounted) return;
+      context.read<OrcamentoController>().carregarOrcamentos();
+      context.read<ClienteController>().carregarClientes();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final controller = context.read<OrcamentoController>();
-    final clienteController = context.read<ClienteController>();
+    final controller = context.watch<OrcamentoController>();
+    final clienteController = context.watch<ClienteController>();
+
+    if (controller.carregando) {
+      return Scaffold(
+        backgroundColor: const Color(0xFFF8F9FA),
+        drawer: const DrawerComum(),
+        appBar: AppBar(
+          leading: Builder(
+            builder: (ctx) => IconButton(
+              icon: const Icon(Icons.menu),
+              onPressed: () => Scaffold.of(ctx).openDrawer(),
+            ),
+          ),
+          title: const Text("Orçamentos", style: TextStyle(fontWeight: FontWeight.bold)),
+          centerTitle: false,
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black,
+          elevation: 0.5,
+        ),
+        body: const Center(child: CircularProgressIndicator(color: Colors.black)),
+      );
+    }
+
+    final todos = controller.orcamentos;
+    final filtradosPorStatus = _filtrarPorStatus(todos);
+    final filtrados = _filtrarPorTexto(filtradosPorStatus);
+    final clientes = clienteController.clientes;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
@@ -188,82 +224,59 @@ _Orçamento gerado pelo PaintManager_
         foregroundColor: Colors.black,
         elevation: 0.5,
       ),
-      body: StreamBuilder<List<Orcamento>>(
-        stream: controller.orcamentos,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator(color: Colors.black));
-          }
-          if (snapshot.hasError) {
-            return const Center(child: Text("Erro ao carregar orçamentos."));
-          }
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // --- HEADER ---
+            const Text("Gestão de Orçamentos", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 4),
+            const Text("Crie e gerencie orçamentos para seus clientes.",
+                style: TextStyle(color: Colors.grey, fontSize: 13)),
+            const SizedBox(height: 16),
 
-          final todos = snapshot.data ?? [];
-          final filtradosPorStatus = _filtrarPorStatus(todos);
-          final filtrados = _filtrarPorTexto(filtradosPorStatus);
-
-          return StreamBuilder<List<Cliente>>(
-            stream: clienteController.clientes,
-            builder: (context, clienteSnapshot) {
-              final clientes = clienteSnapshot.data ?? [];
-
-              return SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // --- HEADER ---
-                    const Text("Gestão de Orçamentos", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 4),
-                    const Text("Crie e gerencie orçamentos para seus clientes.",
-                        style: TextStyle(color: Colors.grey, fontSize: 13)),
-                    const SizedBox(height: 16),
-
-                    // --- BOTÃO NOVO ORÇAMENTO ---
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: () => Navigator.pushNamed(context, '/orcamento-formulario'),
-                        icon: const Icon(Icons.add, size: 18),
-                        label: const Text("Novo Orçamento"),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.black,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-
-                    // --- FILTRO POR STATUS ---
-                    _buildFiltroChips(todos),
-                    const SizedBox(height: 16),
-
-                    // --- BARRA DE BUSCA ---
-                    _buildBarraBusca(),
-                    const SizedBox(height: 8),
-
-                    // --- CONTADOR ---
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      child: Text(
-                        "${filtrados.length} orçamento(s) encontrado(s)",
-                        style: TextStyle(color: Colors.grey[600], fontSize: 13),
-                      ),
-                    ),
-
-                    // --- LISTA DE CARDS ---
-                    if (filtrados.isEmpty)
-                      _buildVazio()
-                    else
-                      ...filtrados.map((orc) => _buildOrcamentoCard(orc, controller, clientes)),
-                  ],
+            // --- BOTÃO NOVO ORÇAMENTO ---
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () => Navigator.pushNamed(context, '/orcamento-formulario'),
+                icon: const Icon(Icons.add, size: 18),
+                label: const Text("Novo Orçamento"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.black,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
-              );
-            },
-          );
-        },
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // --- FILTRO POR STATUS ---
+            _buildFiltroChips(todos),
+            const SizedBox(height: 16),
+
+            // --- BARRA DE BUSCA ---
+            _buildBarraBusca(),
+            const SizedBox(height: 8),
+
+            // --- CONTADOR ---
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Text(
+                "${filtrados.length} orçamento(s) encontrado(s)",
+                style: TextStyle(color: Colors.grey[600], fontSize: 13),
+              ),
+            ),
+
+            // --- LISTA DE CARDS ---
+            if (filtrados.isEmpty)
+              _buildVazio()
+            else
+              ...filtrados.map((orc) => _buildOrcamentoCard(orc, controller, clientes)),
+          ],
+        ),
       ),
     );
   }

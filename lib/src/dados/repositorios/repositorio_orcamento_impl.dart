@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../dominio/entidades/orcamento.dart';
-import '../../dominio/entidades/item_servico.dart';
 import '../../dominio/repositorios/repositorio_orcamento.dart';
 import '../modelos/orcamento_modelo.dart';
 
