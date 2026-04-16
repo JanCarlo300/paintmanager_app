@@ -24,18 +24,22 @@ class AuthController extends ChangeNotifier {
     notifyListeners();
 
     try {
+      print("Tentando realizar login com CPF: $cpf");
       final usuario = await _repositorio.entrarComCpfESenha(cpf, senha);
+      print("Resultado do login: $usuario");
 
       if (usuario != null && context.mounted) {
-        // VERIFICAÇÃO DE SEGURANÇA: Se primeiroAcesso for null (campo não existe no Firestore)
-        // E não for Administrador, obriga a troca de senha
-        if (usuario.primeiroAcesso == null && usuario.funcao != 'Administrador') {
+        // Se é primeiro acesso e não é Administrador, obriga troca de senha
+        if (usuario.primeiroAcesso && usuario.funcao != 'Administrador') {
+          print("Redirecionando para redefinir senha");
           Navigator.of(context).pushReplacementNamed('/redefinir-senha-obrigatoria');
         } else {
+          print("Redirecionando para home");
           Navigator.of(context).pushReplacementNamed('/home');
         }
       }
     } catch (e) {
+      print("Erro no login recebido pelo controller: $e");
       if (context.mounted) {
         final mensagemErro = e.toString().replaceFirst('Exception: ', '').replaceFirst('Exception', '');
         _mostrarMensagem(context, mensagemErro, isErro: true);
@@ -46,7 +50,7 @@ class AuthController extends ChangeNotifier {
     }
   }
 
-  // NOVO: Método para processar a redefinição obrigatória
+  // Redefinição obrigatória de senha no primeiro acesso
   Future<void> redefinirSenhaObrigatoria(BuildContext context, String novaSenha) async {
     if (novaSenha.length < 6) {
       _mostrarMensagem(context, "A senha deve ter no mínimo 6 caracteres.");
@@ -57,7 +61,6 @@ class AuthController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Chama o repositório para atualizar a senha e mudar a flag 'primeiroAcesso' para false
       await _repositorio.atualizarSenhaPrimeiroAcesso(novaSenha);
 
       if (context.mounted) {

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import '../../dominio/entidades/usuario.dart';
-import '../controllers/usuario_controller.dart';
+import '../../modules/auth/dominio/entidades/usuario.dart';
+import '../../modules/auth/apresentacao/controllers/usuario_controller.dart';
 import '../widgets/drawer_comum.dart';
 
 /// Filtros disponíveis na tela de usuários
@@ -18,6 +18,16 @@ class UsuarioListPage extends StatefulWidget {
 class _UsuarioListPageState extends State<UsuarioListPage> {
   String _termoBusca = '';
   FiltroUsuario _filtroAtual = FiltroUsuario.todosAtivos;
+
+  @override
+  void initState() {
+    super.initState();
+    // Carrega a lista de usuários ao abrir a página
+    Future.microtask(() {
+      if (!mounted) return;
+      context.read<UsuarioController>().carregarUsuarios();
+    });
+  }
 
   /// Aplica filtro de busca por texto
   List<Usuario> _filtrarPorTexto(List<Usuario> usuarios) {
@@ -42,7 +52,32 @@ class _UsuarioListPageState extends State<UsuarioListPage> {
 
   @override
   Widget build(BuildContext context) {
-    final controller = context.read<UsuarioController>();
+    final controller = context.watch<UsuarioController>();
+
+    if (controller.carregando) {
+      return Scaffold(
+        backgroundColor: const Color(0xFFF8F9FA),
+        drawer: const DrawerComum(),
+        appBar: AppBar(
+          leading: Builder(
+            builder: (ctx) => IconButton(
+              icon: const Icon(Icons.menu),
+              onPressed: () => Scaffold.of(ctx).openDrawer(),
+            ),
+          ),
+          title: const Text("Usuários", style: TextStyle(fontWeight: FontWeight.bold)),
+          centerTitle: false,
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black,
+          elevation: 0.5,
+        ),
+        body: const Center(child: CircularProgressIndicator(color: Colors.black)),
+      );
+    }
+
+    final todosUsuarios = controller.usuarios;
+    final usuariosFiltradosPorStatus = _filtrarPorStatus(todosUsuarios);
+    final usuariosFiltrados = _filtrarPorTexto(usuariosFiltradosPorStatus);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
@@ -60,75 +95,59 @@ class _UsuarioListPageState extends State<UsuarioListPage> {
         foregroundColor: Colors.black,
         elevation: 0.5,
       ),
-      body: StreamBuilder<List<Usuario>>(
-        stream: controller.usuarios,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator(color: Colors.black));
-          }
-          if (snapshot.hasError) {
-            return const Center(child: Text("Erro ao carregar usuários."));
-          }
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // --- HEADER ---
+            const Text("Gestão de Usuários", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 4),
+            const Text("Gerencie usuários e suas permissões no sistema.",
+                style: TextStyle(color: Colors.grey, fontSize: 13)),
+            const SizedBox(height: 16),
 
-          final todosUsuarios = snapshot.data ?? [];
-          final usuariosFiltradosPorStatus = _filtrarPorStatus(todosUsuarios);
-          final usuariosFiltrados = _filtrarPorTexto(usuariosFiltradosPorStatus);
-
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // --- HEADER ---
-                const Text("Gestão de Usuários", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 4),
-                const Text("Gerencie usuários e suas permissões no sistema.",
-                    style: TextStyle(color: Colors.grey, fontSize: 13)),
-                const SizedBox(height: 16),
-
-                // --- BOTÃO NOVO USUÁRIO ---
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () => _exibirDialogoUsuario(context),
-                    icon: const Icon(Icons.person_add_alt_1, size: 18),
-                    label: const Text("Novo Usuário"),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
-                  ),
+            // --- BOTÃO NOVO USUÁRIO ---
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () => _exibirDialogoUsuario(context),
+                icon: const Icon(Icons.person_add_alt_1, size: 18),
+                label: const Text("Novo Usuário"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.black,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
-                const SizedBox(height: 20),
-
-                // --- FILTRO POR STATUS ---
-                _buildFiltroChips(todosUsuarios),
-                const SizedBox(height: 16),
-
-                // --- BARRA DE BUSCA ---
-                _buildBarraBusca(),
-                const SizedBox(height: 8),
-
-                // --- CONTADOR ---
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Text(
-                    "${usuariosFiltrados.length} usuário(s) encontrado(s)",
-                    style: TextStyle(color: Colors.grey[600], fontSize: 13),
-                  ),
-                ),
-
-                // --- LISTA DE CARDS ---
-                if (usuariosFiltrados.isEmpty)
-                  _buildVazio()
-                else
-                  ...usuariosFiltrados.map((u) => _buildUsuarioCard(u, controller)),
-              ],
+              ),
             ),
-          );
-        },
+            const SizedBox(height: 20),
+
+            // --- FILTRO POR STATUS ---
+            _buildFiltroChips(todosUsuarios),
+            const SizedBox(height: 16),
+
+            // --- BARRA DE BUSCA ---
+            _buildBarraBusca(),
+            const SizedBox(height: 8),
+
+            // --- CONTADOR ---
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Text(
+                "${usuariosFiltrados.length} usuário(s) encontrado(s)",
+                style: TextStyle(color: Colors.grey[600], fontSize: 13),
+              ),
+            ),
+
+            // --- LISTA DE CARDS ---
+            if (usuariosFiltrados.isEmpty)
+              _buildVazio()
+            else
+              ...usuariosFiltrados.map((u) => _buildUsuarioCard(u, controller)),
+          ],
+        ),
       ),
     );
   }
@@ -600,13 +619,13 @@ class _UsuarioListPageState extends State<UsuarioListPage> {
               onPressed: () {
                 final novoUser = Usuario(
                   id: usuario?.id,
+                  authId: usuario?.authId,
                   nome: nomeController.text,
                   email: emailController.text,
                   cpf: cpfController.text,
                   telefone: telefoneController.text,
                   funcao: funcaoSelecionada,
                   status: statusAtivo,
-                  senha: usuario?.senha ?? cpfController.text.replaceAll(RegExp(r'[^0-9]'), ''),
                   primeiroAcesso: usuario?.primeiroAcesso ?? true,
                   criadoEm: usuario?.criadoEm ?? DateTime.now(),
                 );
