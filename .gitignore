@@ -43,3 +43,19 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Credenciais e variáveis de ambiente - NUNCA versionar
+.env
+.env.*
+!.env.example
+
+# Logs de análise e debug (gerados localmente)
+analyze*.txt
+run_error_log.txt
+
+# Agentes e ferramentas de IA
+.agents/
+skills-lock.json
+
+# VS Code (configuração local)
+.vscode/
