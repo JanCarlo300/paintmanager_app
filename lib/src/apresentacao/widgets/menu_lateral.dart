@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../controllers/auth_controller.dart';
+import '../../modules/auth/apresentacao/controllers/auth_controller.dart';
 
 class MenuLateral extends StatelessWidget {
   const MenuLateral({super.key});

@@ -1,88 +1,116 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'firebase_options.dart';
+import 'src/core/config/supabase_config.dart';
 
-// Imports de Autenticação
-import 'src/apresentacao/paginas/login_page.dart';
-import 'src/apresentacao/paginas/recuperar_senha_page.dart';
-import 'src/apresentacao/paginas/auth_check.dart';
-import 'src/apresentacao/paginas/redefinir_senha_obrigatoria_page.dart';
-import 'src/apresentacao/controllers/auth_controller.dart';
-import 'src/dados/repositorios/repositorio_autenticacao_impl.dart';
+// ============================
+// Módulo Auth (Supabase)
+// ============================
+import 'src/modules/auth/apresentacao/paginas/login_page.dart';
+import 'src/modules/auth/apresentacao/paginas/recuperar_senha_page.dart';
+import 'src/modules/auth/apresentacao/paginas/auth_check.dart';
+import 'src/modules/auth/apresentacao/paginas/redefinir_senha_obrigatoria_page.dart';
+import 'src/modules/auth/apresentacao/controllers/auth_controller.dart';
+import 'src/modules/auth/dados/repositorios/repositorio_autenticacao_impl.dart';
+import 'src/modules/auth/apresentacao/controllers/usuario_controller.dart';
+import 'src/modules/auth/dados/repositorios/repositorio_usuario_impl.dart';
 
 // Imports de Dashboard
 import 'src/apresentacao/paginas/dashboard_page.dart';
+import 'src/apresentacao/controllers/dashboard_controller.dart';
 
-// Imports de Clientes
+// Imports de Clientes (Supabase — módulo migrado)
 import 'src/apresentacao/paginas/cliente_list_page.dart';
 import 'src/apresentacao/paginas/cliente_form_page.dart';
-import 'src/apresentacao/controllers/cliente_controller.dart';
-import 'src/dados/repositorios/repositorio_cliente_impl.dart';
-import 'src/dominio/entidades/cliente.dart';
+import 'src/modules/clientes/apresentacao/controllers/cliente_controller.dart';
+import 'src/modules/clientes/dados/repositorios/repositorio_cliente_impl.dart';
+import 'src/modules/clientes/dominio/entidades/cliente.dart';
 
-// Imports de Usuários
+// Imports de Usuários (página de listagem)
 import 'src/apresentacao/paginas/usuario_list_page.dart';
-import 'src/apresentacao/controllers/usuario_controller.dart';
-import 'src/dados/repositorios/repositorio_usuario_impl.dart';
 
-// Imports de Financeiro
+// Imports de Financeiro (ainda Firebase — será migrado em etapa futura)
 import 'src/apresentacao/paginas/financeiro_page.dart';
 import 'src/apresentacao/paginas/transacao_form_page.dart';
 import 'src/apresentacao/controllers/financeiro_controller.dart';
 import 'src/dados/repositorios/repositorio_transacao_impl.dart';
 import 'src/dominio/entidades/transacao.dart';
 
-// Imports de Orçamento
+// Imports de Orçamento (Supabase — módulo migrado)
 import 'src/apresentacao/paginas/orcamento_list_page.dart';
 import 'src/apresentacao/paginas/orcamento_form_page.dart';
-import 'src/apresentacao/controllers/orcamento_controller.dart';
-import 'src/dados/repositorios/repositorio_orcamento_impl.dart';
-import 'src/dominio/entidades/orcamento.dart';
+import 'src/modules/orcamentos/apresentacao/controllers/orcamento_controller.dart';
+import 'src/modules/orcamentos/dados/repositorios/repositorio_orcamento_impl.dart';
+import 'src/modules/orcamentos/dominio/entidades/orcamento.dart';
 
-// Imports de Obras
+// Imports de Obras (Supabase — módulo migrado)
 import 'src/apresentacao/paginas/obra_list_page.dart';
 import 'src/apresentacao/paginas/obra_form_page.dart';
 import 'src/apresentacao/paginas/obra_detalhes_page.dart';
-import 'src/apresentacao/controllers/obra_controller.dart';
-import 'src/dados/repositorios/repositorio_obra_impl.dart';
-import 'src/dominio/entidades/obra.dart';
+import 'src/modules/obras/apresentacao/controllers/obra_controller.dart';
+import 'src/modules/obras/dados/repositorios/repositorio_obra_impl.dart';
+import 'src/modules/obras/dominio/entidades/obra.dart';
 
 // Import da página placeholder
 import 'src/apresentacao/paginas/em_construcao_page.dart';
 
-// Imports de Relatórios
+// Imports de Relatórios (ainda Firebase — será migrado em etapa futura)
 import 'src/apresentacao/paginas/relatorios_page.dart';
 import 'src/apresentacao/controllers/relatorio_controller.dart';
 import 'src/dados/repositorios/repositorio_relatorio_impl.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Carrega variáveis de ambiente
+  await dotenv.load(fileName: '.env');
+
+  // Inicializa Firebase (temporário — necessário até migrar todos os módulos)
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // Inicializa Supabase (único backend para Auth & Usuários)
+  await Supabase.initialize(
+    url: SupabaseConfig.url,
+    anonKey: SupabaseConfig.anonKey,
+  );
+
   await initializeDateFormatting('pt_BR', null);
 
   runApp(
     MultiProvider(
       providers: [
+        // Dashboard
+        ChangeNotifierProvider(
+          create: (_) => DashboardController(),
+        ),
+        // Auth & Usuários — Supabase
         ChangeNotifierProvider(
           create: (_) => AuthController(RepositorioAutenticacaoImpl()),
         ),
         ChangeNotifierProvider(
-          create: (_) => ClienteController(RepositorioClienteImpl()),
-        ),
-        ChangeNotifierProvider(
           create: (_) => UsuarioController(RepositorioUsuarioImpl()),
         ),
+        // Clientes — Supabase (migrado)
+        ChangeNotifierProvider(
+          create: (_) => ClienteController(RepositorioClienteImpl()),
+        ),
+        // Orçamentos — Supabase (migrado)
         ChangeNotifierProvider(
           create: (_) => OrcamentoController(RepositorioOrcamentoImpl()),
         ),
+        // Obras — Supabase (migrado)
         ChangeNotifierProvider(
           create: (_) => ObraController(RepositorioObraImpl()),
         ),
+        // Financeiro — ainda Firebase (migração futura)
         ChangeNotifierProvider(
           create: (_) => FinanceiroController(RepositorioTransacaoImpl()),
         ),
+        // Relatórios — ainda Firebase (migração futura)
         ChangeNotifierProvider(
           create: (_) => RelatorioController(RepositorioRelatorioImpl()),
         ),

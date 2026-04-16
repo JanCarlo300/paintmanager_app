@@ -1,17 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import '../../dominio/entidades/cliente.dart';
-import '../../dominio/entidades/obra.dart';
-import '../../dominio/entidades/orcamento.dart';
-import '../../dominio/entidades/transacao.dart';
-import '../../dominio/entidades/usuario.dart';
-import '../controllers/auth_controller.dart';
-import '../controllers/cliente_controller.dart';
-import '../controllers/financeiro_controller.dart';
-import '../controllers/obra_controller.dart';
-import '../controllers/orcamento_controller.dart';
-import '../controllers/usuario_controller.dart';
+import '../../modules/obras/dominio/entidades/obra.dart';
+import '../../modules/auth/dominio/entidades/usuario.dart';
+import '../../modules/auth/apresentacao/controllers/auth_controller.dart';
+import '../controllers/dashboard_controller.dart';
 import '../widgets/drawer_comum.dart';
 
 class DashboardPage extends StatelessWidget {
@@ -157,6 +150,8 @@ class DashboardPage extends StatelessWidget {
   // 4 CARDS DE RESUMO
   // ═══════════════════════════════════════════
   Widget _buildResumoCards(BuildContext context) {
+    final dashboardCtrl = context.watch<DashboardController>();
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final crossAxisCount = constraints.maxWidth > 600 ? 4 : 2;
@@ -168,75 +163,39 @@ class DashboardPage extends StatelessWidget {
           crossAxisSpacing: 12,
           childAspectRatio: 1.2,
           children: [
-            // Card Clientes Ativos
-            StreamBuilder<List<Cliente>>(
-              stream: context.watch<ClienteController>().clientes,
-              builder: (context, snapshot) {
-                final total = snapshot.data?.where((c) => c.ativo).length ?? 0;
-                return _buildResumoCard(
-                  icon: Icons.people_rounded,
-                  label: 'Clientes Ativos',
-                  valor: total.toString(),
-                  corIcone: _corAzulInfo,
-                  corFundoIcone: const Color(0xFFE3F2FD),
-                );
-              },
-            ),
             // Card Obras em Andamento
-            StreamBuilder<List<Obra>>(
-              stream: context.watch<ObraController>().obras,
-              builder: (context, snapshot) {
-                final total = snapshot.data
-                        ?.where((o) => o.status == 'Em Andamento')
-                        .length ??
-                    0;
-                return _buildResumoCard(
-                  icon: Icons.construction_rounded,
-                  label: 'Obras Ativas',
-                  valor: total.toString(),
-                  corIcone: _corAccent,
-                  corFundoIcone: _corAccentClaro,
-                );
-              },
+            _buildResumoCard(
+              icon: Icons.construction_rounded,
+              label: 'Obras Ativas',
+              valor: dashboardCtrl.carregando ? '...' : dashboardCtrl.obrasAtivas.toString(),
+              corIcone: _corAccent,
+              corFundoIcone: _corAccentClaro,
             ),
             // Card Receita do Mês
-            StreamBuilder<List<Transacao>>(
-              stream: context.watch<FinanceiroController>().transacoes,
-              builder: (context, snapshot) {
-                final agora = DateTime.now();
-                final receitaMes = (snapshot.data ?? [])
-                    .where((t) =>
-                        t.tipo == 'Receita' &&
-                        t.status != 'Pendente' &&
-                        t.dataTransacao.month == agora.month &&
-                        t.dataTransacao.year == agora.year)
-                    .fold<double>(0, (soma, t) => soma + t.valor);
-                return _buildResumoCard(
-                  icon: Icons.trending_up_rounded,
-                  label: 'Receita Mês',
-                  valor: _formatarMoeda(receitaMes),
-                  corIcone: _corVerdeReceita,
-                  corFundoIcone: const Color(0xFFE8F5E9),
-                  fontSizeValor: receitaMes > 99999 ? 16 : null,
-                );
-              },
+            _buildResumoCard(
+              icon: Icons.trending_up_rounded,
+              label: 'Receita Mês',
+              valor: dashboardCtrl.carregando ? '...' : _formatarMoeda(dashboardCtrl.receitaMes),
+              corIcone: _corVerdeReceita,
+              corFundoIcone: const Color(0xFFE8F5E9),
+              fontSizeValor: dashboardCtrl.receitaMes > 99999 ? 16 : null,
+            ),
+            // Card Despesa do Mês
+            _buildResumoCard(
+              icon: Icons.trending_down_rounded,
+              label: 'Despesa Mês',
+              valor: dashboardCtrl.carregando ? '...' : _formatarMoeda(dashboardCtrl.despesaMes),
+              corIcone: _corVermelhoDespesa,
+              corFundoIcone: const Color(0xFFFFEBEE),
+              fontSizeValor: dashboardCtrl.despesaMes > 99999 ? 16 : null,
             ),
             // Card Orçamentos Pendentes
-            StreamBuilder<List<Orcamento>>(
-              stream: context.watch<OrcamentoController>().orcamentos,
-              builder: (context, snapshot) {
-                final total = snapshot.data
-                        ?.where((o) => o.status == 'Pendente')
-                        .length ??
-                    0;
-                return _buildResumoCard(
-                  icon: Icons.request_quote_rounded,
-                  label: 'Orç. Pendentes',
-                  valor: total.toString(),
-                  corIcone: const Color(0xFF8E24AA),
-                  corFundoIcone: const Color(0xFFF3E5F5),
-                );
-              },
+            _buildResumoCard(
+              icon: Icons.request_quote_rounded,
+              label: 'Orç. Pendentes',
+              valor: dashboardCtrl.carregando ? '...' : dashboardCtrl.orcamentosPendentes.toString(),
+              corIcone: const Color(0xFF8E24AA),
+              corFundoIcone: const Color(0xFFF3E5F5),
             ),
           ],
         );
@@ -308,26 +267,22 @@ class DashboardPage extends StatelessWidget {
   // RESUMO FINANCEIRO
   // ═══════════════════════════════════════════
   Widget _buildResumoFinanceiro(BuildContext context) {
-    return StreamBuilder<List<Transacao>>(
-      stream: context.watch<FinanceiroController>().transacoes,
-      builder: (context, snapshot) {
-        final agora = DateTime.now();
-        final transacoesMes = (snapshot.data ?? []).where((t) =>
-            t.dataTransacao.month == agora.month &&
-            t.dataTransacao.year == agora.year);
+    final dashboardCtrl = context.watch<DashboardController>();
+    if (dashboardCtrl.carregando) {
+      return const Padding(
+        padding: EdgeInsets.all(32.0),
+        child: Center(child: CircularProgressIndicator(color: Colors.black)),
+      );
+    }
 
-        final receitas = transacoesMes
-            .where((t) => t.tipo == 'Receita' && t.status != 'Pendente')
-            .fold<double>(0, (s, t) => s + t.valor);
-        final despesas = transacoesMes
-            .where((t) => t.tipo == 'Despesa' && t.status != 'Pendente')
-            .fold<double>(0, (s, t) => s + t.valor);
-        final saldo = receitas - despesas;
-        final maxValor = receitas > despesas ? receitas : despesas;
-        final fracReceita = maxValor > 0 ? receitas / maxValor : 0.0;
-        final fracDespesa = maxValor > 0 ? despesas / maxValor : 0.0;
+    final receitas = dashboardCtrl.receitaMes;
+    final despesas = dashboardCtrl.despesaMes;
+    final saldo = receitas - despesas;
+    final maxValor = receitas > despesas ? receitas : despesas;
+    final fracReceita = maxValor > 0 ? receitas / maxValor : 0.0;
+    final fracDespesa = maxValor > 0 ? despesas / maxValor : 0.0;
 
-        return Container(
+    return Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             color: _corCard,
@@ -408,8 +363,6 @@ class DashboardPage extends StatelessWidget {
             ],
           ),
         );
-      },
-    );
   }
 
   Widget _buildBarraFinanceira({
@@ -463,22 +416,23 @@ class DashboardPage extends StatelessWidget {
   // OBRAS RECENTES
   // ═══════════════════════════════════════════
   Widget _buildObrasRecentes(BuildContext context) {
-    return StreamBuilder<List<Obra>>(
-      stream: context.watch<ObraController>().obras,
-      builder: (context, snapshot) {
-        if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return _buildEmptyState(
-            icon: Icons.construction_outlined,
-            mensagem: 'Nenhuma obra cadastrada',
-          );
-        }
+    final dashboardCtrl = context.watch<DashboardController>();
+    if (dashboardCtrl.carregando) {
+      return const Padding(
+        padding: EdgeInsets.all(32.0),
+        child: Center(child: CircularProgressIndicator(color: Colors.black)),
+      );
+    }
+    
+    final obrasRecentes = dashboardCtrl.obrasRecentes;
+    if (obrasRecentes.isEmpty) {
+      return _buildEmptyState(
+        icon: Icons.construction_outlined,
+        mensagem: 'Nenhuma obra cadastrada',
+      );
+    }
 
-        // Ordenar por data de início (mais recentes primeiro) e pegar top 3
-        final obrasOrdenadas = List<Obra>.from(snapshot.data!)
-          ..sort((a, b) => b.dataInicio.compareTo(a.dataInicio));
-        final obrasRecentes = obrasOrdenadas.take(3).toList();
-
-        return Column(
+    return Column(
           children: obrasRecentes.map((obra) {
             return Container(
               margin: const EdgeInsets.only(bottom: 12),
@@ -567,8 +521,6 @@ class DashboardPage extends StatelessWidget {
             );
           }).toList(),
         );
-      },
-    );
   }
 
   Widget _buildStatusBadge(String status) {

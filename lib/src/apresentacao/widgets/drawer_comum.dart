@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../controllers/auth_controller.dart';
-import '../../dominio/entidades/usuario.dart';
+import '../../modules/auth/apresentacao/controllers/auth_controller.dart';
+import '../../modules/auth/dominio/entidades/usuario.dart';
 
 class DrawerComum extends StatelessWidget {
   const DrawerComum({super.key});

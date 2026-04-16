@@ -18,9 +18,9 @@ class RepositorioRelatorioImpl implements RepositorioRelatorio {
       _buscarOrcamentos(tsInicio, tsFim),
     ]);
 
-    final transacoes = resultados[0] as Map<String, dynamic>;
-    final obras = resultados[1] as Map<String, dynamic>;
-    final orcamentos = resultados[2] as Map<String, dynamic>;
+    final transacoes = resultados[0];
+    final obras = resultados[1];
+    final orcamentos = resultados[2];
 
     return RelatorioGeral(
       periodoInicio: inicio,

@@ -3,11 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../dominio/entidades/transacao.dart';
-import '../../dominio/entidades/cliente.dart';
-import '../../dominio/entidades/obra.dart';
+import '../../modules/clientes/dominio/entidades/cliente.dart';
+import '../../modules/obras/dominio/entidades/obra.dart';
 import '../controllers/financeiro_controller.dart';
-import '../controllers/cliente_controller.dart';
-import '../controllers/obra_controller.dart';
+import '../../modules/clientes/apresentacao/controllers/cliente_controller.dart';
+import '../../modules/obras/apresentacao/controllers/obra_controller.dart';
 
 class TransacaoFormPage extends StatefulWidget {
   final Transacao? transacaoParaEdicao;
@@ -80,9 +80,9 @@ class _TransacaoFormPageState extends State<TransacaoFormPage> {
         dataTransacao: _dataTransacao,
         status: _status,
         formaPagamento: _formaPagamento,
-        clienteId: _clienteSelecionado?.id ?? widget.transacaoParaEdicao?.clienteId,
+        clienteId: _clienteSelecionado?.id?.toString() ?? widget.transacaoParaEdicao?.clienteId,
         clienteNome: _clienteSelecionado?.nome ?? widget.transacaoParaEdicao?.clienteNome,
-        obraId: _obraSelecionada?.id ?? widget.transacaoParaEdicao?.obraId,
+        obraId: _obraSelecionada?.id?.toString() ?? widget.transacaoParaEdicao?.obraId,
         obraTitulo: _obraSelecionada?.tituloDaObra ?? widget.transacaoParaEdicao?.obraTitulo,
       );
 
@@ -113,7 +113,7 @@ class _TransacaoFormPageState extends State<TransacaoFormPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
-        title: Text(isEdicao ? "Editar Transação" : "Nova ${_tipo}", style: const TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(isEdicao ? "Editar Transação" : "Nova $_tipo", style: const TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0.5,
@@ -304,7 +304,7 @@ class _TransacaoFormPageState extends State<TransacaoFormPage> {
 
   Widget _buildDropdown(String label, String value, List<String> options, IconData icon, Function(String?) onChanged) {
     return DropdownButtonFormField<String>(
-      value: options.contains(value) ? value : options.first,
+      initialValue: options.contains(value) ? value : options.first,
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: Icon(icon, size: 20, color: Colors.grey[600]),
@@ -318,52 +318,42 @@ class _TransacaoFormPageState extends State<TransacaoFormPage> {
   }
 
   Widget _clienteDropdown() {
-    final cc = context.read<ClienteController>();
-    return StreamBuilder<List<Cliente>>(
-      stream: cc.clientes,
-      builder: (context, snap) {
-        final clientes = snap.data ?? [];
-        return DropdownButtonFormField<Cliente>(
-          value: _clienteSelecionado,
-          decoration: InputDecoration(
-            labelText: "Vincular ao Cliente (opcional)",
-            prefixIcon: Icon(Icons.person_outline, size: 20, color: Colors.grey[600]),
-            filled: true, fillColor: Colors.grey[50],
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
-            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
-          ),
-          items: [
-            const DropdownMenuItem<Cliente>(value: null, child: Text("Nenhum", style: TextStyle(color: Colors.grey))),
-            ...clientes.map((c) => DropdownMenuItem(value: c, child: Text(c.nome))),
-          ],
-          onChanged: (v) => setState(() => _clienteSelecionado = v),
-        );
-      },
+    final cc = context.watch<ClienteController>();
+    final clientes = cc.clientes;
+    return DropdownButtonFormField<Cliente>(
+      value: _clienteSelecionado,
+      decoration: InputDecoration(
+        labelText: "Vincular ao Cliente (opcional)",
+        prefixIcon: Icon(Icons.person_outline, size: 20, color: Colors.grey[600]),
+        filled: true, fillColor: Colors.grey[50],
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
+      ),
+      items: [
+        const DropdownMenuItem<Cliente>(value: null, child: Text("Nenhum", style: TextStyle(color: Colors.grey))),
+        ...clientes.map((c) => DropdownMenuItem(value: c, child: Text(c.nome))),
+      ],
+      onChanged: (v) => setState(() => _clienteSelecionado = v),
     );
   }
 
   Widget _obraDropdown() {
-    final oc = context.read<ObraController>();
-    return StreamBuilder<List<Obra>>(
-      stream: oc.obras,
-      builder: (context, snap) {
-        final obras = snap.data ?? [];
-        return DropdownButtonFormField<Obra>(
-          value: _obraSelecionada,
-          decoration: InputDecoration(
-            labelText: "Vincular à Obra (opcional)",
-            prefixIcon: Icon(Icons.construction, size: 20, color: Colors.grey[600]),
-            filled: true, fillColor: Colors.grey[50],
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
-            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
-          ),
-          items: [
-            const DropdownMenuItem<Obra>(value: null, child: Text("Nenhuma", style: TextStyle(color: Colors.grey))),
-            ...obras.map((o) => DropdownMenuItem(value: o, child: Text(o.tituloDaObra))),
-          ],
-          onChanged: (v) => setState(() => _obraSelecionada = v),
-        );
-      },
+    final oc = context.watch<ObraController>();
+    final obras = oc.obras;
+    return DropdownButtonFormField<Obra>(
+      value: _obraSelecionada,
+      decoration: InputDecoration(
+        labelText: "Vincular à Obra (opcional)",
+        prefixIcon: Icon(Icons.construction, size: 20, color: Colors.grey[600]),
+        filled: true, fillColor: Colors.grey[50],
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
+      ),
+      items: [
+        const DropdownMenuItem<Obra>(value: null, child: Text("Nenhuma", style: TextStyle(color: Colors.grey))),
+        ...obras.map((o) => DropdownMenuItem(value: o, child: Text(o.tituloDaObra))),
+      ],
+      onChanged: (v) => setState(() => _obraSelecionada = v),
     );
   }
 
