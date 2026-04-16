@@ -2,14 +2,27 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../dominio/entidades/obra.dart';
-import '../../dominio/entidades/etapa_servico.dart';
-import '../controllers/obra_controller.dart';
+import '../../modules/obras/dominio/entidades/obra.dart';
+import '../../modules/obras/apresentacao/controllers/obra_controller.dart';
 
-class ObraDetalhesPage extends StatelessWidget {
+class ObraDetalhesPage extends StatefulWidget {
   final Obra obra;
 
   const ObraDetalhesPage({super.key, required this.obra});
+
+  @override
+  State<ObraDetalhesPage> createState() => _ObraDetalhesPageState();
+}
+
+class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() {
+      if (!mounted) return;
+      context.read<ObraController>().carregarObras();
+    });
+  }
 
   Color _corStatus(String status) {
     switch (status) {
@@ -22,70 +35,76 @@ class ObraDetalhesPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = context.read<ObraController>();
+    final controller = context.watch<ObraController>();
     final formatoData = DateFormat('dd/MM/yyyy');
 
-    // Usamos StreamBuilder para ouvir atualizações em tempo real
-    return StreamBuilder<List<Obra>>(
-      stream: controller.obras,
-      builder: (context, snapshot) {
-        // Encontrar a versão mais atualizada desta obra
-        final obras = snapshot.data ?? [];
-        final obraAtual = obras.where((o) => o.id == obra.id).firstOrNull ?? obra;
-        final cor = _corStatus(obraAtual.status);
+    if (controller.carregando) {
+      return Scaffold(
+        backgroundColor: const Color(0xFFF8F9FA),
+        appBar: AppBar(
+          title: const Text("Detalhes da Obra", style: TextStyle(fontWeight: FontWeight.bold)),
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black,
+          elevation: 0.5,
+        ),
+        body: const Center(child: CircularProgressIndicator(color: Colors.black)),
+      );
+    }
 
-        return Scaffold(
-          backgroundColor: const Color(0xFFF8F9FA),
-          appBar: AppBar(
-            title: const Text("Detalhes da Obra", style: TextStyle(fontWeight: FontWeight.bold)),
-            backgroundColor: Colors.white,
-            foregroundColor: Colors.black,
-            elevation: 0.5,
-            actions: [
-              PopupMenuButton<String>(
-                icon: const Icon(Icons.more_vert),
-                onSelected: (status) => _atualizarStatus(context, obraAtual, controller, status),
-                itemBuilder: (context) => [
-                  'Não Iniciada', 'Em Andamento', 'Pausada', 'Concluída',
-                ].map((s) => PopupMenuItem(value: s, child: Text(s))).toList(),
-              ),
-            ],
+    // Encontrar a versão mais atualizada desta obra
+    final obraAtual = controller.obras.where((o) => o.id == widget.obra.id).firstOrNull ?? widget.obra;
+    final cor = _corStatus(obraAtual.status);
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8F9FA),
+      appBar: AppBar(
+        title: const Text("Detalhes da Obra", style: TextStyle(fontWeight: FontWeight.bold)),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        elevation: 0.5,
+        actions: [
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert),
+            onSelected: (status) => _atualizarStatus(context, obraAtual, controller, status),
+            itemBuilder: (context) => [
+              'Não Iniciada', 'Em Andamento', 'Pausada', 'Concluída',
+            ].map((s) => PopupMenuItem(value: s, child: Text(s))).toList(),
           ),
-          body: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // === CABEÇALHO ===
-                _buildCabecalho(obraAtual, cor, formatoData, context),
-                const SizedBox(height: 24),
+        ],
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // === CABEÇALHO ===
+            _buildCabecalho(obraAtual, cor, formatoData, context),
+            const SizedBox(height: 24),
 
-                // === BARRA DE PROGRESSO ===
-                _buildProgressoCard(obraAtual, cor),
-                const SizedBox(height: 24),
+            // === BARRA DE PROGRESSO ===
+            _buildProgressoCard(obraAtual, cor),
+            const SizedBox(height: 24),
 
-                // === CHECKLIST DE ETAPAS ===
-                _sectionTitle("Checklist de Etapas", Icons.checklist),
-                const SizedBox(height: 12),
-                _buildChecklistCard(context, obraAtual, controller),
-                const SizedBox(height: 24),
+            // === CHECKLIST DE ETAPAS ===
+            _sectionTitle("Checklist de Etapas", Icons.checklist),
+            const SizedBox(height: 12),
+            _buildChecklistCard(context, obraAtual, controller),
+            const SizedBox(height: 24),
 
-                // === MATERIAIS FALTANTES ===
-                _sectionTitle("Materiais Faltantes", Icons.shopping_cart_outlined),
-                const SizedBox(height: 12),
-                _buildMateriaisCard(context, obraAtual, controller),
-                const SizedBox(height: 24),
+            // === MATERIAIS FALTANTES ===
+            _sectionTitle("Materiais Faltantes", Icons.shopping_cart_outlined),
+            const SizedBox(height: 12),
+            _buildMateriaisCard(context, obraAtual, controller),
+            const SizedBox(height: 24),
 
-                // === ANOTAÇÕES ===
-                _sectionTitle("Anotações", Icons.notes),
-                const SizedBox(height: 12),
-                _buildAnotacoesCard(context, obraAtual, controller),
-                const SizedBox(height: 24),
-              ],
-            ),
-          ),
-        );
-      },
+            // === ANOTAÇÕES ===
+            _sectionTitle("Anotações", Icons.notes),
+            const SizedBox(height: 12),
+            _buildAnotacoesCard(context, obraAtual, controller),
+            const SizedBox(height: 24),
+          ],
+        ),
+      ),
     );
   }
 
@@ -349,8 +368,8 @@ class ObraDetalhesPage extends StatelessWidget {
 
   void _salvarComMateriais(ObraController controller, Obra obraAtual, List<String> materiais) {
     controller.salvar(Obra(
-      id: obraAtual.id, orcamentoId: obraAtual.orcamentoId,
-      clienteId: obraAtual.clienteId, clienteNome: obraAtual.clienteNome,
+      id: obraAtual.id, idOrcamento: obraAtual.idOrcamento,
+      idCliente: obraAtual.idCliente, clienteNome: obraAtual.clienteNome,
       tituloDaObra: obraAtual.tituloDaObra, endereco: obraAtual.endereco,
       dataInicio: obraAtual.dataInicio, dataPrevisaoTermino: obraAtual.dataPrevisaoTermino,
       dataConclusao: obraAtual.dataConclusao, status: obraAtual.status,
@@ -385,8 +404,8 @@ class ObraDetalhesPage extends StatelessWidget {
             child: ElevatedButton.icon(
               onPressed: () {
                 controller.salvar(Obra(
-                  id: obraAtual.id, orcamentoId: obraAtual.orcamentoId,
-                  clienteId: obraAtual.clienteId, clienteNome: obraAtual.clienteNome,
+                  id: obraAtual.id, idOrcamento: obraAtual.idOrcamento,
+                  idCliente: obraAtual.idCliente, clienteNome: obraAtual.clienteNome,
                   tituloDaObra: obraAtual.tituloDaObra, endereco: obraAtual.endereco,
                   dataInicio: obraAtual.dataInicio, dataPrevisaoTermino: obraAtual.dataPrevisaoTermino,
                   dataConclusao: obraAtual.dataConclusao, status: obraAtual.status,

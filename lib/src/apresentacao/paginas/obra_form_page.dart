@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import '../../dominio/entidades/obra.dart';
-import '../../dominio/entidades/etapa_servico.dart';
-import '../../dominio/entidades/cliente.dart';
-import '../controllers/obra_controller.dart';
-import '../controllers/cliente_controller.dart';
+import '../../modules/obras/dominio/entidades/obra.dart';
+import '../../modules/obras/dominio/entidades/etapa_servico.dart';
+import '../../modules/clientes/dominio/entidades/cliente.dart';
+import '../../modules/obras/apresentacao/controllers/obra_controller.dart';
+import '../../modules/clientes/apresentacao/controllers/cliente_controller.dart';
 
 class ObraFormPage extends StatefulWidget {
   final Obra? obraParaEdicao;
@@ -110,7 +110,7 @@ class _ObraFormPageState extends State<ObraFormPage> {
 
       final obra = Obra(
         id: widget.obraParaEdicao?.id,
-        clienteId: _clienteSelecionado?.id ?? widget.obraParaEdicao?.clienteId ?? '',
+        idCliente: _clienteSelecionado?.id ?? widget.obraParaEdicao?.idCliente ?? 0,
         clienteNome: _clienteSelecionado?.nome ?? widget.obraParaEdicao?.clienteNome ?? '',
         tituloDaObra: _tituloController.text.trim(),
         endereco: _enderecoController.text.trim(),
@@ -302,22 +302,17 @@ class _ObraFormPageState extends State<ObraFormPage> {
   );
 
   Widget _clienteDropdown() {
-    final cc = context.read<ClienteController>();
-    return StreamBuilder<List<Cliente>>(
-      stream: cc.clientes,
-      builder: (context, snap) {
-        final clientes = snap.data ?? [];
-        return DropdownButtonFormField<Cliente>(
-          value: _clienteSelecionado,
-          decoration: InputDecoration(labelText: "Selecione o Cliente", prefixIcon: Icon(Icons.person_outline, size: 20, color: Colors.grey[600]),
-            filled: true, fillColor: Colors.grey[50],
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
-            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!))),
-          items: clientes.map((c) => DropdownMenuItem(value: c, child: Text(c.nome))).toList(),
-          onChanged: (v) => setState(() => _clienteSelecionado = v),
-          validator: (v) => v == null ? "Selecione um cliente" : null,
-        );
-      },
+    final cc = context.watch<ClienteController>();
+    final clientes = cc.clientes;
+    return DropdownButtonFormField<Cliente>(
+      value: _clienteSelecionado,
+      decoration: InputDecoration(labelText: "Selecione o Cliente", prefixIcon: Icon(Icons.person_outline, size: 20, color: Colors.grey[600]),
+        filled: true, fillColor: Colors.grey[50],
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!))),
+      items: clientes.map((c) => DropdownMenuItem(value: c, child: Text(c.nome))).toList(),
+      onChanged: (v) => setState(() => _clienteSelecionado = v),
+      validator: (v) => v == null ? "Selecione um cliente" : null,
     );
   }
 

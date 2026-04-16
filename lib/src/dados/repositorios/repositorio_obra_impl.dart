@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../dominio/entidades/obra.dart';
-import '../../dominio/entidades/etapa_servico.dart';
 import '../../dominio/repositorios/repositorio_obra.dart';
 import '../modelos/obra_modelo.dart';
 

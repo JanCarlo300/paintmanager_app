@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import '../../dominio/entidades/obra.dart';
-import '../controllers/obra_controller.dart';
+import '../../modules/obras/dominio/entidades/obra.dart';
+import '../../modules/obras/apresentacao/controllers/obra_controller.dart';
 import '../widgets/drawer_comum.dart';
 
 class ObraListPage extends StatefulWidget {
@@ -14,6 +14,15 @@ class ObraListPage extends StatefulWidget {
 
 class _ObraListPageState extends State<ObraListPage> {
   String _termoBusca = '';
+
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() {
+      if (!mounted) return;
+      context.read<ObraController>().carregarObras();
+    });
+  }
 
   List<Obra> _filtrar(List<Obra> obras) {
     if (_termoBusca.isEmpty) return obras;
@@ -45,9 +54,35 @@ class _ObraListPageState extends State<ObraListPage> {
 
   @override
   Widget build(BuildContext context) {
-    final controller = context.read<ObraController>();
+    final controller = context.watch<ObraController>();
     final formatoData = DateFormat('dd/MM/yyyy');
     final isWide = MediaQuery.of(context).size.width > 800;
+
+    if (controller.carregando) {
+      return Scaffold(
+        backgroundColor: const Color(0xFFF8F9FA),
+        drawer: const DrawerComum(),
+        appBar: AppBar(
+          leading: Builder(
+            builder: (context) => IconButton(
+              icon: const Icon(Icons.menu),
+              onPressed: () => Scaffold.of(context).openDrawer(),
+            ),
+          ),
+          title: const Text("Obras", style: TextStyle(fontWeight: FontWeight.bold)),
+          centerTitle: false,
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black,
+          elevation: 0.5,
+        ),
+        body: const Center(child: CircularProgressIndicator(color: Colors.black)),
+      );
+    }
+
+    final todas = controller.obras;
+    final filtradas = _filtrar(todas);
+    final emAndamento = todas.where((o) => o.status == 'Em Andamento').length;
+    final concluidas = todas.where((o) => o.status == 'Concluída').length;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
@@ -65,84 +100,70 @@ class _ObraListPageState extends State<ObraListPage> {
         foregroundColor: Colors.black,
         elevation: 0.5,
       ),
-      body: StreamBuilder<List<Obra>>(
-        stream: controller.obras,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator(color: Colors.black));
-          }
-
-          final todas = snapshot.data ?? [];
-          final filtradas = _filtrar(todas);
-          final emAndamento = todas.where((o) => o.status == 'Em Andamento').length;
-          final concluidas = todas.where((o) => o.status == 'Concluída').length;
-
-          return SingleChildScrollView(
-            padding: EdgeInsets.all(isWide ? 24 : 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // --- HEADER ---
-                const Text("Gestão de Obras", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 4),
-                const Text("Acompanhe o progresso de cada serviço.", style: TextStyle(color: Colors.grey, fontSize: 13)),
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: isWide ? null : double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () => Navigator.pushNamed(context, '/obra-formulario'),
-                    icon: const Icon(Icons.add, size: 18),
-                    label: const Text("Nova Obra"),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
-                  ),
+      body: SingleChildScrollView(
+        padding: EdgeInsets.all(isWide ? 24 : 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // --- HEADER ---
+            const Text("Gestão de Obras", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 4),
+            const Text("Acompanhe o progresso de cada serviço.", style: TextStyle(color: Colors.grey, fontSize: 13)),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: isWide ? null : double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () => Navigator.pushNamed(context, '/obra-formulario'),
+                icon: const Icon(Icons.add, size: 18),
+                label: const Text("Nova Obra"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.black,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
-                const SizedBox(height: 24),
-
-                // --- SUMMARY CARDS ---
-                _buildSummaryRow(todas.length, emAndamento, concluidas),
-                const SizedBox(height: 24),
-
-                // --- BUSCA ---
-                TextField(
-                  onChanged: (v) => setState(() => _termoBusca = v),
-                  decoration: InputDecoration(
-                    hintText: "Buscar obras...",
-                    hintStyle: TextStyle(color: Colors.grey[400]),
-                    prefixIcon: Icon(Icons.search, color: Colors.grey[400]),
-                    filled: true,
-                    fillColor: Colors.white,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 14),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Colors.grey[200]!)),
-                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Colors.grey[200]!)),
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-                // --- LISTA DE CARDS ---
-                if (filtradas.isEmpty)
-                  Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(40),
-                      child: Column(
-                        children: [
-                          Icon(Icons.construction_outlined, size: 48, color: Colors.grey[400]),
-                          const SizedBox(height: 12),
-                          const Text("Nenhuma obra encontrada.", style: TextStyle(color: Colors.grey)),
-                        ],
-                      ),
-                    ),
-                  )
-                else
-                  ...filtradas.map((obra) => _buildObraCard(obra, formatoData)),
-              ],
+              ),
             ),
-          );
-        },
+            const SizedBox(height: 24),
+
+            // --- SUMMARY CARDS ---
+            _buildSummaryRow(todas.length, emAndamento, concluidas),
+            const SizedBox(height: 24),
+
+            // --- BUSCA ---
+            TextField(
+              onChanged: (v) => setState(() => _termoBusca = v),
+              decoration: InputDecoration(
+                hintText: "Buscar obras...",
+                hintStyle: TextStyle(color: Colors.grey[400]),
+                prefixIcon: Icon(Icons.search, color: Colors.grey[400]),
+                filled: true,
+                fillColor: Colors.white,
+                contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Colors.grey[200]!)),
+                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Colors.grey[200]!)),
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // --- LISTA DE CARDS ---
+            if (filtradas.isEmpty)
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(40),
+                  child: Column(
+                    children: [
+                      Icon(Icons.construction_outlined, size: 48, color: Colors.grey[400]),
+                      const SizedBox(height: 12),
+                      const Text("Nenhuma obra encontrada.", style: TextStyle(color: Colors.grey)),
+                    ],
+                  ),
+                ),
+              )
+            else
+              ...filtradas.map((obra) => _buildObraCard(obra, formatoData)),
+          ],
+        ),
       ),
     );
   }
