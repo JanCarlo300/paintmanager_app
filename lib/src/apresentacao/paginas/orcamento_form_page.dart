@@ -22,7 +22,7 @@ class _OrcamentoFormPageState extends State<OrcamentoFormPage> {
   final _formKey = GlobalKey<FormState>();
 
   // Dados do orçamento
-  Cliente? _clienteSelecionado;
+  int? _clienteSelecionadoId;
   late TextEditingController _descricaoController;
   late DateTime _dataValidade;
   String _formaPagamento = 'PIX';
@@ -43,6 +43,16 @@ class _OrcamentoFormPageState extends State<OrcamentoFormPage> {
   void initState() {
     super.initState();
     final orc = widget.orcamentoParaEdicao;
+
+    // NOVO: Garantir que a lista de clientes esteja presente (para o dropdown)
+    Future.microtask(() {
+      if (mounted) {
+        final ctrl = context.read<ClienteController>();
+        if (ctrl.clientes.isEmpty && !ctrl.carregando) {
+          ctrl.carregarClientes();
+        }
+      }
+    });
 
     _descricaoController = TextEditingController(text: orc?.descricao);
     _dataValidade = orc?.dataValidade ?? DateTime.now().add(const Duration(days: 30));
@@ -126,7 +136,7 @@ class _OrcamentoFormPageState extends State<OrcamentoFormPage> {
 
   void _salvar() async {
     if (_formKey.currentState!.validate()) {
-      if (_clienteSelecionado == null && widget.orcamentoParaEdicao == null) {
+      if (_clienteSelecionadoId == null && widget.orcamentoParaEdicao == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Selecione um cliente."), backgroundColor: Colors.red, behavior: SnackBarBehavior.floating),
         );
@@ -152,10 +162,18 @@ class _OrcamentoFormPageState extends State<OrcamentoFormPage> {
         );
       }).toList();
 
+      String nomeCliEncontrado = '';
+      if (_clienteSelecionadoId != null) {
+        try {
+          final cliente = context.read<ClienteController>().clientes.firstWhere((x) => x.id == _clienteSelecionadoId);
+          nomeCliEncontrado = cliente.nome;
+        } catch (_) {}
+      }
+
       final orcamento = Orcamento(
         id: widget.orcamentoParaEdicao?.id,
         idObra: widget.orcamentoParaEdicao?.idObra,
-        clienteNome: _clienteSelecionado?.nome ?? widget.orcamentoParaEdicao?.clienteNome ?? '',
+        clienteNome: nomeCliEncontrado.isNotEmpty ? nomeCliEncontrado : (widget.orcamentoParaEdicao?.clienteNome ?? ''),
         descricao: _descricaoController.text.trim(),
         dataCriacao: widget.orcamentoParaEdicao?.dataCriacao ?? DateTime.now(),
         dataValidade: _dataValidade,
@@ -550,8 +568,8 @@ _Orçamento gerado pelo PaintManager_
   Widget _buildClienteDropdown() {
     final clienteController = context.watch<ClienteController>();
     final clientes = clienteController.clientes;
-    return DropdownButtonFormField<Cliente>(
-      value: _clienteSelecionado,
+    return DropdownButtonFormField<int>(
+      initialValue: _clienteSelecionadoId,
       decoration: InputDecoration(
         labelText: "Selecione o Cliente",
         prefixIcon: Icon(Icons.person_outline, size: 20, color: Colors.grey[600]),
@@ -560,8 +578,8 @@ _Orçamento gerado pelo PaintManager_
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
         enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
       ),
-      items: clientes.map((c) => DropdownMenuItem(value: c, child: Text(c.nome))).toList(),
-      onChanged: (val) => setState(() => _clienteSelecionado = val),
+      items: clientes.map((c) => DropdownMenuItem<int>(value: c.id, child: Text(c.nome))).toList(),
+      onChanged: (val) => setState(() => _clienteSelecionadoId = val),
       validator: (val) => val == null ? "Selecione um cliente" : null,
     );
   }

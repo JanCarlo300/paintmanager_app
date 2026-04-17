@@ -19,7 +19,7 @@ class ObraFormPage extends StatefulWidget {
 class _ObraFormPageState extends State<ObraFormPage> {
   final _formKey = GlobalKey<FormState>();
 
-  Cliente? _clienteSelecionado;
+  int? _clienteSelecionadoId;
   late TextEditingController _tituloController;
   late TextEditingController _enderecoController;
   late TextEditingController _anotacoesController;
@@ -42,6 +42,16 @@ class _ObraFormPageState extends State<ObraFormPage> {
   void initState() {
     super.initState();
     final obra = widget.obraParaEdicao;
+
+    // NOVO: Garantir que a lista de clientes esteja presente
+    Future.microtask(() {
+      if (mounted) {
+        final ctrl = context.read<ClienteController>();
+        if (ctrl.clientes.isEmpty && !ctrl.carregando) {
+          ctrl.carregarClientes();
+        }
+      }
+    });
 
     _tituloController = TextEditingController(text: obra?.tituloDaObra);
     _enderecoController = TextEditingController(text: obra?.endereco);
@@ -95,7 +105,7 @@ class _ObraFormPageState extends State<ObraFormPage> {
 
   void _salvar() async {
     if (_formKey.currentState!.validate()) {
-      if (_clienteSelecionado == null && widget.obraParaEdicao == null) {
+      if (_clienteSelecionadoId == null && widget.obraParaEdicao == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Selecione um cliente."), backgroundColor: Colors.red, behavior: SnackBarBehavior.floating),
         );
@@ -108,10 +118,18 @@ class _ObraFormPageState extends State<ObraFormPage> {
           .map((c) => EtapaServico(nome: c.text.trim()))
           .toList();
 
+      String nomeCliEncontrado = '';
+      if (_clienteSelecionadoId != null) {
+        try {
+          final cliente = context.read<ClienteController>().clientes.firstWhere((x) => x.id == _clienteSelecionadoId);
+          nomeCliEncontrado = cliente.nome;
+        } catch (_) {}
+      }
+
       final obra = Obra(
         id: widget.obraParaEdicao?.id,
-        idCliente: _clienteSelecionado?.id ?? widget.obraParaEdicao?.idCliente ?? 0,
-        clienteNome: _clienteSelecionado?.nome ?? widget.obraParaEdicao?.clienteNome ?? '',
+        idCliente: _clienteSelecionadoId ?? widget.obraParaEdicao?.idCliente ?? 0,
+        clienteNome: nomeCliEncontrado.isNotEmpty ? nomeCliEncontrado : (widget.obraParaEdicao?.clienteNome ?? ''),
         tituloDaObra: _tituloController.text.trim(),
         endereco: _enderecoController.text.trim(),
         dataInicio: _dataInicio,
@@ -304,14 +322,14 @@ class _ObraFormPageState extends State<ObraFormPage> {
   Widget _clienteDropdown() {
     final cc = context.watch<ClienteController>();
     final clientes = cc.clientes;
-    return DropdownButtonFormField<Cliente>(
-      value: _clienteSelecionado,
+    return DropdownButtonFormField<int>(
+      initialValue: _clienteSelecionadoId,
       decoration: InputDecoration(labelText: "Selecione o Cliente", prefixIcon: Icon(Icons.person_outline, size: 20, color: Colors.grey[600]),
         filled: true, fillColor: Colors.grey[50],
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
         enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!))),
-      items: clientes.map((c) => DropdownMenuItem(value: c, child: Text(c.nome))).toList(),
-      onChanged: (v) => setState(() => _clienteSelecionado = v),
+      items: clientes.map((c) => DropdownMenuItem<int>(value: c.id, child: Text(c.nome))).toList(),
+      onChanged: (v) => setState(() => _clienteSelecionadoId = v),
       validator: (v) => v == null ? "Selecione um cliente" : null,
     );
   }
