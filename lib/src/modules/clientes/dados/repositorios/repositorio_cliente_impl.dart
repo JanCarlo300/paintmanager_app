@@ -17,10 +17,23 @@ class RepositorioClienteImpl implements RepositorioCliente {
           .select()
           .order('nome', ascending: true);
 
-      return (resultado as List)
-          .map((mapa) => ClienteModelo.deMapa(mapa))
-          .toList();
-    } catch (e) {
+      final List<Cliente> clientes = [];
+      for (var mapa in (resultado as List)) {
+        try {
+          clientes.add(ClienteModelo.deMapa(mapa));
+        } catch (e, stackTrace) {
+          // Captura a falha silenciosa: imprime exatamente qual registro falhou na conversão
+          print('=====================================');
+          print('ERRO FATAL DE PARSING NO CLIENTE:');
+          print('Payload: $mapa');
+          print('Exceção: $e');
+          print('Stack: $stackTrace');
+          print('=====================================');
+        }
+      }
+      return clientes;
+    } catch (e, stackTrace) {
+      print('Erro de rede ou query listarClientes: $e\\n$stackTrace');
       throw 'Erro ao listar clientes: $e';
     }
   }
