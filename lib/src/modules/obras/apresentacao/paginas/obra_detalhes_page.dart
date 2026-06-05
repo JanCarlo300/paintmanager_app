@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../modules/obras/dominio/entidades/obra.dart';
-import '../../modules/obras/apresentacao/controllers/obra_controller.dart';
+import '../../dominio/entidades/obra.dart';
+import '../controllers/obra_controller.dart';
 
 class ObraDetalhesPage extends StatefulWidget {
   final Obra obra;

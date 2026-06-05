@@ -5,8 +5,6 @@ import '../../dominio/repositorios/repositorio_transacao.dart';
 import '../modelos/transacao_modelo.dart';
 
 /// Implementação do repositório de Transações usando Supabase (PostgreSQL).
-/// Todas as operações usam métodos nativos do SupabaseClient.
-/// Substitui completamente a versão Firebase (Stream → Future).
 class RepositorioTransacaoImpl implements RepositorioTransacao {
   final SupabaseClient _supabase = SupabaseConfig.client;
 

@@ -4,12 +4,12 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../modules/orcamentos/dominio/entidades/orcamento.dart';
-import '../../modules/orcamentos/dominio/entidades/item_servico.dart';
-import '../../modules/obras/dominio/entidades/obra.dart';
-import '../../modules/orcamentos/apresentacao/controllers/orcamento_controller.dart';
-import '../../modules/obras/apresentacao/controllers/obra_controller.dart';
-import '../../modules/clientes/apresentacao/controllers/cliente_controller.dart';
+import '../../dominio/entidades/orcamento.dart';
+import '../../dominio/entidades/item_servico.dart';
+import '../../../obras/dominio/entidades/obra.dart';
+import '../controllers/orcamento_controller.dart';
+import '../../../obras/apresentacao/controllers/obra_controller.dart';
+import '../../../clientes/apresentacao/controllers/cliente_controller.dart';
 
 class OrcamentoFormPage extends StatefulWidget {
   final Orcamento? orcamentoParaEdicao;

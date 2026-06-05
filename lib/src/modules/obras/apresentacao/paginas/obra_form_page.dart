@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import '../../modules/obras/dominio/entidades/obra.dart';
-import '../../modules/obras/dominio/entidades/etapa_servico.dart';
-import '../../modules/clientes/dominio/entidades/cliente.dart';
-import '../../modules/obras/apresentacao/controllers/obra_controller.dart';
-import '../../modules/clientes/apresentacao/controllers/cliente_controller.dart';
+import '../../dominio/entidades/obra.dart';
+import '../../dominio/entidades/etapa_servico.dart';
+import '../../../clientes/dominio/entidades/cliente.dart';
+import '../controllers/obra_controller.dart';
+import '../../../clientes/apresentacao/controllers/cliente_controller.dart';
 
 class ObraFormPage extends StatefulWidget {
   final Obra? obraParaEdicao;

@@ -1,6 +1,4 @@
-/// Entidade de domínio — Relatório Geral (Supabase).
-/// Agrega KPIs de transações, obras e orçamentos.
-/// Sem dependências do Firebase. Sem tabela própria — é um agregador.
+/// Entidade de domínio — Relatório Geral. Agrega KPIs de transações, obras e orçamentos.
 class RelatorioGeral {
   final DateTime periodoInicio;
   final DateTime periodoFim;

@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
-import '../../modules/relatorios/dominio/entidades/relatorio_geral.dart';
-import '../../modules/relatorios/apresentacao/controllers/relatorio_controller.dart';
-import '../widgets/drawer_comum.dart';
+import '../../dominio/entidades/relatorio_geral.dart';
+import '../controllers/relatorio_controller.dart';
+import '../../../../apresentacao/widgets/drawer_comum.dart';
 
 class RelatoriosPage extends StatefulWidget {
   const RelatoriosPage({super.key});

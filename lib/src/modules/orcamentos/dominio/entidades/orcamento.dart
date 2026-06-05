@@ -1,8 +1,6 @@
 import 'item_servico.dart';
 
-/// Entidade de domínio — Orçamento (Supabase).
-/// Sem dependências de Firebase. Usa int? id para IDENTITY PK do PostgreSQL.
-/// Mantém FK relacional para Obra via idObra (int?).
+/// Entidade de domínio — Orçamento.
 class Orcamento {
   final int? id;
   final int? idObra;

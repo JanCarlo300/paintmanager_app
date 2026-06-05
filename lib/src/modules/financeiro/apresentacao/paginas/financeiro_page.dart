@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import '../../modules/financeiro/dominio/entidades/transacao.dart';
-import '../../modules/financeiro/apresentacao/controllers/financeiro_controller.dart';
-import '../widgets/drawer_comum.dart';
+import '../../dominio/entidades/transacao.dart';
+import '../controllers/financeiro_controller.dart';
+import '../../../../apresentacao/widgets/drawer_comum.dart';
 
 class FinanceiroPage extends StatefulWidget {
   const FinanceiroPage({super.key});

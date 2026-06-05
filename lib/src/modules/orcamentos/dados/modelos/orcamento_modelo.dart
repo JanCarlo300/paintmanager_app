@@ -2,7 +2,6 @@ import '../../dominio/entidades/orcamento.dart';
 import '../../dominio/entidades/item_servico.dart';
 
 /// Modelo de dados — converte entre Map (Supabase/PostgreSQL) e a entidade Orcamento.
-/// Nenhuma dependência do Firebase. Segue convenção snake_case do PostgreSQL.
 class OrcamentoModelo extends Orcamento {
   OrcamentoModelo({
     super.id,

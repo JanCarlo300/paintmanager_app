@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import '../../modules/clientes/dominio/entidades/cliente.dart';
-import '../../modules/obras/dominio/entidades/obra.dart';
-import '../../modules/clientes/apresentacao/controllers/cliente_controller.dart';
-import '../../modules/obras/apresentacao/controllers/obra_controller.dart';
-import '../widgets/drawer_comum.dart';
+import '../../dominio/entidades/cliente.dart';
+import '../../../obras/dominio/entidades/obra.dart';
+import '../controllers/cliente_controller.dart';
+import '../../../obras/apresentacao/controllers/obra_controller.dart';
+import '../../../../apresentacao/widgets/drawer_comum.dart';
 
 /// Filtros disponíveis na tela de clientes
 enum FiltroCliente { comObraAtiva, todosAtivos, inativos }

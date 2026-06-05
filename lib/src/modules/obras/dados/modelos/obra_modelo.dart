@@ -2,7 +2,6 @@ import '../../dominio/entidades/obra.dart';
 import '../../dominio/entidades/etapa_servico.dart';
 
 /// Modelo de dados — converte entre Map (Supabase/PostgreSQL) e a entidade Obra.
-/// Nenhuma dependência do Firebase. Segue convenção snake_case do PostgreSQL.
 class ObraModelo extends Obra {
   ObraModelo({
     super.id,

@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import '../../modules/financeiro/dominio/entidades/transacao.dart';
-import '../../modules/clientes/dominio/entidades/cliente.dart';
-import '../../modules/obras/dominio/entidades/obra.dart';
-import '../../modules/financeiro/apresentacao/controllers/financeiro_controller.dart';
-import '../../modules/clientes/apresentacao/controllers/cliente_controller.dart';
-import '../../modules/obras/apresentacao/controllers/obra_controller.dart';
+import '../../dominio/entidades/transacao.dart';
+import '../../../clientes/dominio/entidades/cliente.dart';
+import '../../../obras/dominio/entidades/obra.dart';
+import '../controllers/financeiro_controller.dart';
+import '../../../clientes/apresentacao/controllers/cliente_controller.dart';
+import '../../../obras/apresentacao/controllers/obra_controller.dart';
 
 class TransacaoFormPage extends StatefulWidget {
   final Transacao? transacaoParaEdicao;

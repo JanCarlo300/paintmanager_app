@@ -1,5 +1,4 @@
-/// Entidade de domínio — Cliente (Supabase)
-/// Sem dependências de Firebase. Usada por toda a camada de apresentação.
+/// Entidade de domínio — Cliente.
 class Cliente {
   final int? id;
   final String nome;

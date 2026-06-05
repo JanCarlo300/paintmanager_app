@@ -1,7 +1,6 @@
 import '../../dominio/entidades/cliente.dart';
 
 /// Modelo de dados — converte entre Map (Supabase/PostgreSQL) e a entidade Cliente.
-/// Nenhuma dependência do Firebase. Segue convenção snake_case do PostgreSQL.
 class ClienteModelo extends Cliente {
   ClienteModelo({
     super.id,

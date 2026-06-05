@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../modules/orcamentos/dominio/entidades/orcamento.dart';
-import '../../modules/clientes/dominio/entidades/cliente.dart';
-import '../../modules/orcamentos/apresentacao/controllers/orcamento_controller.dart';
-import '../../modules/clientes/apresentacao/controllers/cliente_controller.dart';
-import '../widgets/drawer_comum.dart';
+import '../../dominio/entidades/orcamento.dart';
+import '../../../clientes/dominio/entidades/cliente.dart';
+import '../controllers/orcamento_controller.dart';
+import '../../../clientes/apresentacao/controllers/cliente_controller.dart';
+import '../../../../apresentacao/widgets/drawer_comum.dart';
 
 /// Filtros disponíveis na tela de orçamentos
 enum FiltroOrcamento { todos, pendentes, aprovados, rejeitados, concluidos }

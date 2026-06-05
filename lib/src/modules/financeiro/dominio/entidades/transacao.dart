@@ -1,6 +1,4 @@
-/// Entidade de domínio — Transação Financeira (Supabase).
-/// Sem dependências de Firebase. Usa int? id para IDENTITY PK do PostgreSQL.
-/// Mantém FKs relacionais para Cliente (int?) e Orcamento (int?).
+/// Entidade de domínio — Transação Financeira.
 class Transacao {
   final int? id;
   final String tipo;            // Receita | Despesa

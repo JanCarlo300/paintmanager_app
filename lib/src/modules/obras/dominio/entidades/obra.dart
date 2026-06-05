@@ -1,8 +1,6 @@
 import 'etapa_servico.dart';
 
-/// Entidade de domínio — Obra (Supabase).
-/// Sem dependências de Firebase. Usa int? id para IDENTITY PK do PostgreSQL.
-/// Mantém FK relacional para Cliente via idCliente (int).
+/// Entidade de domínio — Obra.
 class Obra {
   final int? id;
   final int? idOrcamento;

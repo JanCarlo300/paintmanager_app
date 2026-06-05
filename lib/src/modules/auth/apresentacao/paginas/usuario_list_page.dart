@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import '../../modules/auth/dominio/entidades/usuario.dart';
-import '../../modules/auth/apresentacao/controllers/usuario_controller.dart';
-import '../widgets/drawer_comum.dart';
+import '../../dominio/entidades/usuario.dart';
+import '../controllers/usuario_controller.dart';
+import '../../../../apresentacao/widgets/drawer_comum.dart';
 
 /// Filtros disponíveis na tela de usuários
 enum FiltroUsuario { todosAtivos, inativos }

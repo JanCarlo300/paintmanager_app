@@ -1,7 +1,6 @@
 import '../../dominio/entidades/transacao.dart';
 
 /// Modelo de dados — converte entre Map (Supabase/PostgreSQL) e a entidade Transacao.
-/// Nenhuma dependência do Firebase. Segue convenção snake_case do PostgreSQL.
 class TransacaoModelo extends Transacao {
   TransacaoModelo({
     super.id,
