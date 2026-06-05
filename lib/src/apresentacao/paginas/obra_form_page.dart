@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../modules/obras/dominio/entidades/obra.dart';
@@ -24,6 +25,7 @@ class _ObraFormPageState extends State<ObraFormPage> {
   late TextEditingController _enderecoController;
   late TextEditingController _anotacoesController;
   late TextEditingController _materialController;
+  late TextEditingController _clienteSearchController;
   late DateTime _dataInicio;
   late DateTime _dataPrevisao;
 
@@ -43,7 +45,7 @@ class _ObraFormPageState extends State<ObraFormPage> {
     super.initState();
     final obra = widget.obraParaEdicao;
 
-    // NOVO: Garantir que a lista de clientes esteja presente
+    // Garantir que a lista de clientes esteja presente
     Future.microtask(() {
       if (mounted) {
         final ctrl = context.read<ClienteController>();
@@ -57,8 +59,38 @@ class _ObraFormPageState extends State<ObraFormPage> {
     _enderecoController = TextEditingController(text: obra?.endereco);
     _anotacoesController = TextEditingController(text: obra?.anotacoes);
     _materialController = TextEditingController();
+    _clienteSearchController = TextEditingController();
     _dataInicio = obra?.dataInicio ?? DateTime.now();
     _dataPrevisao = obra?.dataPrevisaoTermino ?? DateTime.now().add(const Duration(days: 15));
+
+    // Pré-popular o ID e o nome do cliente quando em edição
+    if (obra != null) {
+      _clienteSelecionadoId = obra.idCliente;
+    }
+
+    // Aguardar clientes carregarem para preencher o campo de pesquisa com o nome
+    if (_clienteSelecionadoId != null) {
+      SchedulerBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final clientes = context.read<ClienteController>().clientes;
+        final match = clientes.where((c) => c.id == _clienteSelecionadoId);
+        if (match.isNotEmpty) {
+          _clienteSearchController.text = match.first.nome;
+        } else {
+          // Clientes ainda carregando — ouvir mudanças para preencher depois
+          void listener() {
+            if (!mounted) return;
+            final lista = context.read<ClienteController>().clientes;
+            final found = lista.where((c) => c.id == _clienteSelecionadoId);
+            if (found.isNotEmpty) {
+              _clienteSearchController.text = found.first.nome;
+              context.read<ClienteController>().removeListener(listener);
+            }
+          }
+          context.read<ClienteController>().addListener(listener);
+        }
+      });
+    }
 
     if (obra != null && obra.etapasServico.isNotEmpty) {
       for (final etapa in obra.etapasServico) {
@@ -78,6 +110,7 @@ class _ObraFormPageState extends State<ObraFormPage> {
     _enderecoController.dispose();
     _anotacoesController.dispose();
     _materialController.dispose();
+    _clienteSearchController.dispose();
     for (final c in _etapasControllers) { c.dispose(); }
     super.dispose();
   }
@@ -322,15 +355,157 @@ class _ObraFormPageState extends State<ObraFormPage> {
   Widget _clienteDropdown() {
     final cc = context.watch<ClienteController>();
     final clientes = cc.clientes;
-    return DropdownButtonFormField<int>(
+
+    return FormField<int>(
       initialValue: _clienteSelecionadoId,
-      decoration: InputDecoration(labelText: "Selecione o Cliente", prefixIcon: Icon(Icons.person_outline, size: 20, color: Colors.grey[600]),
-        filled: true, fillColor: Colors.grey[50],
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!))),
-      items: clientes.map((c) => DropdownMenuItem<int>(value: c.id, child: Text(c.nome))).toList(),
-      onChanged: (v) => setState(() => _clienteSelecionadoId = v),
       validator: (v) => v == null ? "Selecione um cliente" : null,
+      builder: (FormFieldState<int> field) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            LayoutBuilder(
+              builder: (context, constraints) {
+                return Autocomplete<Cliente>(
+                  optionsBuilder: (TextEditingValue textEditingValue) {
+                    if (textEditingValue.text.isEmpty) {
+                      return clientes;
+                    }
+                    final query = textEditingValue.text.toLowerCase();
+                    return clientes.where(
+                      (c) => c.nome.toLowerCase().contains(query),
+                    );
+                  },
+                  displayStringForOption: (Cliente c) => c.nome,
+                  onSelected: (Cliente cliente) {
+                    setState(() => _clienteSelecionadoId = cliente.id);
+                    field.didChange(cliente.id);
+                  },
+                  fieldViewBuilder: (context, textController, focusNode, onFieldSubmitted) {
+                    // Sincronizar o controller externo com o interno do Autocomplete
+                    if (_clienteSearchController.text.isNotEmpty && textController.text.isEmpty) {
+                      textController.text = _clienteSearchController.text;
+                    }
+                    // Manter referência para atualizações futuras (edição)
+                    _clienteSearchController = textController;
+
+                    return TextFormField(
+                      controller: textController,
+                      focusNode: focusNode,
+                      decoration: InputDecoration(
+                        labelText: "Pesquisar Cliente",
+                        hintText: "Digite o nome do cliente...",
+                        hintStyle: TextStyle(color: Colors.grey[400]),
+                        prefixIcon: Icon(Icons.person_search_outlined, size: 20, color: Colors.grey[600]),
+                        suffixIcon: textController.text.isNotEmpty
+                            ? IconButton(
+                                icon: Icon(Icons.clear, size: 18, color: Colors.grey[500]),
+                                onPressed: () {
+                                  textController.clear();
+                                  setState(() => _clienteSelecionadoId = null);
+                                  field.didChange(null);
+                                },
+                              )
+                            : Icon(Icons.arrow_drop_down, color: Colors.grey[600]),
+                        filled: true,
+                        fillColor: Colors.grey[50],
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(color: field.hasError ? Colors.red : Colors.grey[200]!),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(color: field.hasError ? Colors.red : Colors.grey[200]!),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(color: field.hasError ? Colors.red : Colors.black, width: 1.5),
+                        ),
+                      ),
+                      onChanged: (value) {
+                        // Se o usuário editar o texto manualmente, limpar a seleção
+                        if (_clienteSelecionadoId != null) {
+                          final nomeAtual = clientes
+                              .where((c) => c.id == _clienteSelecionadoId)
+                              .map((c) => c.nome)
+                              .firstOrNull;
+                          if (value != nomeAtual) {
+                            setState(() => _clienteSelecionadoId = null);
+                            field.didChange(null);
+                          }
+                        }
+                      },
+                    );
+                  },
+                  optionsViewBuilder: (context, onSelected, options) {
+                    return Align(
+                      alignment: Alignment.topLeft,
+                      child: Material(
+                        elevation: 6,
+                        borderRadius: BorderRadius.circular(8),
+                        clipBehavior: Clip.antiAlias,
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxHeight: 240,
+                            maxWidth: constraints.maxWidth,
+                          ),
+                          child: ListView.separated(
+                            shrinkWrap: true,
+                            padding: EdgeInsets.zero,
+                            itemCount: options.length,
+                            separatorBuilder: (_, __) => Divider(height: 1, color: Colors.grey[200]),
+                            itemBuilder: (context, index) {
+                              final cliente = options.elementAt(index);
+                              final isSelected = cliente.id == _clienteSelecionadoId;
+                              return ListTile(
+                                dense: true,
+                                leading: CircleAvatar(
+                                  radius: 16,
+                                  backgroundColor: isSelected ? Colors.black : Colors.grey[200],
+                                  child: Text(
+                                    cliente.nome.isNotEmpty ? cliente.nome[0].toUpperCase() : '?',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold,
+                                      color: isSelected ? Colors.white : Colors.grey[700],
+                                    ),
+                                  ),
+                                ),
+                                title: Text(
+                                  cliente.nome,
+                                  style: TextStyle(
+                                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                    color: Colors.grey[800],
+                                  ),
+                                ),
+                                subtitle: Text(
+                                  cliente.telefone,
+                                  style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                                ),
+                                selected: isSelected,
+                                selectedTileColor: Colors.grey[100],
+                                onTap: () => onSelected(cliente),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+            // Mensagem de erro de validação
+            if (field.hasError)
+              Padding(
+                padding: const EdgeInsets.only(left: 12, top: 6),
+                child: Text(
+                  field.errorText!,
+                  style: TextStyle(color: Colors.red[700], fontSize: 12),
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 

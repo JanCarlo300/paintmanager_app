@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../modules/orcamentos/dominio/entidades/orcamento.dart';
 import '../../modules/orcamentos/dominio/entidades/item_servico.dart';
-import '../../modules/clientes/dominio/entidades/cliente.dart';
+import '../../modules/obras/dominio/entidades/obra.dart';
 import '../../modules/orcamentos/apresentacao/controllers/orcamento_controller.dart';
+import '../../modules/obras/apresentacao/controllers/obra_controller.dart';
 import '../../modules/clientes/apresentacao/controllers/cliente_controller.dart';
 
 class OrcamentoFormPage extends StatefulWidget {
@@ -21,17 +23,15 @@ class OrcamentoFormPage extends StatefulWidget {
 class _OrcamentoFormPageState extends State<OrcamentoFormPage> {
   final _formKey = GlobalKey<FormState>();
 
-  // Dados do orçamento
-  int? _clienteSelecionadoId;
+  Obra? _obraSelecionada;
+  late TextEditingController _obraSearchController;
   late TextEditingController _descricaoController;
   late DateTime _dataValidade;
   String _formaPagamento = 'PIX';
   String _status = 'Pendente';
 
-  // Itens de serviço (lista dinâmica)
   final List<_ItemServicoForm> _itensForm = [];
 
-  // Custos
   bool _materiaisInclusos = false;
   late TextEditingController _valorMateriaisController;
   late TextEditingController _valorMaoDeObraController;
@@ -44,26 +44,59 @@ class _OrcamentoFormPageState extends State<OrcamentoFormPage> {
     super.initState();
     final orc = widget.orcamentoParaEdicao;
 
-    // NOVO: Garantir que a lista de clientes esteja presente (para o dropdown)
+    _obraSearchController = TextEditingController();
+
     Future.microtask(() {
-      if (mounted) {
-        final ctrl = context.read<ClienteController>();
-        if (ctrl.clientes.isEmpty && !ctrl.carregando) {
-          ctrl.carregarClientes();
-        }
+      if (!mounted) return;
+      final obraCtrl = context.read<ObraController>();
+      if (obraCtrl.obras.isEmpty && !obraCtrl.carregando) {
+        obraCtrl.carregarObras();
+      }
+      final clienteCtrl = context.read<ClienteController>();
+      if (clienteCtrl.clientes.isEmpty && !clienteCtrl.carregando) {
+        clienteCtrl.carregarClientes();
       }
     });
+
+    // Pré-popular obra em modo edição
+    if (orc != null && orc.idObra != null) {
+      SchedulerBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final obras = context.read<ObraController>().obras;
+        final match = obras.where((o) => o.id == orc.idObra);
+        if (match.isNotEmpty) {
+          setState(() => _obraSelecionada = match.first);
+          _obraSearchController.text = match.first.tituloDaObra;
+        } else {
+          void listener() {
+            if (!mounted) return;
+            final lista = context.read<ObraController>().obras;
+            final found = lista.where((o) => o.id == orc.idObra);
+            if (found.isNotEmpty) {
+              setState(() => _obraSelecionada = found.first);
+              _obraSearchController.text = found.first.tituloDaObra;
+              context.read<ObraController>().removeListener(listener);
+            }
+          }
+          context.read<ObraController>().addListener(listener);
+        }
+      });
+    }
 
     _descricaoController = TextEditingController(text: orc?.descricao);
     _dataValidade = orc?.dataValidade ?? DateTime.now().add(const Duration(days: 30));
     _formaPagamento = orc?.formaPagamento ?? 'PIX';
-    _status = orc?.status ?? 'Pendente';
+    final rawStatus = orc?.status ?? 'Pendente';
+    // Normaliza 'Rejeitado' → 'Recusado' para compatibilidade com dados antigos
+    _status = rawStatus == 'Rejeitado' ? 'Recusado' : rawStatus;
     _materiaisInclusos = orc?.materiaisInclusos ?? false;
-    _valorMateriaisController = TextEditingController(text: orc != null ? orc.valorMateriais.toStringAsFixed(2) : '');
-    _valorMaoDeObraController = TextEditingController(text: orc != null ? orc.valorMaoDeObra.toStringAsFixed(2) : '');
-    _descontoController = TextEditingController(text: orc != null && orc.desconto > 0 ? orc.desconto.toStringAsFixed(2) : '');
+    _valorMateriaisController = TextEditingController(
+        text: orc != null ? orc.valorMateriais.toStringAsFixed(2) : '');
+    _valorMaoDeObraController = TextEditingController(
+        text: orc != null ? orc.valorMaoDeObra.toStringAsFixed(2) : '');
+    _descontoController = TextEditingController(
+        text: orc != null && orc.desconto > 0 ? orc.desconto.toStringAsFixed(2) : '');
 
-    // Carregar itens existentes ou começar com um vazio
     if (orc != null && orc.itensServico.isNotEmpty) {
       for (final item in orc.itensServico) {
         _itensForm.add(_ItemServicoForm(
@@ -79,6 +112,7 @@ class _OrcamentoFormPageState extends State<OrcamentoFormPage> {
 
   @override
   void dispose() {
+    _obraSearchController.dispose();
     _descricaoController.dispose();
     _valorMateriaisController.dispose();
     _valorMaoDeObraController.dispose();
@@ -112,7 +146,8 @@ class _OrcamentoFormPageState extends State<OrcamentoFormPage> {
 
   double _calcularSubtotalItem(int index) {
     final metragem = double.tryParse(_itensForm[index].metragem.text.replaceAll(',', '.')) ?? 0;
-    final valorUnitario = double.tryParse(_itensForm[index].valorUnitario.text.replaceAll(',', '.')) ?? 0;
+    final valorUnitario =
+        double.tryParse(_itensForm[index].valorUnitario.text.replaceAll(',', '.')) ?? 0;
     return metragem * valorUnitario;
   }
 
@@ -129,82 +164,87 @@ class _OrcamentoFormPageState extends State<OrcamentoFormPage> {
     final materiais = _materiaisInclusos
         ? (double.tryParse(_valorMateriaisController.text.replaceAll(',', '.')) ?? 0)
         : 0.0;
-    final maoDeObra = double.tryParse(_valorMaoDeObraController.text.replaceAll(',', '.')) ?? 0;
-    final desconto = double.tryParse(_descontoController.text.replaceAll(',', '.')) ?? 0;
+    final maoDeObra =
+        double.tryParse(_valorMaoDeObraController.text.replaceAll(',', '.')) ?? 0;
+    final desconto =
+        double.tryParse(_descontoController.text.replaceAll(',', '.')) ?? 0;
     return totalItens + materiais + maoDeObra - desconto;
   }
 
   void _salvar() async {
-    if (_formKey.currentState!.validate()) {
-      if (_clienteSelecionadoId == null && widget.orcamentoParaEdicao == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Selecione um cliente."), backgroundColor: Colors.red, behavior: SnackBarBehavior.floating),
-        );
-        return;
-      }
+    if (!_formKey.currentState!.validate()) return;
 
-      if (_itensForm.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Adicione pelo menos um item de serviço."), backgroundColor: Colors.red, behavior: SnackBarBehavior.floating),
-        );
-        return;
-      }
-
-      final controller = context.read<OrcamentoController>();
-
-      final itens = _itensForm.map((item) {
-        final metragem = double.tryParse(item.metragem.text.replaceAll(',', '.')) ?? 0;
-        final valorUnitario = double.tryParse(item.valorUnitario.text.replaceAll(',', '.')) ?? 0;
-        return ItemServico(
-          descricao: item.descricao.text.trim(),
-          metragem: metragem,
-          valorUnitario: valorUnitario,
-        );
-      }).toList();
-
-      String nomeCliEncontrado = '';
-      if (_clienteSelecionadoId != null) {
-        try {
-          final cliente = context.read<ClienteController>().clientes.firstWhere((x) => x.id == _clienteSelecionadoId);
-          nomeCliEncontrado = cliente.nome;
-        } catch (_) {}
-      }
-
-      final orcamento = Orcamento(
-        id: widget.orcamentoParaEdicao?.id,
-        idObra: widget.orcamentoParaEdicao?.idObra,
-        clienteNome: nomeCliEncontrado.isNotEmpty ? nomeCliEncontrado : (widget.orcamentoParaEdicao?.clienteNome ?? ''),
-        descricao: _descricaoController.text.trim(),
-        dataCriacao: widget.orcamentoParaEdicao?.dataCriacao ?? DateTime.now(),
-        dataValidade: _dataValidade,
-        status: _status,
-        itensServico: itens,
-        materiaisInclusos: _materiaisInclusos,
-        valorMateriais: _materiaisInclusos
-            ? (double.tryParse(_valorMateriaisController.text.replaceAll(',', '.')) ?? 0)
-            : 0,
-        valorMaoDeObra: double.tryParse(_valorMaoDeObraController.text.replaceAll(',', '.')) ?? 0,
-        desconto: double.tryParse(_descontoController.text.replaceAll(',', '.')) ?? 0,
-        formaPagamento: _formaPagamento,
+    final obraId = _obraSelecionada?.id ?? widget.orcamentoParaEdicao?.idObra;
+    if (obraId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text("Selecione uma obra para vincular o orçamento."),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating),
       );
+      return;
+    }
 
-      try {
-        await controller.salvar(orcamento);
-        if (mounted) {
-          // Mostrar dialog de envio ao cliente
-          _mostrarDialogEnvio(orcamento);
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Erro ao salvar: $e"), backgroundColor: Colors.red, behavior: SnackBarBehavior.floating),
-          );
-        }
+    if (_itensForm.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text("Adicione pelo menos um item de serviço."),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating),
+      );
+      return;
+    }
+
+    final itens = _itensForm.map((item) {
+      final metragem =
+          double.tryParse(item.metragem.text.replaceAll(',', '.')) ?? 0;
+      final valorUnitario =
+          double.tryParse(item.valorUnitario.text.replaceAll(',', '.')) ?? 0;
+      return ItemServico(
+        descricao: item.descricao.text.trim(),
+        metragem: metragem,
+        valorUnitario: valorUnitario,
+      );
+    }).toList();
+
+    final clienteNome = _obraSelecionada?.clienteNome ??
+        widget.orcamentoParaEdicao?.clienteNome ??
+        '';
+
+    final orcamento = Orcamento(
+      id: widget.orcamentoParaEdicao?.id,
+      idObra: obraId,
+      clienteNome: clienteNome,
+      descricao: _descricaoController.text.trim(),
+      dataCriacao: widget.orcamentoParaEdicao?.dataCriacao ?? DateTime.now(),
+      dataValidade: _dataValidade,
+      status: _status,
+      itensServico: itens,
+      materiaisInclusos: _materiaisInclusos,
+      valorMateriais: _materiaisInclusos
+          ? (double.tryParse(_valorMateriaisController.text.replaceAll(',', '.')) ?? 0)
+          : 0,
+      valorMaoDeObra:
+          double.tryParse(_valorMaoDeObraController.text.replaceAll(',', '.')) ?? 0,
+      desconto: double.tryParse(_descontoController.text.replaceAll(',', '.')) ?? 0,
+      formaPagamento: _formaPagamento,
+    );
+
+    try {
+      await context.read<OrcamentoController>().salvar(orcamento);
+      if (mounted) _mostrarDialogEnvio(orcamento);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text("Erro ao salvar: $e"),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating),
+        );
       }
     }
   }
 
-  // === FORMATAÇÃO DA MENSAGEM ===
   String _formatarMensagem(Orcamento orc) {
     final itensTexto = orc.itensServico.map((item) {
       return "  • ${item.descricao} — ${item.metragem.toStringAsFixed(1)}m² × ${_formatoMoeda.format(item.valorUnitario)} = ${_formatoMoeda.format(item.subtotal)}";
@@ -239,16 +279,17 @@ _Orçamento gerado pelo PaintManager_
 ''';
   }
 
-  // === ENVIAR POR WHATSAPP ===
   Future<void> _enviarWhatsApp(Orcamento orc) async {
-    final clienteController = context.read<ClienteController>();
-    final clientes = clienteController.clientes;
+    final clientes = context.read<ClienteController>().clientes;
     final cliente = clientes.where((c) => c.nome == orc.clienteNome).firstOrNull;
 
     if (cliente == null || cliente.telefone.isEmpty) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Cliente sem telefone cadastrado."), backgroundColor: Colors.red, behavior: SnackBarBehavior.floating),
+          const SnackBar(
+              content: Text("Cliente sem telefone cadastrado."),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating),
         );
       }
       return;
@@ -256,41 +297,45 @@ _Orçamento gerado pelo PaintManager_
 
     final telefone = cliente.telefone.replaceAll(RegExp(r'[^0-9]'), '');
     final telefoneCompleto = telefone.length <= 11 ? '55$telefone' : telefone;
-    final mensagem = _formatarMensagem(orc);
-    final url = Uri.parse('https://wa.me/$telefoneCompleto?text=${Uri.encodeComponent(mensagem)}');
+    final url = Uri.parse(
+        'https://wa.me/$telefoneCompleto?text=${Uri.encodeComponent(_formatarMensagem(orc))}');
 
     try {
       await launchUrl(url, mode: LaunchMode.externalApplication);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Erro ao abrir WhatsApp: $e"), backgroundColor: Colors.red, behavior: SnackBarBehavior.floating),
+          SnackBar(
+              content: Text("Erro ao abrir WhatsApp: $e"),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating),
         );
       }
     }
   }
 
-  // === ENVIAR POR E-MAIL ===
   Future<void> _enviarEmail(Orcamento orc) async {
-    final clienteController = context.read<ClienteController>();
-    final clientes = clienteController.clientes;
+    final clientes = context.read<ClienteController>().clientes;
     final cliente = clientes.where((c) => c.nome == orc.clienteNome).firstOrNull;
 
     if (cliente == null || cliente.email.isEmpty) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Cliente sem e-mail cadastrado."), backgroundColor: Colors.red, behavior: SnackBarBehavior.floating),
+          const SnackBar(
+              content: Text("Cliente sem e-mail cadastrado."),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating),
         );
       }
       return;
     }
 
-    final mensagemEmail = _formatarMensagem(orc).replaceAll('*', '');
     final assunto = 'Orçamento - ${orc.descricao} | PaintManager';
     final url = Uri(
       scheme: 'mailto',
       path: cliente.email,
-      query: 'subject=${Uri.encodeComponent(assunto)}&body=${Uri.encodeComponent(mensagemEmail)}',
+      query:
+          'subject=${Uri.encodeComponent(assunto)}&body=${Uri.encodeComponent(_formatarMensagem(orc).replaceAll('*', ''))}',
     );
 
     try {
@@ -298,13 +343,15 @@ _Orçamento gerado pelo PaintManager_
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Erro ao abrir e-mail: $e"), backgroundColor: Colors.red, behavior: SnackBarBehavior.floating),
+          SnackBar(
+              content: Text("Erro ao abrir e-mail: $e"),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating),
         );
       }
     }
   }
 
-  // === DIALOG DE ENVIO (pós-salvar) ===
   void _mostrarDialogEnvio(Orcamento orc) {
     showDialog(
       context: context,
@@ -314,12 +361,17 @@ _Orçamento gerado pelo PaintManager_
         title: Row(
           children: [
             Container(
-              width: 44, height: 44,
-              decoration: BoxDecoration(color: Colors.green.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                  color: Colors.green.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(10)),
               child: const Icon(Icons.check_circle, color: Colors.green, size: 28),
             ),
             const SizedBox(width: 12),
-            const Expanded(child: Text("Orçamento Salvo!", style: TextStyle(fontWeight: FontWeight.bold))),
+            const Expanded(
+                child: Text("Orçamento Salvo!",
+                    style: TextStyle(fontWeight: FontWeight.bold))),
           ],
         ),
         content: Column(
@@ -329,18 +381,17 @@ _Orçamento gerado pelo PaintManager_
             Text("Envie o orçamento para ${orc.clienteNome} aprovar ou recusar:",
                 style: TextStyle(color: Colors.grey[600], fontSize: 14)),
             const SizedBox(height: 20),
-
-            // WhatsApp
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: () {
                   Navigator.pop(ctx);
                   _enviarWhatsApp(orc);
-                  Navigator.pop(context); // Volta para a lista
+                  Navigator.pop(context);
                 },
                 icon: const Icon(Icons.chat, size: 20),
-                label: const Text("Enviar por WhatsApp", style: TextStyle(fontWeight: FontWeight.bold)),
+                label: const Text("Enviar por WhatsApp",
+                    style: TextStyle(fontWeight: FontWeight.bold)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF25D366),
                   foregroundColor: Colors.white,
@@ -350,18 +401,17 @@ _Orçamento gerado pelo PaintManager_
               ),
             ),
             const SizedBox(height: 10),
-
-            // E-mail
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: () {
                   Navigator.pop(ctx);
                   _enviarEmail(orc);
-                  Navigator.pop(context); // Volta para a lista
+                  Navigator.pop(context);
                 },
                 icon: const Icon(Icons.email_outlined, size: 20),
-                label: const Text("Enviar por E-mail", style: TextStyle(fontWeight: FontWeight.bold)),
+                label: const Text("Enviar por E-mail",
+                    style: TextStyle(fontWeight: FontWeight.bold)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue,
                   foregroundColor: Colors.white,
@@ -371,16 +421,18 @@ _Orçamento gerado pelo PaintManager_
               ),
             ),
             const SizedBox(height: 10),
-
-            // Enviar depois
             SizedBox(
               width: double.infinity,
               child: TextButton(
                 onPressed: () {
                   Navigator.pop(ctx);
-                  Navigator.pop(context); // Volta para a lista
+                  Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Orçamento salvo! Você pode enviá-lo depois pela listagem."), backgroundColor: Colors.green, behavior: SnackBarBehavior.floating),
+                    const SnackBar(
+                        content: Text(
+                            "Orçamento salvo! Você pode enviá-lo depois pela listagem."),
+                        backgroundColor: Colors.green,
+                        behavior: SnackBarBehavior.floating),
                   );
                 },
                 child: Text("Enviar depois", style: TextStyle(color: Colors.grey[600])),
@@ -400,14 +452,14 @@ _Orçamento gerado pelo PaintManager_
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
-        title: Text(isEdicao ? "Editar Orçamento" : "Novo Orçamento", style: const TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(isEdicao ? "Editar Orçamento" : "Novo Orçamento",
+            style: const TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0.5,
       ),
       body: Column(
         children: [
-          // Conteúdo scrollável
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(16),
@@ -416,13 +468,19 @@ _Orçamento gerado pelo PaintManager_
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // === SEÇÃO 1: DADOS DO CLIENTE ===
-                    _buildSectionTitle("Dados do Cliente", Icons.person_outline),
+                    // === SEÇÃO 0: STATUS (só edição) ===
+                    if (isEdicao) ...[
+                      _buildSectionTitle("Status do Orçamento", Icons.flag_outlined),
+                      const SizedBox(height: 12),
+                      _buildStatusEditor(),
+                      const SizedBox(height: 24),
+                    ],
+
+                    // === SEÇÃO 1: OBRA VINCULADA ===
+                    _buildSectionTitle("Obra Vinculada", Icons.construction),
                     const SizedBox(height: 12),
                     _buildSectionCard(
-                      child: isEdicao
-                          ? _buildInfoTile("Cliente", widget.orcamentoParaEdicao!.clienteNome)
-                          : _buildClienteDropdown(),
+                      child: isEdicao ? _buildObraReadOnly() : _buildObraSearch(),
                     ),
                     const SizedBox(height: 24),
 
@@ -432,15 +490,15 @@ _Orçamento gerado pelo PaintManager_
                     _buildSectionCard(
                       child: Column(
                         children: [
-                          _buildTextField("Descrição da Obra", _descricaoController, Icons.construction, "Ex: Pintura residencial completa"),
+                          _buildTextField(
+                              "Descrição do Serviço",
+                              _descricaoController,
+                              Icons.construction,
+                              "Ex: Pintura residencial completa"),
                           const SizedBox(height: 16),
                           _buildDataPicker(),
                           const SizedBox(height: 16),
                           _buildDropdownPagamento(),
-                          if (isEdicao) ...[
-                            const SizedBox(height: 16),
-                            _buildDropdownStatus(),
-                          ],
                         ],
                       ),
                     ),
@@ -460,7 +518,7 @@ _Orçamento gerado pelo PaintManager_
                       ],
                     ),
                     const SizedBox(height: 12),
-                    ...List.generate(_itensForm.length, (index) => _buildItemServicoCard(index)),
+                    ...List.generate(_itensForm.length, (i) => _buildItemServicoCard(i)),
                     const SizedBox(height: 24),
 
                     // === SEÇÃO 4: CUSTOS ===
@@ -471,8 +529,10 @@ _Orçamento gerado pelo PaintManager_
                         children: [
                           SwitchListTile(
                             contentPadding: EdgeInsets.zero,
-                            title: const Text("Materiais inclusos no orçamento?", style: TextStyle(fontWeight: FontWeight.w500)),
-                            subtitle: const Text("Marque se o pintor fornecerá o material", style: TextStyle(fontSize: 12)),
+                            title: const Text("Materiais inclusos no orçamento?",
+                                style: TextStyle(fontWeight: FontWeight.w500)),
+                            subtitle: const Text("Marque se o pintor fornecerá o material",
+                                style: TextStyle(fontSize: 12)),
                             value: _materiaisInclusos,
                             activeThumbColor: Colors.black,
                             onChanged: (val) => setState(() => _materiaisInclusos = val),
@@ -484,11 +544,12 @@ _Orçamento gerado pelo PaintManager_
                           const SizedBox(height: 12),
                           _buildMoneyField("Valor da Mão de Obra", _valorMaoDeObraController),
                           const SizedBox(height: 12),
-                          _buildMoneyField("Desconto", _descontoController, obrigatorio: false),
+                          _buildMoneyField("Desconto", _descontoController,
+                              obrigatorio: false),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 100), // Espaço para o rodapé fixo
+                    const SizedBox(height: 100),
                   ],
                 ),
               ),
@@ -500,7 +561,12 @@ _Orçamento gerado pelo PaintManager_
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
               color: Colors.white,
-              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 10, offset: const Offset(0, -2))],
+              boxShadow: [
+                BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, -2))
+              ],
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -522,13 +588,20 @@ _Orçamento gerado pelo PaintManager_
                   child: ElevatedButton.icon(
                     onPressed: carregando ? null : _salvar,
                     icon: carregando
-                        ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                        ? const SizedBox(
+                            height: 18,
+                            width: 18,
+                            child: CircularProgressIndicator(
+                                color: Colors.white, strokeWidth: 2))
                         : const Icon(Icons.save_outlined, size: 20),
-                    label: Text(carregando ? "Salvando..." : "Salvar Orçamento", style: const TextStyle(fontWeight: FontWeight.bold)),
+                    label: Text(carregando ? "Salvando..." : "Salvar Orçamento",
+                        style:
+                            const TextStyle(fontWeight: FontWeight.bold)),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.black,
                       foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8)),
                     ),
                   ),
                 ),
@@ -559,46 +632,230 @@ _Orçamento gerado pelo PaintManager_
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)],
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)
+        ],
       ),
       child: child,
     );
   }
 
-  Widget _buildClienteDropdown() {
-    final clienteController = context.watch<ClienteController>();
-    final clientes = clienteController.clientes;
-    return DropdownButtonFormField<int>(
-      initialValue: _clienteSelecionadoId,
-      decoration: InputDecoration(
-        labelText: "Selecione o Cliente",
-        prefixIcon: Icon(Icons.person_outline, size: 20, color: Colors.grey[600]),
-        filled: true,
-        fillColor: Colors.grey[50],
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
-      ),
-      items: clientes.map((c) => DropdownMenuItem<int>(value: c.id, child: Text(c.nome))).toList(),
-      onChanged: (val) => setState(() => _clienteSelecionadoId = val),
-      validator: (val) => val == null ? "Selecione um cliente" : null,
+  /// Busca de obra com autocomplete — filtra por título e nome do cliente
+  Widget _buildObraSearch() {
+    final obras = context.watch<ObraController>().obras;
+
+    return FormField<int>(
+      initialValue: _obraSelecionada?.id,
+      validator: (v) => v == null ? "Selecione uma obra" : null,
+      builder: (FormFieldState<int> field) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            LayoutBuilder(
+              builder: (context, constraints) {
+                return Autocomplete<Obra>(
+                  optionsBuilder: (TextEditingValue textEditingValue) {
+                    if (textEditingValue.text.isEmpty) return obras;
+                    final query = textEditingValue.text.toLowerCase();
+                    return obras.where((o) =>
+                        o.tituloDaObra.toLowerCase().contains(query) ||
+                        o.clienteNome.toLowerCase().contains(query));
+                  },
+                  displayStringForOption: (Obra o) => o.tituloDaObra,
+                  onSelected: (Obra obra) {
+                    setState(() => _obraSelecionada = obra);
+                    field.didChange(obra.id);
+                  },
+                  fieldViewBuilder: (context, textController, focusNode, _) {
+                    if (_obraSearchController.text.isNotEmpty &&
+                        textController.text.isEmpty) {
+                      textController.text = _obraSearchController.text;
+                    }
+                    _obraSearchController = textController;
+
+                    return TextFormField(
+                      controller: textController,
+                      focusNode: focusNode,
+                      decoration: InputDecoration(
+                        labelText: "Pesquisar Obra",
+                        hintText: "Digite o título ou nome do cliente...",
+                        hintStyle: TextStyle(color: Colors.grey[400]),
+                        prefixIcon: Icon(Icons.search, size: 20, color: Colors.grey[600]),
+                        suffixIcon: textController.text.isNotEmpty
+                            ? IconButton(
+                                icon: Icon(Icons.clear,
+                                    size: 18, color: Colors.grey[500]),
+                                onPressed: () {
+                                  textController.clear();
+                                  setState(() => _obraSelecionada = null);
+                                  field.didChange(null);
+                                },
+                              )
+                            : Icon(Icons.arrow_drop_down, color: Colors.grey[600]),
+                        filled: true,
+                        fillColor: Colors.grey[50],
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(
+                              color: field.hasError ? Colors.red : Colors.grey[200]!),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(
+                              color: field.hasError ? Colors.red : Colors.grey[200]!),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(
+                              color: field.hasError ? Colors.red : Colors.black,
+                              width: 1.5),
+                        ),
+                      ),
+                      onChanged: (value) {
+                        if (_obraSelecionada != null &&
+                            value != _obraSelecionada!.tituloDaObra) {
+                          setState(() => _obraSelecionada = null);
+                          field.didChange(null);
+                        }
+                      },
+                    );
+                  },
+                  optionsViewBuilder: (context, onSelected, options) {
+                    return Align(
+                      alignment: Alignment.topLeft,
+                      child: Material(
+                        elevation: 6,
+                        borderRadius: BorderRadius.circular(8),
+                        clipBehavior: Clip.antiAlias,
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                              maxHeight: 280, maxWidth: constraints.maxWidth),
+                          child: ListView.separated(
+                            shrinkWrap: true,
+                            padding: EdgeInsets.zero,
+                            itemCount: options.length,
+                            separatorBuilder: (_, __) =>
+                                Divider(height: 1, color: Colors.grey[200]),
+                            itemBuilder: (context, index) {
+                              final obra = options.elementAt(index);
+                              final isSelected = obra.id == _obraSelecionada?.id;
+                              return ListTile(
+                                dense: true,
+                                leading: CircleAvatar(
+                                  radius: 16,
+                                  backgroundColor:
+                                      isSelected ? Colors.black : Colors.grey[200],
+                                  child: Icon(Icons.construction,
+                                      size: 14,
+                                      color: isSelected
+                                          ? Colors.white
+                                          : Colors.grey[700]),
+                                ),
+                                title: Text(
+                                  obra.tituloDaObra,
+                                  style: TextStyle(
+                                    fontWeight: isSelected
+                                        ? FontWeight.bold
+                                        : FontWeight.normal,
+                                    color: Colors.grey[800],
+                                  ),
+                                ),
+                                subtitle: Text(
+                                  "Cliente: ${obra.clienteNome}  •  ${obra.status}",
+                                  style: TextStyle(
+                                      fontSize: 12, color: Colors.grey[500]),
+                                ),
+                                selected: isSelected,
+                                selectedTileColor: Colors.grey[100],
+                                onTap: () => onSelected(obra),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+            // Chip do cliente preenchido automaticamente
+            if (_obraSelecionada != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.grey[300]!),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.person_outline,
+                          size: 16, color: Colors.grey[600]),
+                      const SizedBox(width: 8),
+                      Text("Cliente: ",
+                          style: TextStyle(
+                              fontSize: 13, color: Colors.grey[600])),
+                      Expanded(
+                        child: Text(
+                          _obraSelecionada!.clienteNome,
+                          style: const TextStyle(
+                              fontSize: 13, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            if (field.hasError)
+              Padding(
+                padding: const EdgeInsets.only(left: 12, top: 6),
+                child: Text(
+                  field.errorText!,
+                  style: TextStyle(color: Colors.red[700], fontSize: 12),
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 
-  Widget _buildInfoTile(String label, String value) {
+  /// Exibição read-only em modo edição
+  Widget _buildObraReadOnly() {
+    final obraTitle = _obraSelecionada?.tituloDaObra ??
+        'Obra #${widget.orcamentoParaEdicao?.idObra}';
+    final clienteNome = _obraSelecionada?.clienteNome ??
+        widget.orcamentoParaEdicao?.clienteNome ??
+        '';
+    return Column(
+      children: [
+        _buildInfoTile("Obra", obraTitle, Icons.construction),
+        const SizedBox(height: 12),
+        _buildInfoTile("Cliente", clienteNome, Icons.person_outline),
+      ],
+    );
+  }
+
+  Widget _buildInfoTile(String label, String value, [IconData icon = Icons.info_outline]) {
     return TextFormField(
       initialValue: value,
       readOnly: true,
       decoration: InputDecoration(
         labelText: label,
-        prefixIcon: Icon(Icons.person_outline, size: 20, color: Colors.grey[600]),
+        prefixIcon: Icon(icon, size: 20, color: Colors.grey[600]),
         filled: true,
         fillColor: Colors.grey[100],
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+        border:
+            OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
       ),
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller, IconData icon, String hint) {
+  Widget _buildTextField(String label, TextEditingController controller,
+      IconData icon, String hint) {
     return TextFormField(
       controller: controller,
       decoration: InputDecoration(
@@ -608,9 +865,15 @@ _Orçamento gerado pelo PaintManager_
         prefixIcon: Icon(icon, size: 20, color: Colors.grey[600]),
         filled: true,
         fillColor: Colors.grey[50],
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Colors.black, width: 1.5)),
+        border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide(color: Colors.grey[200]!)),
+        enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide(color: Colors.grey[200]!)),
+        focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: const BorderSide(color: Colors.black, width: 1.5)),
       ),
       validator: (val) => val == null || val.isEmpty ? "Campo obrigatório" : null,
     );
@@ -633,8 +896,12 @@ _Orçamento gerado pelo PaintManager_
           prefixIcon: Icon(Icons.calendar_today, size: 20, color: Colors.grey[600]),
           filled: true,
           fillColor: Colors.grey[50],
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
-          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
+          border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey[200]!)),
+          enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey[200]!)),
         ),
         child: Text(DateFormat('dd/MM/yyyy').format(_dataValidade)),
       ),
@@ -643,14 +910,18 @@ _Orçamento gerado pelo PaintManager_
 
   Widget _buildDropdownPagamento() {
     return DropdownButtonFormField<String>(
-      initialValue: _formaPagamento,
+      value: _formaPagamento,
       decoration: InputDecoration(
         labelText: "Forma de Pagamento",
         prefixIcon: Icon(Icons.payment, size: 20, color: Colors.grey[600]),
         filled: true,
         fillColor: Colors.grey[50],
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
+        border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide(color: Colors.grey[200]!)),
+        enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide(color: Colors.grey[200]!)),
       ),
       items: ['PIX', 'Cartão', 'Dinheiro', 'Transferência', 'Boleto']
           .map((f) => DropdownMenuItem(value: f, child: Text(f)))
@@ -661,19 +932,80 @@ _Orçamento gerado pelo PaintManager_
 
   Widget _buildDropdownStatus() {
     return DropdownButtonFormField<String>(
-      initialValue: _status,
+      value: _status,
       decoration: InputDecoration(
         labelText: "Status do Orçamento",
         prefixIcon: Icon(Icons.flag_outlined, size: 20, color: Colors.grey[600]),
         filled: true,
         fillColor: Colors.grey[50],
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
+        border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide(color: Colors.grey[200]!)),
+        enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide(color: Colors.grey[200]!)),
       ),
-      items: ['Pendente', 'Aprovado', 'Rejeitado', 'Concluído']
+      items: ['Pendente', 'Aprovado', 'Recusado', 'Concluído']
           .map((s) => DropdownMenuItem(value: s, child: Text(s)))
           .toList(),
       onChanged: (val) => setState(() => _status = val!),
+    );
+  }
+
+  Widget _buildStatusEditor() {
+    const statusOptions = [
+      _StatusOption('Pendente',  Colors.orange, Icons.hourglass_empty),
+      _StatusOption('Aprovado',  Colors.green,  Icons.check_circle_outline),
+      _StatusOption('Recusado',  Colors.red,    Icons.cancel_outlined),
+      _StatusOption('Concluído', Colors.blue,   Icons.done_all),
+    ];
+
+    return _buildSectionCard(
+      child: Row(
+        children: statusOptions.map((opt) {
+          final isSelected = _status == opt.valor;
+          return Expanded(
+            child: GestureDetector(
+              onTap: () => setState(() => _status = opt.valor),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? opt.cor.withValues(alpha: 0.12)
+                      : Colors.grey[100],
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: isSelected ? opt.cor : Colors.grey[300]!,
+                    width: isSelected ? 1.8 : 1,
+                  ),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(opt.icone,
+                        size: 22,
+                        color: isSelected ? opt.cor : Colors.grey[400]),
+                    const SizedBox(height: 5),
+                    Text(
+                      opt.valor,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: isSelected
+                            ? FontWeight.bold
+                            : FontWeight.normal,
+                        color: isSelected ? opt.cor : Colors.grey[500],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
     );
   }
 
@@ -684,7 +1016,9 @@ _Orçamento gerado pelo PaintManager_
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)],
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)
+        ],
         border: Border.all(color: Colors.grey[200]!),
       ),
       child: Column(
@@ -693,7 +1027,9 @@ _Orçamento gerado pelo PaintManager_
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text("Item ${index + 1}", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey[700])),
+              Text("Item ${index + 1}",
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold, color: Colors.grey[700])),
               if (_itensForm.length > 1)
                 IconButton(
                   icon: Icon(Icons.close, size: 18, color: Colors.red[400]),
@@ -714,22 +1050,30 @@ _Orçamento gerado pelo PaintManager_
               Expanded(
                 child: TextFormField(
                   controller: _itensForm[index].metragem,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[\d.,]'))],
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[\d.,]'))
+                  ],
                   decoration: _inputDeco("Metragem (m²)", Icons.square_foot),
                   onChanged: (_) => setState(() {}),
-                  validator: (val) => val == null || val.isEmpty ? "Obrigatório" : null,
+                  validator: (val) =>
+                      val == null || val.isEmpty ? "Obrigatório" : null,
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: TextFormField(
                   controller: _itensForm[index].valorUnitario,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[\d.,]'))],
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[\d.,]'))
+                  ],
                   decoration: _inputDeco("Valor/m² (R\$)", Icons.attach_money),
                   onChanged: (_) => setState(() {}),
-                  validator: (val) => val == null || val.isEmpty ? "Obrigatório" : null,
+                  validator: (val) =>
+                      val == null || val.isEmpty ? "Obrigatório" : null,
                 ),
               ),
             ],
@@ -747,7 +1091,8 @@ _Orçamento gerado pelo PaintManager_
     );
   }
 
-  Widget _buildMoneyField(String label, TextEditingController controller, {bool obrigatorio = true}) {
+  Widget _buildMoneyField(String label, TextEditingController controller,
+      {bool obrigatorio = true}) {
     return TextFormField(
       controller: controller,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -758,12 +1103,20 @@ _Orçamento gerado pelo PaintManager_
         prefixText: "R\$ ",
         filled: true,
         fillColor: Colors.grey[50],
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Colors.black, width: 1.5)),
+        border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide(color: Colors.grey[200]!)),
+        enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide(color: Colors.grey[200]!)),
+        focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: const BorderSide(color: Colors.black, width: 1.5)),
       ),
       onChanged: (_) => setState(() {}),
-      validator: obrigatorio ? (val) => val == null || val.isEmpty ? "Campo obrigatório" : null : null,
+      validator: obrigatorio
+          ? (val) => val == null || val.isEmpty ? "Campo obrigatório" : null
+          : null,
     );
   }
 
@@ -773,14 +1126,26 @@ _Orçamento gerado pelo PaintManager_
       prefixIcon: Icon(icon, size: 20, color: Colors.grey[600]),
       filled: true,
       fillColor: Colors.grey[50],
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
-      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
-      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Colors.black, width: 1.5)),
+      border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: Colors.grey[200]!)),
+      enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: Colors.grey[200]!)),
+      focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: Colors.black, width: 1.5)),
     );
   }
 }
 
-/// Classe auxiliar para armazenar os controllers de cada item de serviço no formulário
+class _StatusOption {
+  final String valor;
+  final Color cor;
+  final IconData icone;
+  const _StatusOption(this.valor, this.cor, this.icone);
+}
+
 class _ItemServicoForm {
   final TextEditingController descricao;
   final TextEditingController metragem;
