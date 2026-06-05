@@ -1,4 +1,4 @@
-# Relatório Técnico de Auditoria de QA e Testes Unitários
+ Relatório Técnico de Auditoria de QA e Testes Unitários
 
 **Projeto:** PaintManager App  
 **Data da Auditoria:** 13 de Abril de 2026  
