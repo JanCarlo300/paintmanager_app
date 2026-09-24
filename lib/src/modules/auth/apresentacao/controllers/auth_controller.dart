@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../dominio/entidades/usuario.dart';
 import '../../dominio/repositorios/repositorio_autenticacao.dart';
+import '../../dominio/validador_senha.dart';
 
 class AuthController extends ChangeNotifier {
   final RepositorioAutenticacao _repositorio;
-  
+
   AuthController(this._repositorio);
 
   bool _carregando = false;
@@ -29,8 +30,9 @@ class AuthController extends ChangeNotifier {
       print("Resultado do login: $usuario");
 
       if (usuario != null && context.mounted) {
-        // Se é primeiro acesso e não é Administrador, obriga troca de senha
-        if (usuario.primeiroAcesso && usuario.funcao != 'Administrador') {
+        // Todo usuário no primeiro acesso é obrigado a trocar a senha,
+        // inclusive administrador (RF002 - sem isenção por função).
+        if (usuario.primeiroAcesso) {
           print("Redirecionando para redefinir senha");
           Navigator.of(context).pushReplacementNamed('/redefinir-senha-obrigatoria');
         } else {
@@ -50,53 +52,77 @@ class AuthController extends ChangeNotifier {
     }
   }
 
-  // Redefinição obrigatória de senha no primeiro acesso
-  Future<void> redefinirSenhaObrigatoria(BuildContext context, String novaSenha) async {
-    if (novaSenha.length < 6) {
-      _mostrarMensagem(context, "A senha deve ter no mínimo 6 caracteres.");
-      return;
-    }
+  // === RF002 - RECUPERAÇÃO DE SENHA (fluxo de 3 passos) ===
 
+  /// E-mail resolvido a partir do CPF/e-mail informado no passo 1.
+  /// Pode ficar `null` se o login não existir — propositalmente não
+  /// revelamos isso na UI, para não expor quais CPFs estão cadastrados.
+  String? _emailRecuperacao;
+
+  /// Passo 1: resolve o CPF/e-mail informado e dispara o código por e-mail.
+  Future<void> solicitarCodigoRecuperacao(String cpfOuEmail) async {
     _carregando = true;
     notifyListeners();
-
     try {
-      await _repositorio.atualizarSenhaPrimeiroAcesso(novaSenha);
-
-      if (context.mounted) {
-        _mostrarMensagem(context, "Senha definida com sucesso!", isErro: false);
-        Navigator.of(context).pushReplacementNamed('/home');
+      final email = await _repositorio.buscarEmailPorLogin(cpfOuEmail.trim());
+      _emailRecuperacao = email;
+      if (email != null) {
+        await _repositorio.recuperarSenha(email);
       }
-    } catch (e) {
-      if (context.mounted) {
-        _mostrarMensagem(context, e.toString(), isErro: true);
-      }
+      // Se não encontrou, não fazemos nada aqui de propósito: a tela
+      // sempre avança e mostra a mesma mensagem genérica, para não
+      // revelar se o CPF/e-mail existe no sistema.
+    } catch (_) {
+      // Erro técnico de envio: também tratado em silêncio por segurança,
+      // a tela segue com a mesma mensagem genérica.
     } finally {
       _carregando = false;
       notifyListeners();
     }
   }
 
-  // RF002 - Recuperar Senha
-  Future<void> recuperarSenha(BuildContext context, String email) async {
-    if (email.isEmpty) {
-      _mostrarMensagem(context, "Por favor, informe o e-mail.");
-      return;
+  /// Passo 2: verifica o código recebido por e-mail.
+  Future<bool> verificarCodigoRecuperacao(BuildContext context, String codigo) async {
+    if (_emailRecuperacao == null) {
+      // Login do passo 1 não existia: o código nunca vai ser válido.
+      _mostrarMensagem(context, "Código inválido. Verifique e tente novamente.");
+      return false;
     }
 
     _carregando = true;
     notifyListeners();
-
     try {
-      await _repositorio.recuperarSenha(email);
-      if (context.mounted) {
-        _mostrarMensagem(context, "Link de recuperação enviado para $email", isErro: false);
-        Navigator.of(context).pop(); 
-      }
+      await _repositorio.verificarCodigoRecuperacao(_emailRecuperacao!, codigo.trim());
+      return true;
     } catch (e) {
-      if (context.mounted) {
-        _mostrarMensagem(context, e.toString(), isErro: true);
+      if (context.mounted) _mostrarMensagem(context, e.toString());
+      return false;
+    } finally {
+      _carregando = false;
+      notifyListeners();
+    }
+  }
+
+  /// Passo 3 (RF002) e troca obrigatória do primeiro acesso: define a nova
+  /// senha para o usuário já autenticado (por login normal ou pelo código
+  /// de recuperação verificado no passo 2).
+  Future<bool> definirNovaSenha(BuildContext context, String novaSenha, String confirmacao) async {
+    _carregando = true;
+    notifyListeners();
+    try {
+      final cpf = await _repositorio.buscarCpfUsuarioLogado();
+      final erro = ValidadorSenha.validar(novaSenha, confirmacao, cpf: cpf);
+      if (erro != null) {
+        if (context.mounted) _mostrarMensagem(context, erro);
+        return false;
       }
+
+      await _repositorio.definirNovaSenha(novaSenha);
+      _emailRecuperacao = null;
+      return true;
+    } catch (e) {
+      if (context.mounted) _mostrarMensagem(context, e.toString(), isErro: true);
+      return false;
     } finally {
       _carregando = false;
       notifyListeners();
@@ -106,7 +132,7 @@ class AuthController extends ChangeNotifier {
   // Logout do Sistema
   Future<void> sair() async {
     await _repositorio.sair();
-    notifyListeners(); 
+    notifyListeners();
   }
 
   void _mostrarMensagem(BuildContext context, String mensagem, {bool isErro = true}) {

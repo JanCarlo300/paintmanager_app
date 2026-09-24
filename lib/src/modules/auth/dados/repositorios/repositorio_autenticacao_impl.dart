@@ -71,10 +71,68 @@ class RepositorioAutenticacaoImpl implements RepositorioAutenticacao {
   }
 
   @override
-  Future<void> atualizarSenhaPrimeiroAcesso(String novaSenha) async {
+  Future<String?> buscarEmailPorLogin(String cpfOuEmail) async {
+    try {
+      final resultado = await _supabase.rpc(
+        'buscar_email_por_login',
+        params: {'p_login': cpfOuEmail},
+      );
+      return resultado as String?;
+    } catch (_) {
+      // Falha de rede/infra: tratamos como "não encontrado" para não
+      // travar o fluxo nem revelar detalhes técnicos ao usuário.
+      return null;
+    }
+  }
+
+  @override
+  Future<void> recuperarSenha(String email) async {
+    try {
+      await _supabase.auth.resetPasswordForEmail(email);
+    } on AuthException catch (_) {
+      throw 'Erro ao enviar código de recuperação. Tente novamente.';
+    } catch (_) {
+      throw 'Erro ao enviar código de recuperação. Tente novamente.';
+    }
+  }
+
+  @override
+  Future<void> verificarCodigoRecuperacao(String email, String codigo) async {
+    try {
+      await _supabase.auth.verifyOTP(
+        email: email,
+        token: codigo,
+        type: OtpType.recovery,
+      );
+    } on AuthException catch (e) {
+      if (e.message.toLowerCase().contains('expired')) {
+        throw 'Código expirado. Solicite um novo código.';
+      }
+      throw 'Código inválido. Verifique e tente novamente.';
+    } catch (_) {
+      throw 'Código inválido. Verifique e tente novamente.';
+    }
+  }
+
+  @override
+  Future<String?> buscarCpfUsuarioLogado() async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) return null;
+
+    final resultado = await _supabase
+        .from('usuario')
+        .select('cpf')
+        .eq('auth_id', user.id)
+        .maybeSingle();
+
+    return resultado?['cpf'] as String?;
+  }
+
+  @override
+  Future<void> definirNovaSenha(String novaSenha) async {
     try {
       final user = _supabase.auth.currentUser;
-      if (user == null) throw 'Sessão expirada. Refaça o login.';
+      if (user == null) throw 'Sessão expirada. Refaça o processo.';
 
       // 1. Atualiza a senha no Supabase Auth
       await _supabase.auth.updateUser(
@@ -91,17 +149,6 @@ class RepositorioAutenticacaoImpl implements RepositorioAutenticacao {
     } catch (e) {
       if (e is String) rethrow;
       throw 'Erro técnico: ${e.toString()}';
-    }
-  }
-
-  @override
-  Future<void> recuperarSenha(String email) async {
-    try {
-      await _supabase.auth.resetPasswordForEmail(email);
-    } on AuthException catch (_) {
-      throw 'Erro ao enviar e-mail de recuperação. Verifique o endereço.';
-    } catch (_) {
-      throw 'Erro ao enviar e-mail de recuperação. Verifique o endereço.';
     }
   }
 
