@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
@@ -181,14 +182,14 @@ class _LoginPageState extends State<LoginPage> {
     required String hint,
     bool obscureText = false,
     TextInputType? keyboardType,
-    List<dynamic>? formatters,
+    List<TextInputFormatter>? formatters,
     Widget? suffixIcon,
   }) {
     return TextField(
       controller: controller,
       obscureText: obscureText,
       keyboardType: keyboardType,
-      inputFormatters: formatters != null ? [...formatters] : null,
+      inputFormatters: formatters,
       style: GoogleFonts.manrope(fontSize: 14, color: _Sahara.onSurface),
       decoration: InputDecoration(
         hintText: hint,
@@ -262,8 +263,8 @@ class _LoginPageState extends State<LoginPage> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        GestureDetector(
-          onTap: () => Navigator.pushNamed(context, '/recuperar-senha'),
+        TextButton(
+          onPressed: () => Navigator.pushNamed(context, '/recuperar-senha'),
           child: Text(
             "Esqueci minha senha",
             style: GoogleFonts.manrope(
@@ -274,8 +275,8 @@ class _LoginPageState extends State<LoginPage> {
             ),
           ),
         ),
-        GestureDetector(
-          onTap: () => _mostrarDicaPrimeiroAcesso(context),
+        TextButton(
+          onPressed: () => _mostrarDicaPrimeiroAcesso(context),
           child: Text(
             "Primeiro Acesso?",
             style: GoogleFonts.manrope(
@@ -334,7 +335,7 @@ class _LoginPageState extends State<LoginPage> {
             Divider(color: _Sahara.border, thickness: 1),
             const SizedBox(height: 16),
             Text(
-              "Deseja definir uma senha pessoal?",
+              "E a minha senha definitiva?",
               style: GoogleFonts.manrope(
                 fontWeight: FontWeight.w600,
                 fontSize: 13,
@@ -343,7 +344,7 @@ class _LoginPageState extends State<LoginPage> {
             ),
             const SizedBox(height: 8),
             Text(
-              "Após entrar no sistema pela primeira vez, recomendamos que utilize a opção 'Esqueci minha senha' para cadastrar uma senha definitiva.",
+              "Ao entrar com o CPF, o sistema vai pedir automaticamente que você cadastre uma senha definitiva antes de continuar.",
               style: GoogleFonts.manrope(
                 fontSize: 13,
                 color: _Sahara.onSurfaceMuted,
