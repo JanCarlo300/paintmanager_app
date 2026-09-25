@@ -12,38 +12,26 @@ class RepositorioUsuarioImpl implements RepositorioUsuario {
     try {
       // 1. Caso seja um NOVO usuário (cadastro pelo ADM)
       if (usuario.id == null) {
-        // Cria a senha inicial usando apenas os números do CPF
-        final senhaInicial = usuario.cpf.replaceAll(RegExp(r'[^0-9]'), '');
-
-        // Cria o usuário no Supabase Auth via signUp
-        final response = await _supabase.auth.signUp(
-          email: usuario.email,
-          password: senhaInicial,
-        );
-
-        final novoAuthId = response.user?.id;
-        if (novoAuthId == null) {
-          throw 'Erro ao criar conta: usuário não retornado pelo Supabase Auth.';
+        // Cria a conta inteiramente no servidor (Edge Function), sem
+        // tocar na sessão de quem está chamando. Ver supabase/functions/criar-usuario.
+        try {
+          await _supabase.functions.invoke(
+            'criar-usuario',
+            body: {
+              'nome': usuario.nome,
+              'email': usuario.email,
+              'cpf': usuario.cpf,
+              'telefone': usuario.telefone,
+              'funcao': usuario.funcao,
+            },
+          );
+        } on FunctionException catch (e) {
+          final detalhes = e.details;
+          if (detalhes is Map && detalhes['error'] is String) {
+            throw detalhes['error'] as String;
+          }
+          throw 'Erro ao criar usuário.';
         }
-
-        // Insere o registro na tabela 'usuario' do PostgreSQL
-        final modelo = UsuarioModelo(
-          authId: novoAuthId,
-          nome: usuario.nome,
-          email: usuario.email,
-          cpf: usuario.cpf,
-          telefone: usuario.telefone,
-          funcao: usuario.funcao,
-          status: usuario.status,
-          primeiroAcesso: true,
-          criadoEm: usuario.criadoEm,
-        );
-
-        await _supabase.from('usuario').insert(modelo.paraMapa());
-
-        // Restaura a sessão do ADM que fez o cadastro
-        // O signUp pode ter trocado a sessão — fazemos refresh
-        await _supabase.auth.refreshSession();
       }
       // 2. Caso seja uma ATUALIZAÇÃO de usuário existente
       else {
@@ -65,11 +53,6 @@ class RepositorioUsuarioImpl implements RepositorioUsuario {
             .update(modelo.paraMapa())
             .eq('id_usuario', usuario.id!);
       }
-    } on AuthException catch (e) {
-      if (e.message.contains('already registered')) {
-        throw 'Este e-mail já está cadastrado no sistema.';
-      }
-      throw 'Erro ao criar conta: ${e.message}';
     } catch (e) {
       if (e is String) rethrow;
       throw 'Erro ao salvar/atualizar usuário: $e';
