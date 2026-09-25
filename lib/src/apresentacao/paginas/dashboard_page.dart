@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../modules/auth/dominio/entidades/usuario.dart';
 import '../../modules/auth/apresentacao/controllers/auth_controller.dart';
 import '../controllers/dashboard_controller.dart';
+import '../controllers/notificacao_controller.dart';
 import '../widgets/drawer_comum.dart';
 import '../../core/tema/paleta_sahara.dart';
 
@@ -21,6 +22,9 @@ class DashboardPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final notificacaoController = context.watch<NotificacaoController>();
+    final qtdAlertas = notificacaoController.alertas.length;
+
     return Scaffold(
       backgroundColor: _corFundo,
       drawer: const DrawerComum(),
@@ -40,8 +44,13 @@ class DashboardPage extends StatelessWidget {
             ),
             actions: [
               IconButton(
-                icon: const Icon(Icons.notifications_none_rounded, color: Colors.white),
-                onPressed: () {},
+                icon: Badge(
+                  label: Text('$qtdAlertas'),
+                  isLabelVisible: qtdAlertas > 0,
+                  backgroundColor: Colors.red,
+                  child: const Icon(Icons.notifications_none_rounded, color: Colors.white),
+                ),
+                onPressed: () => _mostrarAlertas(context, notificacaoController),
               ),
             ],
             flexibleSpace: FlexibleSpaceBar(
@@ -682,6 +691,80 @@ class DashboardPage extends StatelessWidget {
   String _formatarMoeda(double valor) {
     return NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$', decimalDigits: 2)
         .format(valor);
+  }
+
+  // ═══════════════════════════════════════════
+  // ALERTAS (RF013 simplificado)
+  // ═══════════════════════════════════════════
+  void _mostrarAlertas(BuildContext context, NotificacaoController controller) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Consumer<NotificacaoController>(
+            builder: (context, ctrl, _) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text("Alertas", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                      IconButton(
+                        icon: const Icon(Icons.refresh, size: 20),
+                        tooltip: "Atualizar",
+                        onPressed: () => ctrl.carregarAlertas(),
+                      ),
+                    ],
+                  ),
+                  if (ctrl.carregando)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 24),
+                      child: Center(child: CircularProgressIndicator(color: _corPrimaria)),
+                    )
+                  else if (ctrl.alertas.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 24),
+                      child: Column(
+                        children: [
+                          Icon(Icons.check_circle_outline, size: 40, color: Colors.grey[400]),
+                          const SizedBox(height: 8),
+                          Text("Tudo em dia, sem pendências.", style: TextStyle(color: Colors.grey[600])),
+                        ],
+                      ),
+                    )
+                  else
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxHeight: 400),
+                      child: ListView.separated(
+                        shrinkWrap: true,
+                        itemCount: ctrl.alertas.length,
+                        separatorBuilder: (_, __) => const Divider(height: 1),
+                        itemBuilder: (context, i) {
+                          final a = ctrl.alertas[i];
+                          return ListTile(
+                            leading: Icon(a.icone, color: a.cor),
+                            title: Text(a.titulo, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                            subtitle: Text(a.subtitulo, style: const TextStyle(fontSize: 12)),
+                            onTap: () {
+                              Navigator.pop(ctx);
+                              Navigator.pushNamed(context, a.rota);
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
+        ),
+      ),
+    );
   }
 }
 

@@ -20,6 +20,7 @@ import 'src/modules/auth/dados/repositorios/repositorio_usuario_impl.dart';
 // Imports de Dashboard
 import 'src/apresentacao/paginas/dashboard_page.dart';
 import 'src/apresentacao/controllers/dashboard_controller.dart';
+import 'src/apresentacao/controllers/notificacao_controller.dart';
 
 // Imports de Clientes
 import 'src/modules/clientes/apresentacao/paginas/cliente_list_page.dart';
@@ -81,6 +82,9 @@ void main() async {
         // Dashboard
         ChangeNotifierProvider(
           create: (_) => DashboardController(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => NotificacaoController(),
         ),
         // Auth & Usuários — Supabase
         ChangeNotifierProvider(
