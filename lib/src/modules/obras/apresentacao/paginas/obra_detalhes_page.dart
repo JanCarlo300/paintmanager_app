@@ -6,6 +6,7 @@ import '../../dominio/entidades/obra.dart';
 import '../controllers/obra_controller.dart';
 import '../../../../core/tema/paleta_sahara.dart';
 import '../../../auth/apresentacao/controllers/auth_controller.dart';
+import '../../../auth/apresentacao/controllers/usuario_controller.dart';
 
 class ObraDetalhesPage extends StatefulWidget {
   final Obra obra;
@@ -22,7 +23,9 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
     super.initState();
     Future.microtask(() {
       if (!mounted) return;
-      context.read<ObraController>().carregarObras();
+      final controller = context.read<ObraController>();
+      controller.carregarObras();
+      if (widget.obra.id != null) controller.carregarEquipe(widget.obra.id!);
     });
   }
 
@@ -39,8 +42,9 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
   Widget build(BuildContext context) {
     final controller = context.watch<ObraController>();
     final formatoData = DateFormat('dd/MM/yyyy');
-    // Só o responsável técnico (Gerente/Administrador) confirma mudanças de status.
-    final podeAlterarStatus = context.watch<AuthController>().usuarioLogado?.funcao != 'Funcionário';
+    // Só o responsável técnico (Gerente/Administrador) confirma mudanças de
+    // status e mexe na equipe alocada — Funcionário só acompanha.
+    final podeGerenciarObra = context.watch<AuthController>().usuarioLogado?.funcao != 'Funcionário';
 
     if (controller.carregando) {
       return Scaffold(
@@ -67,7 +71,7 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
         foregroundColor: PaletaSahara.onSurface,
         elevation: 0.5,
         actions: [
-          if (podeAlterarStatus)
+          if (podeGerenciarObra)
             PopupMenuButton<String>(
               icon: const Icon(Icons.more_vert),
               onSelected: (status) => _atualizarStatus(context, obraAtual, controller, status),
@@ -88,6 +92,12 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
 
             // === BARRA DE PROGRESSO ===
             _buildProgressoCard(obraAtual, cor),
+            const SizedBox(height: 24),
+
+            // === EQUIPE ALOCADA ===
+            _sectionTitle("Equipe Alocada", Icons.groups_outlined),
+            const SizedBox(height: 12),
+            _buildEquipeCard(context, obraAtual, controller, podeGerenciarObra),
             const SizedBox(height: 24),
 
             // === CHECKLIST DE ETAPAS ===
@@ -233,6 +243,142 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
           Text("${obraAtual.progresso.toStringAsFixed(0)}% concluído",
               style: TextStyle(color: cor, fontWeight: FontWeight.bold, fontSize: 16)),
         ],
+      ),
+    );
+  }
+
+  // --- EQUIPE ALOCADA (RF010) ---
+  Widget _buildEquipeCard(BuildContext context, Obra obraAtual, ObraController controller, bool podeGerenciar) {
+    final equipe = controller.equipeObraAtual;
+
+    return _card(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (controller.carregandoEquipe)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(8),
+                child: CircularProgressIndicator(color: PaletaSahara.primary, strokeWidth: 2),
+              ),
+            )
+          else if (equipe.isEmpty)
+            Text("Nenhum funcionário alocado.", style: TextStyle(color: Colors.grey[500], fontSize: 13))
+          else
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: equipe.map((u) {
+                return Chip(
+                  avatar: CircleAvatar(
+                    backgroundColor: PaletaSahara.primary,
+                    child: Text(
+                      u.nome.isNotEmpty ? u.nome[0].toUpperCase() : '?',
+                      style: const TextStyle(color: Colors.white, fontSize: 12),
+                    ),
+                  ),
+                  label: Text(u.nome, style: const TextStyle(fontSize: 13)),
+                  onDeleted: podeGerenciar && obraAtual.id != null && u.id != null
+                      ? () => controller.desalocarFuncionario(obraAtual.id!, u.id!)
+                      : null,
+                  backgroundColor: PaletaSahara.primary.withValues(alpha: 0.08),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    side: BorderSide(color: PaletaSahara.primary.withValues(alpha: 0.25)),
+                  ),
+                );
+              }).toList(),
+            ),
+          if (podeGerenciar) ...[
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: () => _mostrarSelecionarFuncionario(context, obraAtual, controller),
+              icon: const Icon(Icons.person_add_alt_1, size: 18),
+              label: const Text("Adicionar funcionário"),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: PaletaSahara.primary,
+                side: const BorderSide(color: PaletaSahara.primary),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  void _mostrarSelecionarFuncionario(BuildContext context, Obra obraAtual, ObraController obraController) {
+    if (obraAtual.id == null) return;
+    final usuarioController = context.read<UsuarioController>();
+    Future.microtask(() => usuarioController.carregarUsuarios());
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Consumer<UsuarioController>(
+            builder: (context, usuarioCtrl, _) {
+              final idsAlocados = obraController.equipeObraAtual.map((u) => u.id).toSet();
+              final disponiveis = usuarioCtrl.usuarios
+                  .where((u) => u.funcao == 'Funcionário' && u.status && !idsAlocados.contains(u.id))
+                  .toList();
+
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text("Adicionar funcionário", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 16),
+                  if (usuarioCtrl.carregando)
+                    const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(16),
+                        child: CircularProgressIndicator(color: PaletaSahara.primary),
+                      ),
+                    )
+                  else if (disponiveis.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      child: Text(
+                        "Nenhum funcionário disponível para alocar.",
+                        style: TextStyle(color: Colors.grey[600]),
+                      ),
+                    )
+                  else
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxHeight: 320),
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: disponiveis.length,
+                        itemBuilder: (context, i) {
+                          final u = disponiveis[i];
+                          return ListTile(
+                            leading: CircleAvatar(
+                              backgroundColor: PaletaSahara.primary,
+                              child: Text(
+                                u.nome.isNotEmpty ? u.nome[0].toUpperCase() : '?',
+                                style: const TextStyle(color: Colors.white),
+                              ),
+                            ),
+                            title: Text(u.nome),
+                            subtitle: Text(u.telefone.isNotEmpty ? u.telefone : u.email),
+                            onTap: () {
+                              Navigator.pop(ctx);
+                              if (u.id != null) {
+                                obraController.alocarFuncionario(obraAtual.id!, u.id!);
+                              }
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
+        ),
       ),
     );
   }

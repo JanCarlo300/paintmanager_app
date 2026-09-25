@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../dominio/entidades/obra.dart';
 import '../../dominio/entidades/etapa_servico.dart';
 import '../../dominio/repositorios/repositorio_obra.dart';
+import '../../../auth/dominio/entidades/usuario.dart';
 
 /// Controller do módulo Obras — Supabase.
 /// Segue o padrão Future + notifyListeners (consistente com ClienteController).
@@ -106,5 +107,36 @@ class ObraController extends ChangeNotifier {
 
     await salvar(obraAtualizada);
     return null; // Sem erro
+  }
+
+  // === RF010 - Alocar Equipe à Obra ===
+
+  List<Usuario> _equipeObraAtual = [];
+  List<Usuario> get equipeObraAtual => _equipeObraAtual;
+
+  bool _carregandoEquipe = false;
+  bool get carregandoEquipe => _carregandoEquipe;
+
+  Future<void> carregarEquipe(int obraId) async {
+    _carregandoEquipe = true;
+    notifyListeners();
+    try {
+      _equipeObraAtual = await _repositorio.listarFuncionariosAlocados(obraId);
+    } catch (e) {
+      _equipeObraAtual = [];
+    } finally {
+      _carregandoEquipe = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> alocarFuncionario(int obraId, int usuarioId) async {
+    await _repositorio.alocarFuncionario(obraId, usuarioId);
+    await carregarEquipe(obraId);
+  }
+
+  Future<void> desalocarFuncionario(int obraId, int usuarioId) async {
+    await _repositorio.desalocarFuncionario(obraId, usuarioId);
+    await carregarEquipe(obraId);
   }
 }

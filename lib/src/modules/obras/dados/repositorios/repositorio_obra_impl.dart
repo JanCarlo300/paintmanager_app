@@ -3,6 +3,8 @@ import '../../../../core/config/supabase_config.dart';
 import '../../dominio/entidades/obra.dart';
 import '../../dominio/repositorios/repositorio_obra.dart';
 import '../modelos/obra_modelo.dart';
+import '../../../auth/dominio/entidades/usuario.dart';
+import '../../../auth/dados/modelos/usuario_modelo.dart';
 
 /// Implementação do repositório de Obras usando Supabase (PostgreSQL).
 /// Todas as operações usam métodos nativos do SupabaseClient.
@@ -66,6 +68,60 @@ class RepositorioObraImpl implements RepositorioObra {
       await _supabase.from('obra').delete().eq('id_obra', id);
     } catch (e) {
       throw 'Erro ao excluir obra: $e';
+    }
+  }
+
+  // === RF010 - Alocar Equipe à Obra ===
+
+  @override
+  Future<List<Usuario>> listarFuncionariosAlocados(int obraId) async {
+    try {
+      final vinculos = await _supabase
+          .from('equipe_obra')
+          .select('usuario_id')
+          .eq('obra_id', obraId);
+
+      final idsAlocados = (vinculos as List)
+          .map((v) => v['usuario_id'] as int)
+          .toList();
+
+      if (idsAlocados.isEmpty) return [];
+
+      final usuarios = await _supabase
+          .from('usuario')
+          .select()
+          .inFilter('id_usuario', idsAlocados);
+
+      return (usuarios as List)
+          .map((mapa) => UsuarioModelo.deMapa(mapa))
+          .toList();
+    } catch (e) {
+      throw 'Erro ao listar equipe alocada: $e';
+    }
+  }
+
+  @override
+  Future<void> alocarFuncionario(int obraId, int usuarioId) async {
+    try {
+      await _supabase.from('equipe_obra').insert({
+        'obra_id': obraId,
+        'usuario_id': usuarioId,
+      });
+    } catch (e) {
+      throw 'Erro ao alocar funcionário: $e';
+    }
+  }
+
+  @override
+  Future<void> desalocarFuncionario(int obraId, int usuarioId) async {
+    try {
+      await _supabase
+          .from('equipe_obra')
+          .delete()
+          .eq('obra_id', obraId)
+          .eq('usuario_id', usuarioId);
+    } catch (e) {
+      throw 'Erro ao desalocar funcionário: $e';
     }
   }
 }
