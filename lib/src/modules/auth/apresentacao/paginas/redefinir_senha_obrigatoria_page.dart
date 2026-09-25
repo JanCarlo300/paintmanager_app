@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../controllers/auth_controller.dart';
+import '../../../../core/tema/paleta_sahara.dart';
 
 class RedefinirSenhaObrigatoriaPage extends StatefulWidget {
   const RedefinirSenhaObrigatoriaPage({super.key});
@@ -54,11 +55,12 @@ class _RedefinirSenhaObrigatoriaPageState extends State<RedefinirSenhaObrigatori
     final authController = context.watch<AuthController>();
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: PaletaSahara.background,
       appBar: AppBar(
         title: const Text('Redefinir Senha'),
         centerTitle: true,
-        backgroundColor: Colors.white,
+        backgroundColor: PaletaSahara.cardSurface,
+        foregroundColor: PaletaSahara.onSurface,
         elevation: 0,
       ),
       body: Center(
@@ -68,7 +70,7 @@ class _RedefinirSenhaObrigatoriaPageState extends State<RedefinirSenhaObrigatori
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Icon(Icons.lock_reset, size: 80, color: Colors.black),
+              const Icon(Icons.lock_reset, size: 80, color: PaletaSahara.primary),
               const SizedBox(height: 24),
               const Text(
                 'Primeiro Acesso',
@@ -117,7 +119,7 @@ class _RedefinirSenhaObrigatoriaPageState extends State<RedefinirSenhaObrigatori
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  backgroundColor: Colors.black,
+                  backgroundColor: PaletaSahara.primary,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),

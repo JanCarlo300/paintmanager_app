@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../dominio/entidades/usuario.dart';
 import '../controllers/usuario_controller.dart';
 import '../../../../apresentacao/widgets/drawer_comum.dart';
+import '../../../../core/tema/paleta_sahara.dart';
 
 /// Filtros disponíveis na tela de usuários
 enum FiltroUsuario { todosAtivos, inativos }
@@ -56,7 +57,7 @@ class _UsuarioListPageState extends State<UsuarioListPage> {
 
     if (controller.carregando) {
       return Scaffold(
-        backgroundColor: const Color(0xFFF8F9FA),
+        backgroundColor: PaletaSahara.background,
         drawer: const DrawerComum(),
         appBar: AppBar(
           leading: Builder(
@@ -67,11 +68,11 @@ class _UsuarioListPageState extends State<UsuarioListPage> {
           ),
           title: const Text("Usuários", style: TextStyle(fontWeight: FontWeight.bold)),
           centerTitle: false,
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.black,
+          backgroundColor: PaletaSahara.cardSurface,
+          foregroundColor: PaletaSahara.onSurface,
           elevation: 0.5,
         ),
-        body: const Center(child: CircularProgressIndicator(color: Colors.black)),
+        body: const Center(child: CircularProgressIndicator(color: PaletaSahara.primary)),
       );
     }
 
@@ -80,7 +81,7 @@ class _UsuarioListPageState extends State<UsuarioListPage> {
     final usuariosFiltrados = _filtrarPorTexto(usuariosFiltradosPorStatus);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: PaletaSahara.background,
       drawer: const DrawerComum(),
       appBar: AppBar(
         leading: Builder(
@@ -91,8 +92,8 @@ class _UsuarioListPageState extends State<UsuarioListPage> {
         ),
         title: const Text("Usuários", style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: false,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor: PaletaSahara.cardSurface,
+        foregroundColor: PaletaSahara.onSurface,
         elevation: 0.5,
       ),
       body: SingleChildScrollView(
@@ -115,7 +116,7 @@ class _UsuarioListPageState extends State<UsuarioListPage> {
                 icon: const Icon(Icons.person_add_alt_1, size: 18),
                 label: const Text("Novo Usuário"),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
+                  backgroundColor: PaletaSahara.primary,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -228,7 +229,7 @@ class _UsuarioListPageState extends State<UsuarioListPage> {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
-            borderSide: const BorderSide(color: Colors.black, width: 1.5),
+            borderSide: const BorderSide(color: PaletaSahara.primary, width: 1.5),
           ),
         ),
       ),
@@ -242,7 +243,7 @@ class _UsuarioListPageState extends State<UsuarioListPage> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Material(
-        color: Colors.white,
+        color: PaletaSahara.cardSurface,
         borderRadius: BorderRadius.circular(12),
         elevation: 0,
         child: InkWell(
@@ -266,7 +267,7 @@ class _UsuarioListPageState extends State<UsuarioListPage> {
                     // Avatar
                     CircleAvatar(
                       radius: 20,
-                      backgroundColor: usuario.status ? Colors.black : Colors.grey[400],
+                      backgroundColor: usuario.status ? PaletaSahara.primary : Colors.grey[400],
                       child: Text(
                         usuario.nome.isNotEmpty ? usuario.nome[0].toUpperCase() : '?',
                         style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
@@ -335,7 +336,7 @@ class _UsuarioListPageState extends State<UsuarioListPage> {
       case 'Gerente':
         cor = Colors.orange;
       default:
-        cor = Colors.black;
+        cor = PaletaSahara.onSurface;
     }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -406,7 +407,7 @@ class _UsuarioListPageState extends State<UsuarioListPage> {
                   children: [
                     CircleAvatar(
                       radius: 18,
-                      backgroundColor: Colors.black,
+                      backgroundColor: PaletaSahara.primary,
                       child: Text(
                         usuario.nome.isNotEmpty ? usuario.nome[0].toUpperCase() : '?',
                         style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
@@ -536,7 +537,7 @@ class _UsuarioListPageState extends State<UsuarioListPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(40),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: PaletaSahara.cardSurface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.grey[200]!),
       ),
@@ -632,7 +633,7 @@ class _UsuarioListPageState extends State<UsuarioListPage> {
                 context.read<UsuarioController>().salvar(novoUser);
                 Navigator.pop(context);
               },
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.black),
+              style: ElevatedButton.styleFrom(backgroundColor: PaletaSahara.primary),
               child: const Text(
                 "Salvar",
                 style: TextStyle(color: Colors.white),

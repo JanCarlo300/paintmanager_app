@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../dominio/entidades/obra.dart';
 import '../controllers/obra_controller.dart';
+import '../../../../core/tema/paleta_sahara.dart';
 
 class ObraDetalhesPage extends StatefulWidget {
   final Obra obra;
@@ -40,14 +41,14 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
 
     if (controller.carregando) {
       return Scaffold(
-        backgroundColor: const Color(0xFFF8F9FA),
+        backgroundColor: PaletaSahara.background,
         appBar: AppBar(
           title: const Text("Detalhes da Obra", style: TextStyle(fontWeight: FontWeight.bold)),
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.black,
+          backgroundColor: PaletaSahara.cardSurface,
+          foregroundColor: PaletaSahara.onSurface,
           elevation: 0.5,
         ),
-        body: const Center(child: CircularProgressIndicator(color: Colors.black)),
+        body: const Center(child: CircularProgressIndicator(color: PaletaSahara.primary)),
       );
     }
 
@@ -56,11 +57,11 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
     final cor = _corStatus(obraAtual.status);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: PaletaSahara.background,
       appBar: AppBar(
         title: const Text("Detalhes da Obra", style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor: PaletaSahara.cardSurface,
+        foregroundColor: PaletaSahara.onSurface,
         elevation: 0.5,
         actions: [
           PopupMenuButton<String>(
@@ -115,7 +116,7 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
 
   Widget _card({required Widget child}) => Container(
     width: double.infinity, padding: const EdgeInsets.all(20),
-    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12),
+    decoration: BoxDecoration(color: PaletaSahara.cardSurface, borderRadius: BorderRadius.circular(12),
       boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)]),
     child: child,
   );
@@ -271,7 +272,7 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
                             fontSize: 15,
                             fontWeight: FontWeight.w500,
                             decoration: etapa.concluida ? TextDecoration.lineThrough : null,
-                            color: etapa.concluida ? Colors.grey[500] : Colors.black87,
+                            color: etapa.concluida ? Colors.grey[500] : PaletaSahara.onSurface,
                           ),
                         ),
                       ),
@@ -326,7 +327,7 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
               ),
               const SizedBox(width: 8),
               IconButton(
-                icon: const Icon(Icons.add_circle, color: Colors.black),
+                icon: const Icon(Icons.add_circle, color: PaletaSahara.primary),
                 onPressed: () {
                   final texto = textController.text.trim();
                   if (texto.isNotEmpty) {
@@ -395,7 +396,7 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
               filled: true, fillColor: Colors.grey[50],
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
               enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
-              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Colors.black, width: 1.5)),
+              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: PaletaSahara.primary, width: 1.5)),
             ),
           ),
           const SizedBox(height: 12),
@@ -420,7 +421,7 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
               icon: const Icon(Icons.save_outlined, size: 18),
               label: const Text("Salvar Anotações"),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.black, foregroundColor: Colors.white,
+                backgroundColor: PaletaSahara.primary, foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
             ),

@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../dominio/entidades/obra.dart';
 import '../controllers/obra_controller.dart';
 import '../../../../apresentacao/widgets/drawer_comum.dart';
+import '../../../../core/tema/paleta_sahara.dart';
 
 class ObraListPage extends StatefulWidget {
   const ObraListPage({super.key});
@@ -60,7 +61,7 @@ class _ObraListPageState extends State<ObraListPage> {
 
     if (controller.carregando) {
       return Scaffold(
-        backgroundColor: const Color(0xFFF8F9FA),
+        backgroundColor: PaletaSahara.background,
         drawer: const DrawerComum(),
         appBar: AppBar(
           leading: Builder(
@@ -71,11 +72,11 @@ class _ObraListPageState extends State<ObraListPage> {
           ),
           title: const Text("Obras", style: TextStyle(fontWeight: FontWeight.bold)),
           centerTitle: false,
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.black,
+          backgroundColor: PaletaSahara.cardSurface,
+          foregroundColor: PaletaSahara.onSurface,
           elevation: 0.5,
         ),
-        body: const Center(child: CircularProgressIndicator(color: Colors.black)),
+        body: const Center(child: CircularProgressIndicator(color: PaletaSahara.primary)),
       );
     }
 
@@ -85,7 +86,7 @@ class _ObraListPageState extends State<ObraListPage> {
     final concluidas = todas.where((o) => o.status == 'Concluída').length;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: PaletaSahara.background,
       drawer: const DrawerComum(),
       appBar: AppBar(
         leading: Builder(
@@ -96,8 +97,8 @@ class _ObraListPageState extends State<ObraListPage> {
         ),
         title: const Text("Obras", style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: false,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor: PaletaSahara.cardSurface,
+        foregroundColor: PaletaSahara.onSurface,
         elevation: 0.5,
       ),
       body: SingleChildScrollView(
@@ -117,7 +118,7 @@ class _ObraListPageState extends State<ObraListPage> {
                 icon: const Icon(Icons.add, size: 18),
                 label: const Text("Nova Obra"),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
+                  backgroundColor: PaletaSahara.primary,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -187,7 +188,7 @@ class _ObraListPageState extends State<ObraListPage> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: PaletaSahara.cardSurface,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)],
         border: Border(top: BorderSide(color: accent, width: 3)),
@@ -210,7 +211,7 @@ class _ObraListPageState extends State<ObraListPage> {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: PaletaSahara.cardSurface,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)],
       ),

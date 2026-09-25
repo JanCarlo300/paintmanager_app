@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../widgets/drawer_comum.dart';
+import '../../core/tema/paleta_sahara.dart';
 
 /// Página placeholder para módulos ainda não implementados.
 class EmConstrucaoPage extends StatelessWidget {
@@ -10,7 +11,7 @@ class EmConstrucaoPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: PaletaSahara.background,
       drawer: const DrawerComum(),
       appBar: AppBar(
         leading: Builder(
@@ -21,8 +22,8 @@ class EmConstrucaoPage extends StatelessWidget {
         ),
         title: Text(titulo, style: const TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: false,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor: PaletaSahara.cardSurface,
+        foregroundColor: PaletaSahara.onSurface,
         elevation: 0.5,
       ),
       body: Center(

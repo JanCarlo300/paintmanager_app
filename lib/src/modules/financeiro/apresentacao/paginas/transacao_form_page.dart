@@ -8,6 +8,7 @@ import '../../../obras/dominio/entidades/obra.dart';
 import '../controllers/financeiro_controller.dart';
 import '../../../clientes/apresentacao/controllers/cliente_controller.dart';
 import '../../../obras/apresentacao/controllers/obra_controller.dart';
+import '../../../../core/tema/paleta_sahara.dart';
 
 class TransacaoFormPage extends StatefulWidget {
   final Transacao? transacaoParaEdicao;
@@ -111,11 +112,11 @@ class _TransacaoFormPageState extends State<TransacaoFormPage> {
     final isReceita = _tipo == 'Receita';
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: PaletaSahara.background,
       appBar: AppBar(
         title: Text(isEdicao ? "Editar Transação" : "Nova $_tipo", style: const TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor: PaletaSahara.cardSurface,
+        foregroundColor: PaletaSahara.onSurface,
         elevation: 0.5,
       ),
       body: SingleChildScrollView(
@@ -227,7 +228,7 @@ class _TransacaoFormPageState extends State<TransacaoFormPage> {
                       : const Icon(Icons.save_outlined, size: 20),
                   label: Text(carregando ? "Salvando..." : "Salvar Transação", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black,
+                    backgroundColor: PaletaSahara.primary,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
@@ -250,7 +251,7 @@ class _TransacaoFormPageState extends State<TransacaoFormPage> {
 
   Widget _card({required Widget child}) => Container(
     width: double.infinity, padding: const EdgeInsets.all(16),
-    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12),
+    decoration: BoxDecoration(color: PaletaSahara.cardSurface, borderRadius: BorderRadius.circular(12),
       boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)]),
     child: child,
   );
@@ -363,6 +364,6 @@ class _TransacaoFormPageState extends State<TransacaoFormPage> {
     filled: true, fillColor: Colors.grey[50],
     border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
     enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
-    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Colors.black, width: 1.5)),
+    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: PaletaSahara.primary, width: 1.5)),
   );
 }

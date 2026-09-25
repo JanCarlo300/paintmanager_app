@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../modules/auth/apresentacao/controllers/auth_controller.dart';
 import '../../modules/auth/dominio/entidades/usuario.dart';
+import '../../core/tema/paleta_sahara.dart';
 
 class DrawerComum extends StatelessWidget {
   const DrawerComum({super.key});
@@ -12,7 +13,7 @@ class DrawerComum extends StatelessWidget {
     final rotaAtual = ModalRoute.of(context)?.settings.name;
 
     return Drawer(
-      backgroundColor: Colors.white,
+      backgroundColor: PaletaSahara.cardSurface,
       child: Column(
         children: [
           // Cabeçalho com Logo + Info do Usuário
@@ -31,9 +32,9 @@ class DrawerComum extends StatelessWidget {
                   left: 20,
                   right: 20,
                 ),
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  border: Border(
+                decoration: BoxDecoration(
+                  color: PaletaSahara.cardSurface,
+                  border: const Border(
                     bottom: BorderSide(color: Color(0xFFEEEEEE), width: 1),
                   ),
                 ),
@@ -45,7 +46,7 @@ class DrawerComum extends StatelessWidget {
                       width: 56,
                       height: 56,
                       decoration: BoxDecoration(
-                        color: Colors.black,
+                        color: PaletaSahara.primary,
                         borderRadius: BorderRadius.circular(28),
                       ),
                       child: const Icon(Icons.format_paint, color: Colors.white, size: 28),
@@ -57,7 +58,7 @@ class DrawerComum extends StatelessWidget {
                       style: const TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: 16,
-                        color: Color(0xFF212121),
+                        color: PaletaSahara.onSurface,
                       ),
                     ),
                     const SizedBox(height: 2),

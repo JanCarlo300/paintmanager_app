@@ -7,6 +7,7 @@ import '../../../clientes/dominio/entidades/cliente.dart';
 import '../controllers/orcamento_controller.dart';
 import '../../../clientes/apresentacao/controllers/cliente_controller.dart';
 import '../../../../apresentacao/widgets/drawer_comum.dart';
+import '../../../../core/tema/paleta_sahara.dart';
 
 /// Filtros disponíveis na tela de orçamentos
 enum FiltroOrcamento { todos, pendentes, aprovados, rejeitados, concluidos }
@@ -184,7 +185,7 @@ _Orçamento gerado pelo PaintManager_
 
     if (controller.carregando) {
       return Scaffold(
-        backgroundColor: const Color(0xFFF8F9FA),
+        backgroundColor: PaletaSahara.background,
         drawer: const DrawerComum(),
         appBar: AppBar(
           leading: Builder(
@@ -195,11 +196,11 @@ _Orçamento gerado pelo PaintManager_
           ),
           title: const Text("Orçamentos", style: TextStyle(fontWeight: FontWeight.bold)),
           centerTitle: false,
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.black,
+          backgroundColor: PaletaSahara.cardSurface,
+          foregroundColor: PaletaSahara.onSurface,
           elevation: 0.5,
         ),
-        body: const Center(child: CircularProgressIndicator(color: Colors.black)),
+        body: const Center(child: CircularProgressIndicator(color: PaletaSahara.primary)),
       );
     }
 
@@ -209,7 +210,7 @@ _Orçamento gerado pelo PaintManager_
     final clientes = clienteController.clientes;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: PaletaSahara.background,
       drawer: const DrawerComum(),
       appBar: AppBar(
         leading: Builder(
@@ -220,8 +221,8 @@ _Orçamento gerado pelo PaintManager_
         ),
         title: const Text("Orçamentos", style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: false,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor: PaletaSahara.cardSurface,
+        foregroundColor: PaletaSahara.onSurface,
         elevation: 0.5,
       ),
       body: SingleChildScrollView(
@@ -244,7 +245,7 @@ _Orçamento gerado pelo PaintManager_
                 icon: const Icon(Icons.add, size: 18),
                 label: const Text("Novo Orçamento"),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
+                  backgroundColor: PaletaSahara.primary,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -366,7 +367,7 @@ _Orçamento gerado pelo PaintManager_
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
-            borderSide: const BorderSide(color: Colors.black, width: 1.5),
+            borderSide: const BorderSide(color: PaletaSahara.primary, width: 1.5),
           ),
         ),
       ),
@@ -380,7 +381,7 @@ _Orçamento gerado pelo PaintManager_
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Material(
-        color: Colors.white,
+        color: PaletaSahara.cardSurface,
         borderRadius: BorderRadius.circular(12),
         elevation: 0,
         child: InkWell(
@@ -723,7 +724,7 @@ _Orçamento gerado pelo PaintManager_
       width: double.infinity,
       padding: const EdgeInsets.all(40),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: PaletaSahara.cardSurface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.grey[200]!),
       ),

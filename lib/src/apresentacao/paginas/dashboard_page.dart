@@ -1,24 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import '../../modules/obras/dominio/entidades/obra.dart';
 import '../../modules/auth/dominio/entidades/usuario.dart';
 import '../../modules/auth/apresentacao/controllers/auth_controller.dart';
 import '../controllers/dashboard_controller.dart';
 import '../widgets/drawer_comum.dart';
+import '../../core/tema/paleta_sahara.dart';
 
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
 
   // ─── Paleta PaintManager ───
-  static const Color _corPrimaria = Colors.black;
+  static const Color _corPrimaria = PaletaSahara.primary;
   static const Color _corAccent = Color(0xFFFF9800); // Laranja
   static const Color _corAccentClaro = Color(0xFFFFF3E0);
-  static const Color _corFundo = Color(0xFFF5F6FA);
-  static const Color _corCard = Colors.white;
+  static const Color _corFundo = PaletaSahara.background;
+  static const Color _corCard = PaletaSahara.cardSurface;
   static const Color _corVerdeReceita = Color(0xFF43A047);
   static const Color _corVermelhoDespesa = Color(0xFFE53935);
-  static const Color _corAzulInfo = Color(0xFF1E88E5);
 
   @override
   Widget build(BuildContext context) {
@@ -51,7 +50,7 @@ class DashboardPage extends StatelessWidget {
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [Color(0xFF212121), Color(0xFF424242)],
+                    colors: [PaletaSahara.primary, PaletaSahara.tertiary],
                   ),
                 ),
                 child: SafeArea(
@@ -140,7 +139,7 @@ class DashboardPage extends StatelessWidget {
       style: const TextStyle(
         fontSize: 18,
         fontWeight: FontWeight.w700,
-        color: Color(0xFF212121),
+        color: PaletaSahara.onSurface,
         letterSpacing: 0.3,
       ),
     );
@@ -271,7 +270,7 @@ class DashboardPage extends StatelessWidget {
     if (dashboardCtrl.carregando) {
       return const Padding(
         padding: EdgeInsets.all(32.0),
-        child: Center(child: CircularProgressIndicator(color: Colors.black)),
+        child: Center(child: CircularProgressIndicator(color: PaletaSahara.primary)),
       );
     }
 
@@ -420,7 +419,7 @@ class DashboardPage extends StatelessWidget {
     if (dashboardCtrl.carregando) {
       return const Padding(
         padding: EdgeInsets.all(32.0),
-        child: Center(child: CircularProgressIndicator(color: Colors.black)),
+        child: Center(child: CircularProgressIndicator(color: PaletaSahara.primary)),
       );
     }
     
@@ -462,7 +461,7 @@ class DashboardPage extends StatelessWidget {
                               style: const TextStyle(
                                 fontWeight: FontWeight.w700,
                                 fontSize: 15,
-                                color: Color(0xFF212121),
+                                color: PaletaSahara.onSurface,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,

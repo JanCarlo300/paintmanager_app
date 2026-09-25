@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../dominio/entidades/transacao.dart';
 import '../controllers/financeiro_controller.dart';
 import '../../../../apresentacao/widgets/drawer_comum.dart';
+import '../../../../core/tema/paleta_sahara.dart';
 
 class FinanceiroPage extends StatefulWidget {
   const FinanceiroPage({super.key});
@@ -42,7 +43,7 @@ class _FinanceiroPageState extends State<FinanceiroPage> {
     final formatoData = DateFormat('dd/MM/yyyy');
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: PaletaSahara.background,
       drawer: const DrawerComum(),
       appBar: AppBar(
         leading: Builder(
@@ -50,19 +51,19 @@ class _FinanceiroPageState extends State<FinanceiroPage> {
         ),
         title: const Text("Financeiro", style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: false,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor: PaletaSahara.cardSurface,
+        foregroundColor: PaletaSahara.onSurface,
         elevation: 0.5,
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _mostrarOpcoesNovaTransacao(context),
-        backgroundColor: Colors.black,
+        backgroundColor: PaletaSahara.primary,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add),
         label: const Text("Nova Transação", style: TextStyle(fontWeight: FontWeight.bold)),
       ),
       body: controller.carregando
-          ? const Center(child: CircularProgressIndicator(color: Colors.black))
+          ? const Center(child: CircularProgressIndicator(color: PaletaSahara.primary))
           : _buildConteudo(controller, formatoMoeda, formatoData),
     );
   }
@@ -106,7 +107,7 @@ class _FinanceiroPageState extends State<FinanceiroPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: PaletaSahara.cardSurface,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)],
       ),
@@ -159,7 +160,7 @@ class _FinanceiroPageState extends State<FinanceiroPage> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: PaletaSahara.cardSurface,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)],
         border: Border(top: BorderSide(color: cor, width: 3)),
@@ -186,7 +187,7 @@ class _FinanceiroPageState extends State<FinanceiroPage> {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: PaletaSahara.cardSurface,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)],
       ),

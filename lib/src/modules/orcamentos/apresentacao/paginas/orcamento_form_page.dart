@@ -10,6 +10,7 @@ import '../../../obras/dominio/entidades/obra.dart';
 import '../controllers/orcamento_controller.dart';
 import '../../../obras/apresentacao/controllers/obra_controller.dart';
 import '../../../clientes/apresentacao/controllers/cliente_controller.dart';
+import '../../../../core/tema/paleta_sahara.dart';
 
 class OrcamentoFormPage extends StatefulWidget {
   final Orcamento? orcamentoParaEdicao;
@@ -450,12 +451,12 @@ _Orçamento gerado pelo PaintManager_
     final isEdicao = widget.orcamentoParaEdicao != null;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: PaletaSahara.background,
       appBar: AppBar(
         title: Text(isEdicao ? "Editar Orçamento" : "Novo Orçamento",
             style: const TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor: PaletaSahara.cardSurface,
+        foregroundColor: PaletaSahara.onSurface,
         elevation: 0.5,
       ),
       body: Column(
@@ -513,7 +514,7 @@ _Orçamento gerado pelo PaintManager_
                           onPressed: _adicionarItem,
                           icon: const Icon(Icons.add_circle_outline, size: 18),
                           label: const Text("Adicionar Item"),
-                          style: TextButton.styleFrom(foregroundColor: Colors.black),
+                          style: TextButton.styleFrom(foregroundColor: PaletaSahara.primary),
                         ),
                       ],
                     ),
@@ -534,7 +535,7 @@ _Orçamento gerado pelo PaintManager_
                             subtitle: const Text("Marque se o pintor fornecerá o material",
                                 style: TextStyle(fontSize: 12)),
                             value: _materiaisInclusos,
-                            activeThumbColor: Colors.black,
+                            activeThumbColor: PaletaSahara.primary,
                             onChanged: (val) => setState(() => _materiaisInclusos = val),
                           ),
                           if (_materiaisInclusos) ...[
@@ -560,7 +561,7 @@ _Orçamento gerado pelo PaintManager_
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: PaletaSahara.cardSurface,
               boxShadow: [
                 BoxShadow(
                     color: Colors.black.withValues(alpha: 0.1),
@@ -598,7 +599,7 @@ _Orçamento gerado pelo PaintManager_
                         style:
                             const TextStyle(fontWeight: FontWeight.bold)),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black,
+                      backgroundColor: PaletaSahara.primary,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8)),
@@ -630,7 +631,7 @@ _Orçamento gerado pelo PaintManager_
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: PaletaSahara.cardSurface,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)
@@ -707,7 +708,7 @@ _Orçamento gerado pelo PaintManager_
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
                           borderSide: BorderSide(
-                              color: field.hasError ? Colors.red : Colors.black,
+                              color: field.hasError ? Colors.red : PaletaSahara.primary,
                               width: 1.5),
                         ),
                       ),
@@ -744,7 +745,7 @@ _Orçamento gerado pelo PaintManager_
                                 leading: CircleAvatar(
                                   radius: 16,
                                   backgroundColor:
-                                      isSelected ? Colors.black : Colors.grey[200],
+                                      isSelected ? PaletaSahara.primary : Colors.grey[200],
                                   child: Icon(Icons.construction,
                                       size: 14,
                                       color: isSelected
@@ -873,7 +874,7 @@ _Orçamento gerado pelo PaintManager_
             borderSide: BorderSide(color: Colors.grey[200]!)),
         focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: Colors.black, width: 1.5)),
+            borderSide: const BorderSide(color: PaletaSahara.primary, width: 1.5)),
       ),
       validator: (val) => val == null || val.isEmpty ? "Campo obrigatório" : null,
     );
@@ -1014,7 +1015,7 @@ _Orçamento gerado pelo PaintManager_
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: PaletaSahara.cardSurface,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)
@@ -1111,7 +1112,7 @@ _Orçamento gerado pelo PaintManager_
             borderSide: BorderSide(color: Colors.grey[200]!)),
         focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: Colors.black, width: 1.5)),
+            borderSide: const BorderSide(color: PaletaSahara.primary, width: 1.5)),
       ),
       onChanged: (_) => setState(() {}),
       validator: obrigatorio
@@ -1134,7 +1135,7 @@ _Orçamento gerado pelo PaintManager_
           borderSide: BorderSide(color: Colors.grey[200]!)),
       focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Colors.black, width: 1.5)),
+          borderSide: const BorderSide(color: PaletaSahara.primary, width: 1.5)),
     );
   }
 }

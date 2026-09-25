@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import '../../dominio/entidades/cliente.dart';
 import '../controllers/cliente_controller.dart';
+import '../../../../core/tema/paleta_sahara.dart';
 
 class ClienteFormPage extends StatefulWidget {
   final Cliente? clienteParaEdicao;
@@ -93,14 +94,14 @@ class _ClienteFormPageState extends State<ClienteFormPage> {
     final isEdicao = widget.clienteParaEdicao != null;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: PaletaSahara.background,
       appBar: AppBar(
         title: Text(
           isEdicao ? "Editar Cliente" : "Novo Cliente",
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor: PaletaSahara.cardSurface,
+        foregroundColor: PaletaSahara.onSurface,
         elevation: 0.5,
       ),
       body: Center(
@@ -109,7 +110,7 @@ class _ClienteFormPageState extends State<ClienteFormPage> {
           child: Container(
             constraints: const BoxConstraints(maxWidth: 700),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: PaletaSahara.cardSurface,
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
@@ -171,7 +172,7 @@ class _ClienteFormPageState extends State<ClienteFormPage> {
                     child: ElevatedButton(
                       onPressed: carregando ? null : _salvar,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.black,
+                        backgroundColor: PaletaSahara.primary,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                         elevation: 0,
@@ -231,7 +232,7 @@ class _ClienteFormPageState extends State<ClienteFormPage> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Colors.black, width: 1.5),
+              borderSide: const BorderSide(color: PaletaSahara.primary, width: 1.5),
             ),
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           ),

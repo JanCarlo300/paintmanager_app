@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'src/core/config/supabase_config.dart';
+import 'src/core/tema/paleta_sahara.dart';
 
 // Imports de Auth
 import 'src/modules/auth/apresentacao/paginas/login_page.dart';
@@ -122,7 +123,18 @@ class PaintManagerApp extends StatelessWidget {
       title: 'PaintManager',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.black),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: PaletaSahara.primary,
+          brightness: Brightness.light,
+        ).copyWith(
+          primary: PaletaSahara.primary,
+          tertiary: PaletaSahara.tertiary,
+          surface: PaletaSahara.cardSurface,
+          onSurface: PaletaSahara.onSurface,
+          onSurfaceVariant: PaletaSahara.onSurfaceMuted,
+          outline: PaletaSahara.border,
+        ),
+        scaffoldBackgroundColor: PaletaSahara.background,
         useMaterial3: true,
       ),
       home: const AuthCheck(),

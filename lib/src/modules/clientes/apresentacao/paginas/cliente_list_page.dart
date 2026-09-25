@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../dominio/entidades/cliente.dart';
-import '../../../obras/dominio/entidades/obra.dart';
 import '../controllers/cliente_controller.dart';
 import '../../../obras/apresentacao/controllers/obra_controller.dart';
 import '../../../../apresentacao/widgets/drawer_comum.dart';
+import '../../../../core/tema/paleta_sahara.dart';
 
 /// Filtros disponíveis na tela de clientes
 enum FiltroCliente { comObraAtiva, todosAtivos, inativos }
@@ -60,7 +60,7 @@ class _ClienteListPageState extends State<ClienteListPage> {
 
     if (clienteCtrl.carregando) {
       return Scaffold(
-        backgroundColor: const Color(0xFFF8F9FA),
+        backgroundColor: PaletaSahara.background,
         drawer: const DrawerComum(),
         appBar: AppBar(
           leading: Builder(
@@ -71,16 +71,16 @@ class _ClienteListPageState extends State<ClienteListPage> {
           ),
           title: const Text("Clientes", style: TextStyle(fontWeight: FontWeight.bold)),
           centerTitle: false,
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.black,
+          backgroundColor: PaletaSahara.cardSurface,
+          foregroundColor: PaletaSahara.onSurface,
           elevation: 0.5,
         ),
-        body: const Center(child: CircularProgressIndicator(color: Colors.black)),
+        body: const Center(child: CircularProgressIndicator(color: PaletaSahara.primary)),
       );
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: PaletaSahara.background,
       drawer: const DrawerComum(),
       appBar: AppBar(
         leading: Builder(
@@ -91,8 +91,8 @@ class _ClienteListPageState extends State<ClienteListPage> {
         ),
         title: const Text("Clientes", style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: false,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor: PaletaSahara.cardSurface,
+        foregroundColor: PaletaSahara.onSurface,
         elevation: 0.5,
       ),
       body: Builder(
@@ -128,7 +128,7 @@ class _ClienteListPageState extends State<ClienteListPage> {
                     icon: const Icon(Icons.person_add_alt_1, size: 18),
                     label: const Text("Novo Cliente"),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black,
+                      backgroundColor: PaletaSahara.primary,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -246,7 +246,7 @@ class _ClienteListPageState extends State<ClienteListPage> {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
-            borderSide: const BorderSide(color: Colors.black, width: 1.5),
+            borderSide: const BorderSide(color: PaletaSahara.primary, width: 1.5),
           ),
         ),
       ),
@@ -261,7 +261,7 @@ class _ClienteListPageState extends State<ClienteListPage> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Material(
-        color: Colors.white,
+        color: PaletaSahara.cardSurface,
         borderRadius: BorderRadius.circular(12),
         elevation: 0,
         child: InkWell(
@@ -285,7 +285,7 @@ class _ClienteListPageState extends State<ClienteListPage> {
                     // Avatar
                     CircleAvatar(
                       radius: 20,
-                      backgroundColor: cliente.ativo ? Colors.black : Colors.grey[400],
+                      backgroundColor: cliente.ativo ? PaletaSahara.primary : Colors.grey[400],
                       child: Text(
                         cliente.nome.isNotEmpty ? cliente.nome[0].toUpperCase() : '?',
                         style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
@@ -408,7 +408,7 @@ class _ClienteListPageState extends State<ClienteListPage> {
                   children: [
                     CircleAvatar(
                       radius: 18,
-                      backgroundColor: Colors.black,
+                      backgroundColor: PaletaSahara.primary,
                       child: Text(
                         cliente.nome.isNotEmpty ? cliente.nome[0].toUpperCase() : '?',
                         style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
@@ -539,7 +539,7 @@ class _ClienteListPageState extends State<ClienteListPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(40),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: PaletaSahara.cardSurface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.grey[200]!),
       ),

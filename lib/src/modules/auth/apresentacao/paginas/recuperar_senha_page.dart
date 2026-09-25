@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../controllers/auth_controller.dart';
+import '../../../../core/tema/paleta_sahara.dart';
 
 /// RF002 - Recuperar Senha, em 3 passos dentro da mesma tela:
 /// 1) CPF ou e-mail  2) código recebido por e-mail  3) nova senha
@@ -38,7 +39,7 @@ class _RecuperarSenhaPageState extends State<RecuperarSenhaPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text("Se o CPF ou e-mail estiver cadastrado, um código foi enviado."),
-        backgroundColor: Colors.black,
+        backgroundColor: PaletaSahara.onSurface,
         behavior: SnackBarBehavior.floating,
         duration: Duration(seconds: 4),
       ),
@@ -84,11 +85,11 @@ class _RecuperarSenhaPageState extends State<RecuperarSenhaPage> {
     final authController = context.watch<AuthController>();
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: PaletaSahara.background,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: PaletaSahara.cardSurface,
         elevation: 0,
-        foregroundColor: Colors.black,
+        foregroundColor: PaletaSahara.onSurface,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 20),
@@ -106,7 +107,7 @@ class _RecuperarSenhaPageState extends State<RecuperarSenhaPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Icon(Icons.lock_reset_outlined, color: Colors.black, size: 40),
+        const Icon(Icons.lock_reset_outlined, color: PaletaSahara.primary, size: 40),
         const SizedBox(height: 24),
         const Text("Recuperar Senha", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
         const SizedBox(height: 12),
@@ -131,7 +132,7 @@ class _RecuperarSenhaPageState extends State<RecuperarSenhaPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Icon(Icons.mark_email_read_outlined, color: Colors.black, size: 40),
+        const Icon(Icons.mark_email_read_outlined, color: PaletaSahara.primary, size: 40),
         const SizedBox(height: 24),
         const Text("Digite o código", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
         const SizedBox(height: 12),
@@ -168,7 +169,7 @@ class _RecuperarSenhaPageState extends State<RecuperarSenhaPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Icon(Icons.password_outlined, color: Colors.black, size: 40),
+        const Icon(Icons.password_outlined, color: PaletaSahara.primary, size: 40),
         const SizedBox(height: 24),
         const Text("Nova senha", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
         const SizedBox(height: 12),
@@ -226,7 +227,7 @@ class _RecuperarSenhaPageState extends State<RecuperarSenhaPage> {
       child: ElevatedButton(
         onPressed: carregando ? null : onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.black,
+          backgroundColor: PaletaSahara.primary,
           foregroundColor: Colors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),

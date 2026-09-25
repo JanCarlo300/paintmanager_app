@@ -4,17 +4,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import '../controllers/auth_controller.dart';
+import '../../../../core/tema/paleta_sahara.dart';
 
-// Paleta Sahara
-class _Sahara {
-  static const background = Color(0xFFFAF5EE);
-  static const primary = Color(0xFFC2652A);
-  static const tertiary = Color(0xFF8C3C3C);
-  static const border = Color(0xFFD8D0C8);
-  static const cardSurface = Color(0xFFFFFFFF);
-  static const onSurface = Color(0xFF3A302A);
-  static const onSurfaceMuted = Color(0xFF9A8E85);
-}
+typedef _Sahara = PaletaSahara;
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});

@@ -7,6 +7,7 @@ import '../../dominio/entidades/etapa_servico.dart';
 import '../../../clientes/dominio/entidades/cliente.dart';
 import '../controllers/obra_controller.dart';
 import '../../../clientes/apresentacao/controllers/cliente_controller.dart';
+import '../../../../core/tema/paleta_sahara.dart';
 
 class ObraFormPage extends StatefulWidget {
   final Obra? obraParaEdicao;
@@ -197,11 +198,11 @@ class _ObraFormPageState extends State<ObraFormPage> {
     final carregando = context.watch<ObraController>().carregando;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: PaletaSahara.background,
       appBar: AppBar(
         title: Text(isEdicao ? "Editar Obra" : "Nova Obra", style: const TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor: PaletaSahara.cardSurface,
+        foregroundColor: PaletaSahara.onSurface,
         elevation: 0.5,
       ),
       body: SingleChildScrollView(
@@ -250,7 +251,7 @@ class _ObraFormPageState extends State<ObraFormPage> {
                     onPressed: _adicionarEtapa,
                     icon: const Icon(Icons.add_circle_outline, size: 18),
                     label: const Text("Adicionar"),
-                    style: TextButton.styleFrom(foregroundColor: Colors.black),
+                    style: TextButton.styleFrom(foregroundColor: PaletaSahara.primary),
                   ),
                 ],
               ),
@@ -276,7 +277,7 @@ class _ObraFormPageState extends State<ObraFormPage> {
                         const SizedBox(width: 8),
                         IconButton(
                           onPressed: _adicionarMaterial,
-                          icon: const Icon(Icons.add_circle, color: Colors.black),
+                          icon: const Icon(Icons.add_circle, color: PaletaSahara.primary),
                           tooltip: "Adicionar material",
                         ),
                       ],
@@ -324,7 +325,7 @@ class _ObraFormPageState extends State<ObraFormPage> {
                       : const Icon(Icons.save_outlined, size: 20),
                   label: Text(carregando ? "Salvando..." : "Salvar Obra", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black,
+                    backgroundColor: PaletaSahara.primary,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
@@ -347,7 +348,7 @@ class _ObraFormPageState extends State<ObraFormPage> {
 
   Widget _card({required Widget child}) => Container(
     width: double.infinity, padding: const EdgeInsets.all(20),
-    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12),
+    decoration: BoxDecoration(color: PaletaSahara.cardSurface, borderRadius: BorderRadius.circular(12),
       boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)]),
     child: child,
   );
@@ -418,7 +419,7 @@ class _ObraFormPageState extends State<ObraFormPage> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: field.hasError ? Colors.red : Colors.black, width: 1.5),
+                          borderSide: BorderSide(color: field.hasError ? Colors.red : PaletaSahara.primary, width: 1.5),
                         ),
                       ),
                       onChanged: (value) {
@@ -460,7 +461,7 @@ class _ObraFormPageState extends State<ObraFormPage> {
                                 dense: true,
                                 leading: CircleAvatar(
                                   radius: 16,
-                                  backgroundColor: isSelected ? Colors.black : Colors.grey[200],
+                                  backgroundColor: isSelected ? PaletaSahara.primary : Colors.grey[200],
                                   child: Text(
                                     cliente.nome.isNotEmpty ? cliente.nome[0].toUpperCase() : '?',
                                     style: TextStyle(
@@ -523,7 +524,7 @@ class _ObraFormPageState extends State<ObraFormPage> {
       filled: true, fillColor: Colors.grey[50],
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
       enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
-      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Colors.black, width: 1.5))),
+      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: PaletaSahara.primary, width: 1.5))),
     validator: (v) => v == null || v.isEmpty ? "Campo obrigatório" : null,
   );
 
@@ -564,6 +565,6 @@ class _ObraFormPageState extends State<ObraFormPage> {
     filled: true, fillColor: Colors.grey[50],
     border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
     enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
-    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Colors.black, width: 1.5)),
+    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: PaletaSahara.primary, width: 1.5)),
   );
 }

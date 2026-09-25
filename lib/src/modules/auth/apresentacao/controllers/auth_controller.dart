@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../dominio/entidades/usuario.dart';
 import '../../dominio/repositorios/repositorio_autenticacao.dart';
 import '../../dominio/validador_senha.dart';
+import '../../../../core/tema/paleta_sahara.dart';
 
 class AuthController extends ChangeNotifier {
   final RepositorioAutenticacao _repositorio;
@@ -139,7 +140,7 @@ class AuthController extends ChangeNotifier {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(mensagem),
-        backgroundColor: isErro ? Colors.red : Colors.black,
+        backgroundColor: isErro ? Colors.red : PaletaSahara.onSurface,
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 3),
       ),

@@ -5,6 +5,7 @@ import 'package:fl_chart/fl_chart.dart';
 import '../../dominio/entidades/relatorio_geral.dart';
 import '../controllers/relatorio_controller.dart';
 import '../../../../apresentacao/widgets/drawer_comum.dart';
+import '../../../../core/tema/paleta_sahara.dart';
 
 class RelatoriosPage extends StatefulWidget {
   const RelatoriosPage({super.key});
@@ -36,14 +37,14 @@ class _RelatoriosPageState extends State<RelatoriosPage> {
     final controller = context.watch<RelatorioController>();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: PaletaSahara.background,
       drawer: const DrawerComum(),
       appBar: AppBar(
         leading: Builder(builder: (ctx) => IconButton(icon: const Icon(Icons.menu), onPressed: () => Scaffold.of(ctx).openDrawer())),
         title: const Text("Relatórios", style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: false,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor: PaletaSahara.cardSurface,
+        foregroundColor: PaletaSahara.onSurface,
         elevation: 0.5,
       ),
       body: SingleChildScrollView(
@@ -65,7 +66,7 @@ class _RelatoriosPageState extends State<RelatoriosPage> {
             if (controller.carregando)
               const SizedBox(
                 height: 300,
-                child: Center(child: CircularProgressIndicator(color: Colors.black)),
+                child: Center(child: CircularProgressIndicator(color: PaletaSahara.primary)),
               )
             else if (controller.erro != null)
               _buildMensagemVazia(controller.erro!, Icons.error_outline, Colors.red)
@@ -92,7 +93,7 @@ class _RelatoriosPageState extends State<RelatoriosPage> {
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: PaletaSahara.cardSurface,
             borderRadius: BorderRadius.circular(10),
             border: Border.all(color: Colors.grey[200]!),
           ),
@@ -120,7 +121,7 @@ class _RelatoriosPageState extends State<RelatoriosPage> {
                   fontWeight: selecionado ? FontWeight.bold : FontWeight.normal,
                 )),
                 selected: selecionado,
-                selectedColor: Colors.black,
+                selectedColor: PaletaSahara.primary,
                 labelStyle: TextStyle(color: selecionado ? Colors.white : Colors.grey[700]),
                 backgroundColor: Colors.grey[100],
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -138,7 +139,7 @@ class _RelatoriosPageState extends State<RelatoriosPage> {
               )),
               avatar: Icon(Icons.edit_calendar, size: 14,
                   color: controller.filtroSelecionado == 'Personalizado' ? Colors.white : Colors.grey[600]),
-              backgroundColor: controller.filtroSelecionado == 'Personalizado' ? Colors.black : Colors.grey[100],
+              backgroundColor: controller.filtroSelecionado == 'Personalizado' ? PaletaSahara.primary : Colors.grey[100],
               labelStyle: TextStyle(color: controller.filtroSelecionado == 'Personalizado' ? Colors.white : Colors.grey[700]),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               side: BorderSide.none,
@@ -241,7 +242,7 @@ class _RelatoriosPageState extends State<RelatoriosPage> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white, borderRadius: BorderRadius.circular(12),
+        color: PaletaSahara.cardSurface, borderRadius: BorderRadius.circular(12),
         boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)],
         border: Border(left: BorderSide(color: cor, width: 3)),
       ),
@@ -284,7 +285,7 @@ class _RelatoriosPageState extends State<RelatoriosPage> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white, borderRadius: BorderRadius.circular(12),
+        color: PaletaSahara.cardSurface, borderRadius: BorderRadius.circular(12),
         boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)],
       ),
       child: Column(
@@ -417,7 +418,7 @@ class _RelatoriosPageState extends State<RelatoriosPage> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white, borderRadius: BorderRadius.circular(12),
+        color: PaletaSahara.cardSurface, borderRadius: BorderRadius.circular(12),
         boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)],
       ),
       child: Column(
@@ -504,7 +505,7 @@ class _RelatoriosPageState extends State<RelatoriosPage> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white, borderRadius: BorderRadius.circular(12),
+        color: PaletaSahara.cardSurface, borderRadius: BorderRadius.circular(12),
         boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)],
       ),
       child: Column(
@@ -588,7 +589,7 @@ class _RelatoriosPageState extends State<RelatoriosPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(40),
       decoration: BoxDecoration(
-        color: Colors.white, borderRadius: BorderRadius.circular(12),
+        color: PaletaSahara.cardSurface, borderRadius: BorderRadius.circular(12),
         boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)],
       ),
       child: Column(
