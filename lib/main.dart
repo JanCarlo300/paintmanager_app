@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'src/core/config/supabase_config.dart';
 import 'src/core/tema/paleta_sahara.dart';
+import 'src/apresentacao/widgets/guarda_rota.dart';
 
 // Imports de Auth
 import 'src/modules/auth/apresentacao/paginas/login_page.dart';
@@ -141,39 +142,66 @@ class PaintManagerApp extends StatelessWidget {
       routes: {
         '/login': (context) => const LoginPage(),
         '/recuperar-senha': (context) => RecuperarSenhaPage(),
-        '/home': (context) => const DashboardPage(),
+        '/home': (context) => const GuardaRota(
+              papeisPermitidos: ['Administrador', 'Gerente'],
+              child: DashboardPage(),
+            ),
         '/redefinir-senha-obrigatoria': (context) => const RedefinirSenhaObrigatoriaPage(),
-        '/clientes': (context) => const ClienteListPage(),
-        '/usuarios': (context) => const UsuarioListPage(),
-        '/financeiro': (context) => const FinanceiroPage(),
+        '/clientes': (context) => const GuardaRota(
+              papeisPermitidos: ['Administrador', 'Gerente'],
+              child: ClienteListPage(),
+            ),
+        '/usuarios': (context) => const GuardaRota(
+              papeisPermitidos: ['Administrador'],
+              child: UsuarioListPage(),
+            ),
+        '/financeiro': (context) => const GuardaRota(
+              papeisPermitidos: ['Administrador', 'Gerente'],
+              child: FinanceiroPage(),
+            ),
 
         // Orçamentos
-        '/orcamentos': (context) => const OrcamentoListPage(),
+        '/orcamentos': (context) => const GuardaRota(
+              papeisPermitidos: ['Administrador', 'Gerente'],
+              child: OrcamentoListPage(),
+            ),
 
-        // Obras
+        // Obras — acessível às 3 funções (Funcionário só vê ações operacionais)
         '/obras': (context) => const ObraListPage(),
 
         // Relatórios
-        '/relatorios': (context) => const RelatoriosPage(),
+        '/relatorios': (context) => const GuardaRota(
+              papeisPermitidos: ['Administrador', 'Gerente'],
+              child: RelatoriosPage(),
+            ),
         '/configuracoes': (context) => const EmConstrucaoPage(titulo: 'Configurações'),
       },
       onGenerateRoute: (settings) {
         if (settings.name == '/cliente-formulario') {
           final cliente = settings.arguments as Cliente?;
           return MaterialPageRoute(
-            builder: (context) => ClienteFormPage(clienteParaEdicao: cliente),
+            builder: (context) => GuardaRota(
+              papeisPermitidos: const ['Administrador', 'Gerente'],
+              child: ClienteFormPage(clienteParaEdicao: cliente),
+            ),
           );
         }
         if (settings.name == '/orcamento-formulario') {
           final orcamento = settings.arguments as Orcamento?;
           return MaterialPageRoute(
-            builder: (context) => OrcamentoFormPage(orcamentoParaEdicao: orcamento),
+            builder: (context) => GuardaRota(
+              papeisPermitidos: const ['Administrador', 'Gerente'],
+              child: OrcamentoFormPage(orcamentoParaEdicao: orcamento),
+            ),
           );
         }
         if (settings.name == '/obra-formulario') {
           final obra = settings.arguments as Obra?;
           return MaterialPageRoute(
-            builder: (context) => ObraFormPage(obraParaEdicao: obra),
+            builder: (context) => GuardaRota(
+              papeisPermitidos: const ['Administrador', 'Gerente'],
+              child: ObraFormPage(obraParaEdicao: obra),
+            ),
           );
         }
         if (settings.name == '/obra-detalhes') {
@@ -192,9 +220,12 @@ class PaintManagerApp extends StatelessWidget {
             tipoInicial = args['tipo'] as String?;
           }
           return MaterialPageRoute(
-            builder: (context) => TransacaoFormPage(
-              transacaoParaEdicao: transacao,
-              tipoInicial: tipoInicial,
+            builder: (context) => GuardaRota(
+              papeisPermitidos: const ['Administrador', 'Gerente'],
+              child: TransacaoFormPage(
+                transacaoParaEdicao: transacao,
+                tipoInicial: tipoInicial,
+              ),
             ),
           );
         }

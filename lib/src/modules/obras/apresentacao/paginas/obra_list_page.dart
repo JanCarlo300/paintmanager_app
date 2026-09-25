@@ -5,6 +5,7 @@ import '../../dominio/entidades/obra.dart';
 import '../controllers/obra_controller.dart';
 import '../../../../apresentacao/widgets/drawer_comum.dart';
 import '../../../../core/tema/paleta_sahara.dart';
+import '../../../auth/apresentacao/controllers/auth_controller.dart';
 
 class ObraListPage extends StatefulWidget {
   const ObraListPage({super.key});
@@ -58,6 +59,8 @@ class _ObraListPageState extends State<ObraListPage> {
     final controller = context.watch<ObraController>();
     final formatoData = DateFormat('dd/MM/yyyy');
     final isWide = MediaQuery.of(context).size.width > 800;
+    // Funcionário só acompanha o andamento das obras — não cadastra novas.
+    final podeGerenciarObras = context.watch<AuthController>().usuarioLogado?.funcao != 'Funcionário';
 
     if (controller.carregando) {
       return Scaffold(
@@ -111,21 +114,23 @@ class _ObraListPageState extends State<ObraListPage> {
             const SizedBox(height: 4),
             const Text("Acompanhe o progresso de cada serviço.", style: TextStyle(color: Colors.grey, fontSize: 13)),
             const SizedBox(height: 16),
-            SizedBox(
-              width: isWide ? null : double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () => Navigator.pushNamed(context, '/obra-formulario'),
-                icon: const Icon(Icons.add, size: 18),
-                label: const Text("Nova Obra"),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: PaletaSahara.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            if (podeGerenciarObras) ...[
+              SizedBox(
+                width: isWide ? null : double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () => Navigator.pushNamed(context, '/obra-formulario'),
+                  icon: const Icon(Icons.add, size: 18),
+                  label: const Text("Nova Obra"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: PaletaSahara.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 24),
+              const SizedBox(height: 24),
+            ],
 
             // --- SUMMARY CARDS ---
             _buildSummaryRow(todas.length, emAndamento, concluidas),

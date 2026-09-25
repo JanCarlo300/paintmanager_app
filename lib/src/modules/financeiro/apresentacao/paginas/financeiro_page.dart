@@ -5,6 +5,7 @@ import '../../dominio/entidades/transacao.dart';
 import '../controllers/financeiro_controller.dart';
 import '../../../../apresentacao/widgets/drawer_comum.dart';
 import '../../../../core/tema/paleta_sahara.dart';
+import '../../../auth/apresentacao/controllers/auth_controller.dart';
 
 class FinanceiroPage extends StatefulWidget {
   const FinanceiroPage({super.key});
@@ -41,6 +42,8 @@ class _FinanceiroPageState extends State<FinanceiroPage> {
     final controller = context.watch<FinanceiroController>();
     final formatoMoeda = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
     final formatoData = DateFormat('dd/MM/yyyy');
+    // Regra de negócio: só administrador exclui registros financeiros.
+    final podeExcluir = context.watch<AuthController>().usuarioLogado?.funcao == 'Administrador';
 
     return Scaffold(
       backgroundColor: PaletaSahara.background,
@@ -64,11 +67,11 @@ class _FinanceiroPageState extends State<FinanceiroPage> {
       ),
       body: controller.carregando
           ? const Center(child: CircularProgressIndicator(color: PaletaSahara.primary))
-          : _buildConteudo(controller, formatoMoeda, formatoData),
+          : _buildConteudo(controller, formatoMoeda, formatoData, podeExcluir),
     );
   }
 
-  Widget _buildConteudo(FinanceiroController controller, NumberFormat formatoMoeda, DateFormat formatoData) {
+  Widget _buildConteudo(FinanceiroController controller, NumberFormat formatoMoeda, DateFormat formatoData, bool podeExcluir) {
     final todas = controller.transacoes;
     final doMes = controller.filtrarPorMes(todas);
     final receitas = controller.calcularReceitas(doMes);
@@ -96,7 +99,7 @@ class _FinanceiroPageState extends State<FinanceiroPage> {
           const SizedBox(height: 24),
 
           // --- LISTA DE TRANSAÇÕES ---
-          _buildListaTransacoes(context, doMes, formatoMoeda, formatoData, controller),
+          _buildListaTransacoes(context, doMes, formatoMoeda, formatoData, controller, podeExcluir),
         ],
       ),
     );
@@ -183,7 +186,7 @@ class _FinanceiroPageState extends State<FinanceiroPage> {
   }
 
   // --- LISTA DE TRANSAÇÕES ---
-  Widget _buildListaTransacoes(BuildContext context, List<Transacao> transacoes, NumberFormat fmt, DateFormat fmtData, FinanceiroController controller) {
+  Widget _buildListaTransacoes(BuildContext context, List<Transacao> transacoes, NumberFormat fmt, DateFormat fmtData, FinanceiroController controller, bool podeExcluir) {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -287,11 +290,13 @@ class _FinanceiroPageState extends State<FinanceiroPage> {
                             },
                             child: Icon(Icons.edit_outlined, size: 16, color: Colors.grey[500]),
                           ),
-                          const SizedBox(width: 8),
-                          InkWell(
-                            onTap: () => _confirmarExclusao(context, t, controller),
-                            child: Icon(Icons.delete_outline, size: 16, color: Colors.red[300]),
-                          ),
+                          if (podeExcluir) ...[
+                            const SizedBox(width: 8),
+                            InkWell(
+                              onTap: () => _confirmarExclusao(context, t, controller),
+                              child: Icon(Icons.delete_outline, size: 16, color: Colors.red[300]),
+                            ),
+                          ],
                         ],
                       ),
                     ],

@@ -4,6 +4,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'login_page.dart';
 import 'redefinir_senha_obrigatoria_page.dart';
 import '../../../../apresentacao/paginas/dashboard_page.dart';
+import '../../../obras/apresentacao/paginas/obra_list_page.dart';
+import '../controllers/auth_controller.dart';
 
 class AuthCheck extends StatefulWidget {
   const AuthCheck({super.key});
@@ -17,6 +19,7 @@ class _AuthCheckState extends State<AuthCheck> {
   bool _isLoading = true;
   bool _isAuthenticated = false;
   bool _primeiroAcessoPendente = false;
+  String _funcao = '';
 
   @override
   void initState() {
@@ -27,22 +30,27 @@ class _AuthCheckState extends State<AuthCheck> {
 
       if (event == AuthChangeEvent.signedIn) {
         // Login normal (RF001): verifica se a troca obrigatória de senha
-        // do primeiro acesso ainda está pendente antes de decidir a rota.
-        final pendente = await _primeiroAcessoEstaPendente();
+        // do primeiro acesso ainda está pendente, e qual a função do
+        // usuário, antes de decidir a rota.
+        final dados = await _dadosDoUsuarioLogado();
         if (!mounted) return;
         setState(() {
           _isAuthenticated = true;
-          _primeiroAcessoPendente = pendente;
+          _primeiroAcessoPendente = dados.primeiroAcessoPendente;
+          _funcao = dados.funcao;
           _isLoading = false;
         });
         Navigator.of(context).pushReplacementNamed(
-          pendente ? '/redefinir-senha-obrigatoria' : '/home',
+          dados.primeiroAcessoPendente
+              ? '/redefinir-senha-obrigatoria'
+              : rotaInicialParaFuncao(dados.funcao),
         );
       } else if (event == AuthChangeEvent.signedOut) {
         if (!mounted) return;
         setState(() {
           _isAuthenticated = false;
           _primeiroAcessoPendente = false;
+          _funcao = '';
           _isLoading = false;
         });
         Navigator.of(context).pushReplacementNamed('/login');
@@ -55,21 +63,25 @@ class _AuthCheckState extends State<AuthCheck> {
     });
   }
 
-  /// Consulta se o usuário autenticado no momento ainda precisa trocar a
-  /// senha (RF001/RF002). Em caso de erro de leitura, assume que não está
-  /// pendente — nunca bloqueia o acesso por falha de rede.
-  Future<bool> _primeiroAcessoEstaPendente() async {
+  /// Consulta a flag de primeiro acesso e a função do usuário autenticado
+  /// no momento. Em caso de erro de leitura, assume que a troca não está
+  /// pendente e função vazia (tratada como acesso restrito) — nunca
+  /// bloqueia por falha de rede, mas também nunca libera de mais.
+  Future<_DadosUsuario> _dadosDoUsuarioLogado() async {
     final user = Supabase.instance.client.auth.currentUser;
-    if (user == null) return false;
+    if (user == null) return const _DadosUsuario(primeiroAcessoPendente: false, funcao: '');
     try {
       final resultado = await Supabase.instance.client
           .from('usuario')
-          .select('primeiro_acesso')
+          .select('primeiro_acesso, funcao')
           .eq('auth_id', user.id)
           .maybeSingle();
-      return resultado?['primeiro_acesso'] as bool? ?? false;
+      return _DadosUsuario(
+        primeiroAcessoPendente: resultado?['primeiro_acesso'] as bool? ?? false,
+        funcao: resultado?['funcao'] as String? ?? '',
+      );
     } catch (_) {
-      return false;
+      return const _DadosUsuario(primeiroAcessoPendente: false, funcao: '');
     }
   }
 
@@ -86,12 +98,13 @@ class _AuthCheckState extends State<AuthCheck> {
 
     // Já existe sessão salva (app reaberto): confere se a troca obrigatória
     // de senha ficou pendente, para não deixar pular essa etapa fechando
-    // e reabrindo o app.
-    final pendente = await _primeiroAcessoEstaPendente();
+    // e reabrindo o app, e qual a função para saber a tela inicial.
+    final dados = await _dadosDoUsuarioLogado();
     if (!mounted) return;
     setState(() {
       _isAuthenticated = true;
-      _primeiroAcessoPendente = pendente;
+      _primeiroAcessoPendente = dados.primeiroAcessoPendente;
+      _funcao = dados.funcao;
       _isLoading = false;
     });
   }
@@ -113,9 +126,16 @@ class _AuthCheckState extends State<AuthCheck> {
     }
 
     if (_isAuthenticated) {
-      return _primeiroAcessoPendente ? const RedefinirSenhaObrigatoriaPage() : const DashboardPage();
+      if (_primeiroAcessoPendente) return const RedefinirSenhaObrigatoriaPage();
+      return _funcao == 'Funcionário' ? const ObraListPage() : const DashboardPage();
     }
 
     return const LoginPage();
   }
+}
+
+class _DadosUsuario {
+  final bool primeiroAcessoPendente;
+  final String funcao;
+  const _DadosUsuario({required this.primeiroAcessoPendente, required this.funcao});
 }

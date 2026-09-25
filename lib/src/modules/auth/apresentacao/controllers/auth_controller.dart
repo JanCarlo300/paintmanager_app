@@ -1,19 +1,43 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../dominio/entidades/usuario.dart';
 import '../../dominio/repositorios/repositorio_autenticacao.dart';
 import '../../dominio/validador_senha.dart';
 import '../../../../core/tema/paleta_sahara.dart';
 
+/// Rota inicial de cada função, usada logo após o login e pelo AuthCheck
+/// ao reabrir o app com uma sessão já existente.
+String rotaInicialParaFuncao(String funcao) =>
+    funcao == 'Funcionário' ? '/obras' : '/home';
+
 class AuthController extends ChangeNotifier {
   final RepositorioAutenticacao _repositorio;
+  StreamSubscription<Usuario?>? _usuarioSub;
 
-  AuthController(this._repositorio);
+  AuthController(this._repositorio) {
+    // Mantém o usuário logado em cache, para checagem de permissão
+    // síncrona (context.watch) em qualquer tela, sem precisar de
+    // StreamBuilder espalhado pelo app.
+    _usuarioSub = _repositorio.usuarioAtual.listen((usuario) {
+      _usuarioLogado = usuario;
+      notifyListeners();
+    });
+  }
 
   bool _carregando = false;
   bool get carregando => _carregando;
 
   // --- SESSÃO PERSISTENTE ---
   Stream<Usuario?> get usuarioAtual => _repositorio.usuarioAtual;
+
+  Usuario? _usuarioLogado;
+  Usuario? get usuarioLogado => _usuarioLogado;
+
+  @override
+  void dispose() {
+    _usuarioSub?.cancel();
+    super.dispose();
+  }
 
   // RF001 - Realizar Login com Verificação de Primeiro Acesso
   Future<void> realizarLogin(BuildContext context, String cpf, String senha) async {
@@ -37,8 +61,8 @@ class AuthController extends ChangeNotifier {
           print("Redirecionando para redefinir senha");
           Navigator.of(context).pushReplacementNamed('/redefinir-senha-obrigatoria');
         } else {
-          print("Redirecionando para home");
-          Navigator.of(context).pushReplacementNamed('/home');
+          print("Redirecionando para ${rotaInicialParaFuncao(usuario.funcao)}");
+          Navigator.of(context).pushReplacementNamed(rotaInicialParaFuncao(usuario.funcao));
         }
       }
     } catch (e) {

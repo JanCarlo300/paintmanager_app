@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../modules/auth/apresentacao/controllers/auth_controller.dart';
-import '../../modules/auth/dominio/entidades/usuario.dart';
 import '../../core/tema/paleta_sahara.dart';
 
 class DrawerComum extends StatelessWidget {
@@ -9,7 +8,9 @@ class DrawerComum extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final authController = context.read<AuthController>();
+    final authController = context.watch<AuthController>();
+    final usuarioLogado = authController.usuarioLogado;
+    final funcao = usuarioLogado?.funcao ?? '';
     final rotaAtual = ModalRoute.of(context)?.settings.name;
 
     return Drawer(
@@ -17,12 +18,9 @@ class DrawerComum extends StatelessWidget {
       child: Column(
         children: [
           // Cabeçalho com Logo + Info do Usuário
-          StreamBuilder<Usuario?>(
-            stream: authController.usuarioAtual,
-            builder: (context, snapshot) {
-              final usuario = snapshot.data;
-              final nome = usuario?.nome ?? '...';
-              final funcao = usuario?.funcao ?? '';
+          Builder(
+            builder: (context) {
+              final nome = usuarioLogado?.nome ?? '...';
 
               return Container(
                 width: double.infinity,
@@ -79,18 +77,24 @@ class DrawerComum extends StatelessWidget {
           ),
           const SizedBox(height: 8),
 
-          // Itens de Navegação (scrollable para evitar overflow)
+          // Itens de Navegação (scrollable para evitar overflow), filtrados por função
           Expanded(
             child: ListView(
               padding: EdgeInsets.zero,
               children: [
-                _buildMenuItem(context, icon: Icons.dashboard_outlined, title: "Dashboard", route: '/home', rotaAtual: rotaAtual),
-                _buildMenuItem(context, icon: Icons.people_outline, title: "Usuários", route: '/usuarios', rotaAtual: rotaAtual),
-                _buildMenuItem(context, icon: Icons.person_outline, title: "Clientes", route: '/clientes', rotaAtual: rotaAtual),
+                if (funcao != 'Funcionário')
+                  _buildMenuItem(context, icon: Icons.dashboard_outlined, title: "Dashboard", route: '/home', rotaAtual: rotaAtual),
+                if (funcao == 'Administrador')
+                  _buildMenuItem(context, icon: Icons.people_outline, title: "Usuários", route: '/usuarios', rotaAtual: rotaAtual),
+                if (funcao != 'Funcionário')
+                  _buildMenuItem(context, icon: Icons.person_outline, title: "Clientes", route: '/clientes', rotaAtual: rotaAtual),
                 _buildMenuItem(context, icon: Icons.construction_outlined, title: "Obras", route: '/obras', rotaAtual: rotaAtual),
-                _buildMenuItem(context, icon: Icons.request_quote_outlined, title: "Orçamentos", route: '/orcamentos', rotaAtual: rotaAtual),
-                _buildMenuItem(context, icon: Icons.attach_money, title: "Financeiro", route: '/financeiro', rotaAtual: rotaAtual),
-                _buildMenuItem(context, icon: Icons.bar_chart_outlined, title: "Relatórios", route: '/relatorios', rotaAtual: rotaAtual),
+                if (funcao != 'Funcionário')
+                  _buildMenuItem(context, icon: Icons.request_quote_outlined, title: "Orçamentos", route: '/orcamentos', rotaAtual: rotaAtual),
+                if (funcao != 'Funcionário')
+                  _buildMenuItem(context, icon: Icons.attach_money, title: "Financeiro", route: '/financeiro', rotaAtual: rotaAtual),
+                if (funcao != 'Funcionário')
+                  _buildMenuItem(context, icon: Icons.bar_chart_outlined, title: "Relatórios", route: '/relatorios', rotaAtual: rotaAtual),
                 _buildMenuItem(context, icon: Icons.settings_outlined, title: "Configurações", route: '/configuracoes', rotaAtual: rotaAtual),
               ],
             ),

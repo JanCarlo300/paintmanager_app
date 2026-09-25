@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../dominio/entidades/obra.dart';
 import '../controllers/obra_controller.dart';
 import '../../../../core/tema/paleta_sahara.dart';
+import '../../../auth/apresentacao/controllers/auth_controller.dart';
 
 class ObraDetalhesPage extends StatefulWidget {
   final Obra obra;
@@ -38,6 +39,8 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
   Widget build(BuildContext context) {
     final controller = context.watch<ObraController>();
     final formatoData = DateFormat('dd/MM/yyyy');
+    // Só o responsável técnico (Gerente/Administrador) confirma mudanças de status.
+    final podeAlterarStatus = context.watch<AuthController>().usuarioLogado?.funcao != 'Funcionário';
 
     if (controller.carregando) {
       return Scaffold(
@@ -64,13 +67,14 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
         foregroundColor: PaletaSahara.onSurface,
         elevation: 0.5,
         actions: [
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert),
-            onSelected: (status) => _atualizarStatus(context, obraAtual, controller, status),
-            itemBuilder: (context) => [
-              'Não Iniciada', 'Em Andamento', 'Pausada', 'Concluída',
-            ].map((s) => PopupMenuItem(value: s, child: Text(s))).toList(),
-          ),
+          if (podeAlterarStatus)
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.more_vert),
+              onSelected: (status) => _atualizarStatus(context, obraAtual, controller, status),
+              itemBuilder: (context) => [
+                'Não Iniciada', 'Em Andamento', 'Pausada', 'Concluída',
+              ].map((s) => PopupMenuItem(value: s, child: Text(s))).toList(),
+            ),
         ],
       ),
       body: SingleChildScrollView(
