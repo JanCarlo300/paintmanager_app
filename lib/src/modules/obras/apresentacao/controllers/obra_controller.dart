@@ -139,4 +139,25 @@ class ObraController extends ChangeNotifier {
     await _repositorio.desalocarFuncionario(obraId, usuarioId);
     await carregarEquipe(obraId);
   }
+
+  // === Item 2.1 — obras alocadas ao usuário logado (visão do Funcionário) ===
+
+  List<int> _obraIdsAlocados = [];
+  List<int> get obraIdsAlocados => _obraIdsAlocados;
+
+  bool _carregandoAlocacoes = false;
+  bool get carregandoAlocacoes => _carregandoAlocacoes;
+
+  Future<void> carregarObraIdsAlocados(int usuarioId) async {
+    _carregandoAlocacoes = true;
+    notifyListeners();
+    try {
+      _obraIdsAlocados = await _repositorio.listarObraIdsAlocados(usuarioId);
+    } catch (e) {
+      _obraIdsAlocados = [];
+    } finally {
+      _carregandoAlocacoes = false;
+      notifyListeners();
+    }
+  }
 }

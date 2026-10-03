@@ -26,6 +26,13 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
       final controller = context.read<ObraController>();
       controller.carregarObras();
       if (widget.obra.id != null) controller.carregarEquipe(widget.obra.id!);
+
+      // Item 2.1: carrega as alocações do Funcionário, para checar se ele
+      // tem permissão de ver esta obra específica (bloqueia acesso direto).
+      final usuario = context.read<AuthController>().usuarioLogado;
+      if (usuario?.funcao == 'Funcionário' && usuario?.id != null) {
+        controller.carregarObraIdsAlocados(usuario!.id!);
+      }
     });
   }
 
@@ -42,11 +49,13 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
   Widget build(BuildContext context) {
     final controller = context.watch<ObraController>();
     final formatoData = DateFormat('dd/MM/yyyy');
+    final usuarioLogado = context.watch<AuthController>().usuarioLogado;
+    final ehFuncionario = usuarioLogado?.funcao == 'Funcionário';
     // Só o responsável técnico (Gerente/Administrador) confirma mudanças de
     // status e mexe na equipe alocada — Funcionário só acompanha.
-    final podeGerenciarObra = context.watch<AuthController>().usuarioLogado?.funcao != 'Funcionário';
+    final podeGerenciarObra = !ehFuncionario;
 
-    if (controller.carregando) {
+    if (controller.carregando || (ehFuncionario && controller.carregandoAlocacoes)) {
       return Scaffold(
         backgroundColor: PaletaSahara.background,
         appBar: AppBar(
@@ -56,6 +65,42 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
           elevation: 0.5,
         ),
         body: const Center(child: CircularProgressIndicator(color: PaletaSahara.primary)),
+      );
+    }
+
+    // Item 2.1: Funcionário não pode abrir uma obra em que não está alocado,
+    // mesmo navegando direto (não é só esconder da lista).
+    if (ehFuncionario && !controller.obraIdsAlocados.contains(widget.obra.id)) {
+      return Scaffold(
+        backgroundColor: PaletaSahara.background,
+        appBar: AppBar(
+          title: const Text("Acesso restrito", style: TextStyle(fontWeight: FontWeight.bold)),
+          backgroundColor: PaletaSahara.cardSurface,
+          foregroundColor: PaletaSahara.onSurface,
+          elevation: 0.5,
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.lock_outline, size: 56, color: Colors.grey),
+                const SizedBox(height: 16),
+                const Text(
+                  'Você não está alocado nesta obra.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 16),
+                ),
+                const SizedBox(height: 24),
+                OutlinedButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Voltar'),
+                ),
+              ],
+            ),
+          ),
+        ),
       );
     }
 

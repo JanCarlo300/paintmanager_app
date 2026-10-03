@@ -11,4 +11,7 @@ abstract class RepositorioObra {
   Future<List<Usuario>> listarFuncionariosAlocados(int obraId);
   Future<void> alocarFuncionario(int obraId, int usuarioId);
   Future<void> desalocarFuncionario(int obraId, int usuarioId);
+
+  /// Item 2.1 — ids das obras em que este usuário está alocado (visão do Funcionário)
+  Future<List<int>> listarObraIdsAlocados(int usuarioId);
 }

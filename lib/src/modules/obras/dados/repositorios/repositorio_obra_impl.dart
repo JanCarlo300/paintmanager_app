@@ -124,4 +124,18 @@ class RepositorioObraImpl implements RepositorioObra {
       throw 'Erro ao desalocar funcionário: $e';
     }
   }
+
+  @override
+  Future<List<int>> listarObraIdsAlocados(int usuarioId) async {
+    try {
+      final vinculos = await _supabase
+          .from('equipe_obra')
+          .select('obra_id')
+          .eq('usuario_id', usuarioId);
+
+      return (vinculos as List).map((v) => v['obra_id'] as int).toList();
+    } catch (e) {
+      throw 'Erro ao listar obras alocadas: $e';
+    }
+  }
 }

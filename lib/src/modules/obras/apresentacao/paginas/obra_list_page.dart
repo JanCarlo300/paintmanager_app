@@ -22,7 +22,14 @@ class _ObraListPageState extends State<ObraListPage> {
     super.initState();
     Future.microtask(() {
       if (!mounted) return;
-      context.read<ObraController>().carregarObras();
+      final controller = context.read<ObraController>();
+      controller.carregarObras();
+
+      // Item 2.1: Funcionário só vê as obras em que está alocado.
+      final usuario = context.read<AuthController>().usuarioLogado;
+      if (usuario?.funcao == 'Funcionário' && usuario?.id != null) {
+        controller.carregarObraIdsAlocados(usuario!.id!);
+      }
     });
   }
 
@@ -59,10 +66,12 @@ class _ObraListPageState extends State<ObraListPage> {
     final controller = context.watch<ObraController>();
     final formatoData = DateFormat('dd/MM/yyyy');
     final isWide = MediaQuery.of(context).size.width > 800;
+    final usuarioLogado = context.watch<AuthController>().usuarioLogado;
+    final ehFuncionario = usuarioLogado?.funcao == 'Funcionário';
     // Funcionário só acompanha o andamento das obras — não cadastra novas.
-    final podeGerenciarObras = context.watch<AuthController>().usuarioLogado?.funcao != 'Funcionário';
+    final podeGerenciarObras = !ehFuncionario;
 
-    if (controller.carregando) {
+    if (controller.carregando || (ehFuncionario && controller.carregandoAlocacoes)) {
       return Scaffold(
         backgroundColor: PaletaSahara.background,
         drawer: const DrawerComum(),
@@ -83,7 +92,10 @@ class _ObraListPageState extends State<ObraListPage> {
       );
     }
 
-    final todas = controller.obras;
+    // Item 2.1: Funcionário só enxerga as obras em que está alocado.
+    final todas = ehFuncionario
+        ? controller.obras.where((o) => controller.obraIdsAlocados.contains(o.id)).toList()
+        : controller.obras;
     final filtradas = _filtrar(todas);
     final emAndamento = todas.where((o) => o.status == 'Em Andamento').length;
     final concluidas = todas.where((o) => o.status == 'Concluída').length;
