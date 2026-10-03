@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import '../../dominio/entidades/obra.dart';
 import '../controllers/obra_controller.dart';
 import '../../../../core/tema/paleta_sahara.dart';
@@ -220,12 +222,44 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.map_outlined, color: Colors.blue),
-                tooltip: "Abrir no mapa",
-                onPressed: () => _abrirMapa(obraAtual.endereco),
+                icon: const Icon(Icons.directions_outlined, color: Colors.blue),
+                tooltip: "Como chegar",
+                onPressed: () => _abrirMapa(obraAtual),
               ),
             ],
           ),
+          if (obraAtual.temCoordenadas) ...[
+            const SizedBox(height: 10),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: SizedBox(
+                height: 160,
+                child: IgnorePointer(
+                  child: FlutterMap(
+                    options: MapOptions(
+                      initialCenter: LatLng(obraAtual.latitude!, obraAtual.longitude!),
+                      initialZoom: 15,
+                      interactionOptions: const InteractionOptions(flags: InteractiveFlag.none),
+                    ),
+                    children: [
+                      TileLayer(
+                        urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        userAgentPackageName: 'com.paintmanager.app',
+                      ),
+                      MarkerLayer(markers: [
+                        Marker(
+                          point: LatLng(obraAtual.latitude!, obraAtual.longitude!),
+                          width: 36,
+                          height: 36,
+                          child: const Icon(Icons.location_pin, color: Colors.red, size: 36),
+                        ),
+                      ]),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
           const SizedBox(height: 10),
 
           // Datas
@@ -571,6 +605,7 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
       dataConclusao: obraAtual.dataConclusao, status: obraAtual.status,
       progresso: obraAtual.progresso, etapasServico: obraAtual.etapasServico,
       anotacoes: obraAtual.anotacoes, materiaisFaltantes: materiais,
+      latitude: obraAtual.latitude, longitude: obraAtual.longitude,
     ));
   }
 
@@ -608,6 +643,7 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
                   progresso: obraAtual.progresso, etapasServico: obraAtual.etapasServico,
                   anotacoes: textController.text.trim(),
                   materiaisFaltantes: obraAtual.materiaisFaltantes,
+                  latitude: obraAtual.latitude, longitude: obraAtual.longitude,
                 ));
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text("Anotações salvas!"), backgroundColor: Colors.green, behavior: SnackBarBehavior.floating),
@@ -641,8 +677,13 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
     }
   }
 
-  void _abrirMapa(String endereco) async {
-    final uri = Uri.parse("https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(endereco)}");
+  void _abrirMapa(Obra obra) async {
+    // Item 3.2 — prefere a coordenada geocodificada (mais precisa); se a obra
+    // não tiver coordenada (geocodificação falhou ou obra antiga), cai para
+    // a busca por texto do endereço.
+    final uri = obra.temCoordenadas
+        ? Uri.parse("https://www.google.com/maps/dir/?api=1&destination=${obra.latitude},${obra.longitude}")
+        : Uri.parse("https://www.google.com/maps/dir/?api=1&destination=${Uri.encodeComponent(obra.endereco)}");
     try {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } catch (_) {

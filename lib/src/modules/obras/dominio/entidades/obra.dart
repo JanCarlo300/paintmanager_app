@@ -16,6 +16,8 @@ class Obra {
   final List<EtapaServico> etapasServico;
   final String anotacoes;
   final List<String> materiaisFaltantes;
+  final double? latitude;   // item 3.2 — geocodificado a partir do endereço (Nominatim/OSM)
+  final double? longitude;
 
   Obra({
     this.id,
@@ -32,7 +34,11 @@ class Obra {
     required this.etapasServico,
     this.anotacoes = '',
     this.materiaisFaltantes = const [],
+    this.latitude,
+    this.longitude,
   }) : progresso = progresso ?? _calcularProgresso(etapasServico);
+
+  bool get temCoordenadas => latitude != null && longitude != null;
 
   /// Calcula o progresso automaticamente baseado nas etapas concluídas
   static double _calcularProgresso(List<EtapaServico> etapas) {

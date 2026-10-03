@@ -8,6 +8,7 @@ import '../../../clientes/dominio/entidades/cliente.dart';
 import '../controllers/obra_controller.dart';
 import '../../../clientes/apresentacao/controllers/cliente_controller.dart';
 import '../../../../core/tema/paleta_sahara.dart';
+import '../../../../core/servicos/geocodificacao_service.dart';
 
 class ObraFormPage extends StatefulWidget {
   final Obra? obraParaEdicao;
@@ -160,18 +161,27 @@ class _ObraFormPageState extends State<ObraFormPage> {
         } catch (_) {}
       }
 
+      final enderecoDigitado = _enderecoController.text.trim();
+
+      // Item 3.2 — geocodifica o endereço (gratuito, via OpenStreetMap/Nominatim).
+      // Se falhar (sem internet, endereço não encontrado), mantém a coordenada
+      // anterior em vez de apagar o que já tinha funcionado antes.
+      final coordenada = await GeocodificacaoService().buscarCoordenadas(enderecoDigitado);
+
       final obra = Obra(
         id: widget.obraParaEdicao?.id,
         idCliente: _clienteSelecionadoId ?? widget.obraParaEdicao?.idCliente ?? 0,
         clienteNome: nomeCliEncontrado.isNotEmpty ? nomeCliEncontrado : (widget.obraParaEdicao?.clienteNome ?? ''),
         tituloDaObra: _tituloController.text.trim(),
-        endereco: _enderecoController.text.trim(),
+        endereco: enderecoDigitado,
         dataInicio: _dataInicio,
         dataPrevisaoTermino: _dataPrevisao,
         status: widget.obraParaEdicao?.status ?? 'Não Iniciada',
         etapasServico: etapas,
         anotacoes: _anotacoesController.text.trim(),
         materiaisFaltantes: _materiaisFaltantes,
+        latitude: coordenada?.latitude ?? widget.obraParaEdicao?.latitude,
+        longitude: coordenada?.longitude ?? widget.obraParaEdicao?.longitude,
       );
 
       try {

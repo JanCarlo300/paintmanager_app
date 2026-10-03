@@ -76,6 +76,8 @@ class ObraController extends ChangeNotifier {
       etapasServico: novasEtapas,
       anotacoes: obra.anotacoes,
       materiaisFaltantes: obra.materiaisFaltantes,
+      latitude: obra.latitude,
+      longitude: obra.longitude,
     );
 
     await salvar(obraAtualizada);
@@ -103,6 +105,8 @@ class ObraController extends ChangeNotifier {
       etapasServico: obra.etapasServico,
       anotacoes: obra.anotacoes,
       materiaisFaltantes: obra.materiaisFaltantes,
+      latitude: obra.latitude,
+      longitude: obra.longitude,
     );
 
     await salvar(obraAtualizada);

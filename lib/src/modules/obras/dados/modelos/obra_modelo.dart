@@ -18,6 +18,8 @@ class ObraModelo extends Obra {
     required super.etapasServico,
     super.anotacoes,
     super.materiaisFaltantes,
+    super.latitude,
+    super.longitude,
   });
 
   /// Cria um ObraModelo a partir do Map retornado pelo Supabase (snake_case)
@@ -53,6 +55,8 @@ class ObraModelo extends Obra {
       etapasServico: etapas,
       anotacoes: mapa['anotacoes'] ?? '',
       materiaisFaltantes: materiais,
+      latitude: (mapa['latitude'] as num?)?.toDouble(),
+      longitude: (mapa['longitude'] as num?)?.toDouble(),
     );
   }
 
@@ -74,6 +78,8 @@ class ObraModelo extends Obra {
       'etapas_servico': etapasServico.map((e) => e.paraMapa()).toList(),       // JSONB
       'anotacoes': anotacoes,
       'materiais_faltantes': materiaisFaltantes,                               // JSONB
+      'latitude': latitude,
+      'longitude': longitude,
     };
   }
 }
