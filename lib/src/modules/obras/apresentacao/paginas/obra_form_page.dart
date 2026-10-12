@@ -25,7 +25,6 @@ class _ObraFormPageState extends State<ObraFormPage> {
   int? _clienteSelecionadoId;
   late TextEditingController _tituloController;
   late TextEditingController _enderecoController;
-  late TextEditingController _anotacoesController;
   late TextEditingController _materialController;
   late TextEditingController _clienteSearchController;
   late DateTime _dataInicio;
@@ -59,7 +58,6 @@ class _ObraFormPageState extends State<ObraFormPage> {
 
     _tituloController = TextEditingController(text: obra?.tituloDaObra);
     _enderecoController = TextEditingController(text: obra?.endereco);
-    _anotacoesController = TextEditingController(text: obra?.anotacoes);
     _materialController = TextEditingController();
     _clienteSearchController = TextEditingController();
     _dataInicio = obra?.dataInicio ?? DateTime.now();
@@ -110,7 +108,6 @@ class _ObraFormPageState extends State<ObraFormPage> {
   void dispose() {
     _tituloController.dispose();
     _enderecoController.dispose();
-    _anotacoesController.dispose();
     _materialController.dispose();
     _clienteSearchController.dispose();
     for (final c in _etapasControllers) { c.dispose(); }
@@ -178,7 +175,6 @@ class _ObraFormPageState extends State<ObraFormPage> {
         dataPrevisaoTermino: _dataPrevisao,
         status: widget.obraParaEdicao?.status ?? 'Não Iniciada',
         etapasServico: etapas,
-        anotacoes: _anotacoesController.text.trim(),
         materiaisFaltantes: _materiaisFaltantes,
         latitude: coordenada?.latitude ?? widget.obraParaEdicao?.latitude,
         longitude: coordenada?.longitude ?? widget.obraParaEdicao?.longitude,
@@ -308,18 +304,6 @@ class _ObraFormPageState extends State<ObraFormPage> {
                       }).toList(),
                     ),
                   ],
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // === SEÇÃO 5: ANOTAÇÕES ===
-              _sectionTitle("Anotações", Icons.notes),
-              const SizedBox(height: 12),
-              _card(
-                child: TextFormField(
-                  controller: _anotacoesController,
-                  maxLines: 4,
-                  decoration: _inputDeco("Observações, notas do dia, detalhes importantes...", Icons.edit_note),
                 ),
               ),
               const SizedBox(height: 32),

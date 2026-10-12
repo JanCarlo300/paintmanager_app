@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../dominio/entidades/obra.dart';
 import '../../dominio/entidades/etapa_servico.dart';
+import '../../dominio/entidades/mensagem_obra.dart';
 import '../../dominio/repositorios/repositorio_obra.dart';
 import '../../../auth/dominio/entidades/usuario.dart';
 
@@ -74,7 +75,6 @@ class ObraController extends ChangeNotifier {
       status: obra.status,
       progresso: novoProgresso,
       etapasServico: novasEtapas,
-      anotacoes: obra.anotacoes,
       materiaisFaltantes: obra.materiaisFaltantes,
       latitude: obra.latitude,
       longitude: obra.longitude,
@@ -103,7 +103,6 @@ class ObraController extends ChangeNotifier {
       status: novoStatus,
       progresso: obra.progresso,
       etapasServico: obra.etapasServico,
-      anotacoes: obra.anotacoes,
       materiaisFaltantes: obra.materiaisFaltantes,
       latitude: obra.latitude,
       longitude: obra.longitude,
@@ -164,4 +163,12 @@ class ObraController extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  // === Item 2.3 — Chat da Obra ===
+
+  Stream<List<MensagemObra>> escutarMensagens(int obraId) =>
+      _repositorio.escutarMensagens(obraId);
+
+  Future<void> enviarMensagem({required int obraId, required int usuarioId, required String texto}) =>
+      _repositorio.enviarMensagem(obraId: obraId, usuarioId: usuarioId, texto: texto);
 }

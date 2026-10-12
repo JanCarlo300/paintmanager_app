@@ -1,4 +1,5 @@
 import '../entidades/obra.dart';
+import '../entidades/mensagem_obra.dart';
 import '../../../auth/dominio/entidades/usuario.dart';
 
 /// Contrato do repositório de Obras.
@@ -14,4 +15,8 @@ abstract class RepositorioObra {
 
   /// Item 2.1 — ids das obras em que este usuário está alocado (visão do Funcionário)
   Future<List<int>> listarObraIdsAlocados(int usuarioId);
+
+  /// Item 2.3 — chat da obra (tempo real)
+  Stream<List<MensagemObra>> escutarMensagens(int obraId);
+  Future<void> enviarMensagem({required int obraId, required int usuarioId, required String texto});
 }

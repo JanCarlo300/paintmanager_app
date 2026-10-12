@@ -6,6 +6,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../../dominio/entidades/obra.dart';
 import '../controllers/obra_controller.dart';
+import '../widgets/chat_obra_card.dart';
 import '../../../../core/tema/paleta_sahara.dart';
 import '../../../auth/apresentacao/controllers/auth_controller.dart';
 import '../../../auth/apresentacao/controllers/usuario_controller.dart';
@@ -159,11 +160,13 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
             _buildMateriaisCard(context, obraAtual, controller),
             const SizedBox(height: 24),
 
-            // === ANOTAÇÕES ===
-            _sectionTitle("Anotações", Icons.notes),
-            const SizedBox(height: 12),
-            _buildAnotacoesCard(context, obraAtual, controller),
-            const SizedBox(height: 24),
+            // === CHAT DA OBRA (item 2.3) ===
+            if (obraAtual.id != null) ...[
+              _sectionTitle("Chat da Obra", Icons.forum_outlined),
+              const SizedBox(height: 12),
+              ChatObraCard(obraId: obraAtual.id!),
+              const SizedBox(height: 24),
+            ],
           ],
         ),
       ),
@@ -604,62 +607,9 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
       dataInicio: obraAtual.dataInicio, dataPrevisaoTermino: obraAtual.dataPrevisaoTermino,
       dataConclusao: obraAtual.dataConclusao, status: obraAtual.status,
       progresso: obraAtual.progresso, etapasServico: obraAtual.etapasServico,
-      anotacoes: obraAtual.anotacoes, materiaisFaltantes: materiais,
+      materiaisFaltantes: materiais,
       latitude: obraAtual.latitude, longitude: obraAtual.longitude,
     ));
-  }
-
-  // --- ANOTAÇÕES ---
-  Widget _buildAnotacoesCard(BuildContext context, Obra obraAtual, ObraController controller) {
-    final textController = TextEditingController(text: obraAtual.anotacoes);
-
-    return _card(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          TextField(
-            controller: textController,
-            maxLines: 4,
-            decoration: InputDecoration(
-              hintText: "Observações do dia, detalhes importantes...",
-              hintStyle: TextStyle(color: Colors.grey[400]),
-              filled: true, fillColor: Colors.grey[50],
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
-              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
-              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: PaletaSahara.primary, width: 1.5)),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Align(
-            alignment: Alignment.centerRight,
-            child: ElevatedButton.icon(
-              onPressed: () {
-                controller.salvar(Obra(
-                  id: obraAtual.id, idOrcamento: obraAtual.idOrcamento,
-                  idCliente: obraAtual.idCliente, clienteNome: obraAtual.clienteNome,
-                  tituloDaObra: obraAtual.tituloDaObra, endereco: obraAtual.endereco,
-                  dataInicio: obraAtual.dataInicio, dataPrevisaoTermino: obraAtual.dataPrevisaoTermino,
-                  dataConclusao: obraAtual.dataConclusao, status: obraAtual.status,
-                  progresso: obraAtual.progresso, etapasServico: obraAtual.etapasServico,
-                  anotacoes: textController.text.trim(),
-                  materiaisFaltantes: obraAtual.materiaisFaltantes,
-                  latitude: obraAtual.latitude, longitude: obraAtual.longitude,
-                ));
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Anotações salvas!"), backgroundColor: Colors.green, behavior: SnackBarBehavior.floating),
-                );
-              },
-              icon: const Icon(Icons.save_outlined, size: 18),
-              label: const Text("Salvar Anotações"),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: PaletaSahara.primary, foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   void _atualizarStatus(BuildContext context, Obra obraAtual, ObraController controller, String novoStatus) async {

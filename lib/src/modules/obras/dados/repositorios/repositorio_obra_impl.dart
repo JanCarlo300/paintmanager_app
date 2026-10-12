@@ -3,6 +3,8 @@ import '../../../../core/config/supabase_config.dart';
 import '../../dominio/entidades/obra.dart';
 import '../../dominio/repositorios/repositorio_obra.dart';
 import '../modelos/obra_modelo.dart';
+import '../modelos/mensagem_obra_modelo.dart';
+import '../../dominio/entidades/mensagem_obra.dart';
 import '../../../auth/dominio/entidades/usuario.dart';
 import '../../../auth/dados/modelos/usuario_modelo.dart';
 
@@ -43,8 +45,9 @@ class RepositorioObraImpl implements RepositorioObra {
         status: obra.status,
         progresso: obra.progresso,
         etapasServico: obra.etapasServico,
-        anotacoes: obra.anotacoes,
         materiaisFaltantes: obra.materiaisFaltantes,
+        latitude: obra.latitude,
+        longitude: obra.longitude,
       );
 
       if (obra.id == null) {
@@ -136,6 +139,31 @@ class RepositorioObraImpl implements RepositorioObra {
       return (vinculos as List).map((v) => v['obra_id'] as int).toList();
     } catch (e) {
       throw 'Erro ao listar obras alocadas: $e';
+    }
+  }
+
+  // === Item 2.3 — Chat da Obra ===
+
+  @override
+  Stream<List<MensagemObra>> escutarMensagens(int obraId) {
+    return _supabase
+        .from('obra_mensagem')
+        .stream(primaryKey: ['id_mensagem'])
+        .eq('obra_id', obraId)
+        .order('criado_em')
+        .map((linhas) => linhas.map(MensagemObraModelo.deMapa).toList());
+  }
+
+  @override
+  Future<void> enviarMensagem({required int obraId, required int usuarioId, required String texto}) async {
+    try {
+      await _supabase.from('obra_mensagem').insert({
+        'obra_id': obraId,
+        'usuario_id': usuarioId,
+        'texto': texto,
+      });
+    } catch (e) {
+      throw 'Erro ao enviar mensagem: $e';
     }
   }
 }

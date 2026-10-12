@@ -14,7 +14,6 @@ class Obra {
   final String status;          // Não Iniciada | Em Andamento | Pausada | Concluída
   final double progresso;       // 0 a 100
   final List<EtapaServico> etapasServico;
-  final String anotacoes;
   final List<String> materiaisFaltantes;
   final double? latitude;   // item 3.2 — geocodificado a partir do endereço (Nominatim/OSM)
   final double? longitude;
@@ -32,7 +31,6 @@ class Obra {
     this.status = 'Não Iniciada',
     double? progresso,
     required this.etapasServico,
-    this.anotacoes = '',
     this.materiaisFaltantes = const [],
     this.latitude,
     this.longitude,
