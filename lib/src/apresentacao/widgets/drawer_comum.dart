@@ -108,7 +108,7 @@ class DrawerComum extends StatelessWidget {
             onTap: () async {
               await authController.sair();
               if (context.mounted) {
-                Navigator.of(context).pushReplacementNamed('/login');
+                Navigator.of(context).pushNamedAndRemoveUntil('/login', (_) => false);
               }
             },
           ),
@@ -145,8 +145,18 @@ class DrawerComum extends StatelessWidget {
         dense: true,
         onTap: () {
           Navigator.pop(context);
-          if (rotaAtual != route) {
-            Navigator.pushReplacementNamed(context, route);
+          if (rotaAtual == route) return;
+
+          // Mantém a tela inicial do usuário na base da pilha: o botão voltar
+          // do Android leva de volta a ela e só ali fecha o app.
+          final funcao = context.read<AuthController>().usuarioLogado?.funcao ?? '';
+          final inicial = rotaInicialParaFuncao(funcao);
+          bool ehBase(Route<dynamic> r) => r.settings.name == inicial || r.isFirst;
+
+          if (route == inicial) {
+            Navigator.popUntil(context, ehBase);
+          } else {
+            Navigator.pushNamedAndRemoveUntil(context, route, ehBase);
           }
         },
       ),

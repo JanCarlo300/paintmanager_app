@@ -605,13 +605,7 @@ class DashboardPage extends StatelessWidget {
                 borderRadius: BorderRadius.circular(14),
                 splashColor: _corAccent.withValues(alpha: 0.12),
                 highlightColor: _corAccent.withValues(alpha: 0.06),
-                onTap: () {
-                  if (atalho.rota.contains('formulario')) {
-                    Navigator.pushNamed(context, atalho.rota);
-                  } else {
-                    Navigator.pushReplacementNamed(context, atalho.rota);
-                  }
-                },
+                onTap: () => Navigator.pushNamed(context, atalho.rota),
                 child: Container(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(14),

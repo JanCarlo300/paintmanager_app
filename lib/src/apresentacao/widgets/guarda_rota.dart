@@ -51,8 +51,9 @@ class GuardaRota extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               ElevatedButton(
-                onPressed: () => Navigator.of(context).pushReplacementNamed(
+                onPressed: () => Navigator.of(context).pushNamedAndRemoveUntil(
                   rotaInicialParaFuncao(usuario.funcao),
+                  (_) => false,
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: PaletaSahara.primary,
