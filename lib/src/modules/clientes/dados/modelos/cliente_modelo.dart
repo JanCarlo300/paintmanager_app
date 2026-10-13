@@ -56,7 +56,7 @@ class ClienteModelo extends Cliente {
       'nome': nome,
       'email': email,
       'telefone': telefone,
-      'cpf_cnpj': cpfOuCnpj,
+      'cpf_cnpj': cpfOuCnpj.trim().isEmpty ? null : cpfOuCnpj,
       'endereco': endereco,
       'status': ativo,
     };

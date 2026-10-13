@@ -56,5 +56,18 @@ void main() {
 
       expect(result, expectedMap);
     });
+
+    test('paraMapa envia cpf_cnpj como null quando o documento nao foi informado', () {
+      final semDocumento = ClienteModelo(
+        nome: 'Cliente Sem Documento',
+        email: 'a@b.com',
+        telefone: '64999999999',
+        endereco: 'Rua A',
+        cpfOuCnpj: '  ',
+        criadoEm: tCriadoEm,
+      );
+
+      expect(semDocumento.paraMapa()['cpf_cnpj'], isNull);
+    });
   });
 }

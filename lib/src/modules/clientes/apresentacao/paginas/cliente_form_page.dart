@@ -150,11 +150,13 @@ class _ClienteFormPageState extends State<ClienteFormPage> {
                   ),
                   const SizedBox(height: 20),
                   _buildField(
-                    "CPF ou CNPJ",
+                    "CPF ou CNPJ (opcional)",
                     _documentoController,
                     Icons.badge_outlined,
                     "000.000.000-00",
                     mask: _documentoMask,
+                    keyboardType: TextInputType.number,
+                    obrigatorio: false,
                   ),
                   const SizedBox(height: 20),
                   _buildField(
@@ -205,6 +207,7 @@ class _ClienteFormPageState extends State<ClienteFormPage> {
     String hint, {
     TextInputType? keyboardType,
     MaskTextInputFormatter? mask,
+    bool obrigatorio = true,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -215,7 +218,7 @@ class _ClienteFormPageState extends State<ClienteFormPage> {
           controller: controller,
           keyboardType: keyboardType,
           inputFormatters: mask != null ? [mask] : [],
-          validator: (value) => value == null || value.isEmpty ? "Campo obrigatório" : null,
+          validator: (value) => obrigatorio && (value == null || value.isEmpty) ? "Campo obrigatório" : null,
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: TextStyle(color: Colors.grey[400]),
