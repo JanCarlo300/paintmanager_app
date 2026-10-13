@@ -5,6 +5,8 @@ import '../../dominio/entidades/usuario.dart';
 import '../controllers/usuario_controller.dart';
 import '../../../../apresentacao/widgets/drawer_comum.dart';
 import '../../../../core/tema/paleta_sahara.dart';
+import '../../../../core/validadores/validador_cpf.dart';
+import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 
 /// Filtros disponíveis na tela de usuários
 enum FiltroUsuario { todosAtivos, inativos }
@@ -555,10 +557,18 @@ class _UsuarioListPageState extends State<UsuarioListPage> {
   void _exibirDialogoUsuario(BuildContext context, {Usuario? usuario}) {
     final nomeController = TextEditingController(text: usuario?.nome);
     final emailController = TextEditingController(text: usuario?.email);
-    final cpfController = TextEditingController(text: usuario?.cpf);
+    final cpfMask = MaskTextInputFormatter(
+      mask: '###.###.###-##',
+      filter: {"#": RegExp(r'[0-9]')},
+      initialText: usuario?.cpf ?? '',
+    );
+    final cpfController = TextEditingController(text: cpfMask.getMaskedText());
     final telefoneController = TextEditingController(text: usuario?.telefone);
     String funcaoSelecionada = usuario?.funcao ?? "Funcionário";
     bool statusAtivo = usuario?.status ?? true;
+    String? erroCpf;
+    String? erroGeral;
+    bool salvando = false;
 
     showDialog(
       context: context,
@@ -580,8 +590,12 @@ class _UsuarioListPageState extends State<UsuarioListPage> {
                 ),
                 TextField(
                   controller: cpfController,
-                  decoration: const InputDecoration(labelText: "CPF"),
+                  decoration: InputDecoration(labelText: "CPF", errorText: erroCpf),
                   keyboardType: TextInputType.number,
+                  inputFormatters: [cpfMask],
+                  onChanged: (_) {
+                    if (erroCpf != null) setDialogState(() => erroCpf = null);
+                  },
                 ),
                 TextField(
                   controller: telefoneController,
@@ -608,6 +622,11 @@ class _UsuarioListPageState extends State<UsuarioListPage> {
                     setDialogState(() => statusAtivo = val);
                   },
                 ),
+                if (erroGeral != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text(erroGeral!, style: const TextStyle(color: Colors.red, fontSize: 13)),
+                  ),
               ],
             ),
           ),
@@ -617,26 +636,40 @@ class _UsuarioListPageState extends State<UsuarioListPage> {
               child: const Text("Cancelar"),
             ),
             ElevatedButton(
-              onPressed: () {
+              onPressed: salvando ? null : () async {
+                final erro = ValidadorCpf.mensagemErro(cpfController.text);
+                if (erro != null) {
+                  setDialogState(() => erroCpf = erro);
+                  return;
+                }
                 final novoUser = Usuario(
                   id: usuario?.id,
                   authId: usuario?.authId,
                   nome: nomeController.text,
                   email: emailController.text,
-                  cpf: cpfController.text,
+                  // O login busca o CPF só com números; com máscara o usuário não entraria.
+                  cpf: ValidadorCpf.apenasDigitos(cpfController.text),
                   telefone: telefoneController.text,
                   funcao: funcaoSelecionada,
                   status: statusAtivo,
                   primeiroAcesso: usuario?.primeiroAcesso ?? true,
                   criadoEm: usuario?.criadoEm ?? DateTime.now(),
                 );
-                context.read<UsuarioController>().salvar(novoUser);
-                Navigator.pop(context);
+                setDialogState(() => salvando = true);
+                try {
+                  await context.read<UsuarioController>().salvar(novoUser);
+                  if (context.mounted) Navigator.pop(context);
+                } catch (e) {
+                  setDialogState(() {
+                    salvando = false;
+                    erroGeral = '$e';
+                  });
+                }
               },
               style: ElevatedButton.styleFrom(backgroundColor: PaletaSahara.primary),
-              child: const Text(
-                "Salvar",
-                style: TextStyle(color: Colors.white),
+              child: Text(
+                salvando ? "Salvando..." : "Salvar",
+                style: const TextStyle(color: Colors.white),
               ),
             ),
           ],

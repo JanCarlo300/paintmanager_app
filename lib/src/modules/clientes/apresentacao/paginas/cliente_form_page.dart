@@ -4,6 +4,7 @@ import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import '../../dominio/entidades/cliente.dart';
 import '../controllers/cliente_controller.dart';
 import '../../../../core/tema/paleta_sahara.dart';
+import '../../../../core/validadores/validador_cpf.dart';
 
 class ClienteFormPage extends StatefulWidget {
   final Cliente? clienteParaEdicao;
@@ -45,6 +46,12 @@ class _ClienteFormPageState extends State<ClienteFormPage> {
     _enderecoController.dispose();
     _documentoController.dispose();
     super.dispose();
+  }
+
+  String? _validarDocumento(String? valor) {
+    // Clientes antigos podem ter CNPJ (14 dígitos) gravado; só o CPF é validado.
+    if (ValidadorCpf.apenasDigitos(valor ?? '').length == 14) return null;
+    return ValidadorCpf.mensagemErro(valor, obrigatorio: false);
   }
 
   void _salvar() async {
@@ -156,7 +163,7 @@ class _ClienteFormPageState extends State<ClienteFormPage> {
                     "000.000.000-00",
                     mask: _documentoMask,
                     keyboardType: TextInputType.number,
-                    obrigatorio: false,
+                    validator: _validarDocumento,
                   ),
                   const SizedBox(height: 20),
                   _buildField(
@@ -207,7 +214,7 @@ class _ClienteFormPageState extends State<ClienteFormPage> {
     String hint, {
     TextInputType? keyboardType,
     MaskTextInputFormatter? mask,
-    bool obrigatorio = true,
+    String? Function(String?)? validator,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -218,7 +225,7 @@ class _ClienteFormPageState extends State<ClienteFormPage> {
           controller: controller,
           keyboardType: keyboardType,
           inputFormatters: mask != null ? [mask] : [],
-          validator: (value) => obrigatorio && (value == null || value.isEmpty) ? "Campo obrigatório" : null,
+          validator: validator ?? (value) => value == null || value.isEmpty ? "Campo obrigatório" : null,
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: TextStyle(color: Colors.grey[400]),
