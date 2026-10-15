@@ -6,6 +6,9 @@ import '../controllers/obra_controller.dart';
 import '../../../../apresentacao/widgets/drawer_comum.dart';
 import '../../../../core/tema/paleta_sahara.dart';
 import '../../../auth/apresentacao/controllers/auth_controller.dart';
+import '../../../../core/filtros/filtro_lista.dart';
+import '../../../../apresentacao/widgets/painel_filtro_lista.dart';
+import '../../../../apresentacao/widgets/chips_filtro_status.dart';
 
 class ObraListPage extends StatefulWidget {
   const ObraListPage({super.key});
@@ -16,6 +19,9 @@ class ObraListPage extends StatefulWidget {
 
 class _ObraListPageState extends State<ObraListPage> {
   String _termoBusca = '';
+  String? _statusSelecionado; // null = todas
+  late FiltroLista _filtro =
+      FiltroLista(maisRecentes: context.read<ObraController>().maisRecentes);
 
   @override
   void initState() {
@@ -34,13 +40,40 @@ class _ObraListPageState extends State<ObraListPage> {
   }
 
   List<Obra> _filtrar(List<Obra> obras) {
-    if (_termoBusca.isEmpty) return obras;
     final termo = _termoBusca.toLowerCase();
-    return obras.where((o) =>
-      o.tituloDaObra.toLowerCase().contains(termo) ||
-      o.clienteNome.toLowerCase().contains(termo) ||
-      o.status.toLowerCase().contains(termo)
-    ).toList();
+    return obras.where((o) {
+      if (_statusSelecionado != null && o.status != _statusSelecionado) return false;
+      if (termo.isNotEmpty &&
+          !o.tituloDaObra.toLowerCase().contains(termo) &&
+          !o.clienteNome.toLowerCase().contains(termo) &&
+          !o.status.toLowerCase().contains(termo)) {
+        return false;
+      }
+      return _filtro.criadoNoPeriodo(o.criadoEm) &&
+          // Obra concluída não está mais "atrasada" nem "terminando".
+          _filtro.dentroDoPrazo(o.dataPrevisaoTermino, emAberto: o.status != 'Concluída');
+    }).toList();
+  }
+
+  void _aplicarFiltro(FiltroLista novo) {
+    setState(() => _filtro = novo);
+    context.read<ObraController>().ordenar(maisRecentes: novo.maisRecentes);
+  }
+
+  Widget _buildChipsStatus(List<Obra> todas) {
+    int qtd(String status) => todas.where((o) => o.status == status).length;
+
+    return ChipsFiltroStatus<String?>(
+      selecionado: _statusSelecionado,
+      aoSelecionar: (s) => setState(() => _statusSelecionado = s),
+      opcoes: [
+        OpcaoStatus("Todas", null, todas.length, PaletaSahara.primary),
+        OpcaoStatus("Não Iniciada", "Não Iniciada", qtd("Não Iniciada"), Colors.grey[600]!),
+        OpcaoStatus("Em Andamento", "Em Andamento", qtd("Em Andamento"), Colors.green),
+        OpcaoStatus("Pausada", "Pausada", qtd("Pausada"), Colors.orange),
+        OpcaoStatus("Concluída", "Concluída", qtd("Concluída"), Colors.blue),
+      ],
+    );
   }
 
   Color _corStatus(String status) {
@@ -148,21 +181,48 @@ class _ObraListPageState extends State<ObraListPage> {
             _buildSummaryRow(todas.length, emAndamento, concluidas),
             const SizedBox(height: 24),
 
-            // --- BUSCA ---
-            TextField(
-              onChanged: (v) => setState(() => _termoBusca = v),
-              decoration: InputDecoration(
-                hintText: "Buscar obras...",
-                hintStyle: TextStyle(color: Colors.grey[400]),
-                prefixIcon: Icon(Icons.search, color: Colors.grey[400]),
-                filled: true,
-                fillColor: Colors.white,
-                contentPadding: const EdgeInsets.symmetric(vertical: 14),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Colors.grey[200]!)),
-                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Colors.grey[200]!)),
+            // --- FILTRO POR STATUS ---
+            _buildChipsStatus(todas),
+            const SizedBox(height: 16),
+
+            // --- BUSCA + BOTÃO DE FILTRO ---
+            Row(
+              children: [
+                Expanded(
+                  child: SizedBox(
+                    height: 42,
+                    child: TextField(
+                      onChanged: (v) => setState(() => _termoBusca = v),
+                      decoration: InputDecoration(
+                        hintText: "Buscar obras...",
+                        hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
+                        prefixIcon: Icon(Icons.search, color: Colors.grey[400], size: 20),
+                        filled: true,
+                        fillColor: Colors.white,
+                        contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Colors.grey[200]!)),
+                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Colors.grey[200]!)),
+                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: PaletaSahara.primary, width: 1.5)),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                BotaoFiltroLista(
+                  filtro: _filtro,
+                  aoAplicar: _aplicarFiltro,
+                  rotuloAtrasados: "Atrasadas",
+                  rotuloProximos7Dias: "Terminam em 7 dias",
+                ),
+              ],
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Text(
+                "${filtradas.length} obra(s) encontrada(s)",
+                style: TextStyle(color: Colors.grey[600], fontSize: 13),
               ),
             ),
-            const SizedBox(height: 20),
 
             // --- LISTA DE CARDS ---
             if (filtradas.isEmpty)
@@ -173,7 +233,13 @@ class _ObraListPageState extends State<ObraListPage> {
                     children: [
                       Icon(Icons.construction_outlined, size: 48, color: Colors.grey[400]),
                       const SizedBox(height: 12),
-                      const Text("Nenhuma obra encontrada.", style: TextStyle(color: Colors.grey)),
+                      Text(
+                        _filtro.quantidadeAtivos > 0 || _termoBusca.isNotEmpty || _statusSelecionado != null
+                            ? "Nenhuma obra encontrada com esses filtros."
+                            : "Nenhuma obra encontrada.",
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: Colors.grey),
+                      ),
                     ],
                   ),
                 ),

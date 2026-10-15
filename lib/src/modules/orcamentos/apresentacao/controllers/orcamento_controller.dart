@@ -14,12 +14,22 @@ class OrcamentoController extends ChangeNotifier {
   List<Orcamento> _orcamentos = [];
   List<Orcamento> get orcamentos => _orcamentos;
 
+  // Guardada aqui para que recarregar depois de salvar mantenha a ordem escolhida.
+  bool _maisRecentes = true;
+  bool get maisRecentes => _maisRecentes;
+
+  Future<void> ordenar({required bool maisRecentes}) async {
+    if (_maisRecentes == maisRecentes) return;
+    _maisRecentes = maisRecentes;
+    await carregarOrcamentos();
+  }
+
   /// Carrega a lista de orçamentos do Supabase
   Future<void> carregarOrcamentos() async {
     _carregando = true;
     notifyListeners();
     try {
-      _orcamentos = await _repositorio.listarOrcamentos();
+      _orcamentos = await _repositorio.listarOrcamentos(maisRecentes: _maisRecentes);
     } catch (e) {
       _orcamentos = [];
     } finally {

@@ -18,12 +18,22 @@ class ObraController extends ChangeNotifier {
   List<Obra> _obras = [];
   List<Obra> get obras => _obras;
 
+  // Guardada aqui para que recarregar depois de salvar mantenha a ordem escolhida.
+  bool _maisRecentes = true;
+  bool get maisRecentes => _maisRecentes;
+
+  Future<void> ordenar({required bool maisRecentes}) async {
+    if (_maisRecentes == maisRecentes) return;
+    _maisRecentes = maisRecentes;
+    await carregarObras();
+  }
+
   /// Carrega a lista de obras do Supabase
   Future<void> carregarObras() async {
     _carregando = true;
     notifyListeners();
     try {
-      _obras = await _repositorio.listarObras();
+      _obras = await _repositorio.listarObras(maisRecentes: _maisRecentes);
     } catch (e) {
       _obras = [];
     } finally {

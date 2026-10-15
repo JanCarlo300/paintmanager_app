@@ -19,6 +19,7 @@ class ObraModelo extends Obra {
     super.materiaisFaltantes,
     super.latitude,
     super.longitude,
+    super.criadoEm,
   });
 
   /// Cria um ObraModelo a partir do Map retornado pelo Supabase (snake_case)
@@ -55,6 +56,7 @@ class ObraModelo extends Obra {
       materiaisFaltantes: materiais,
       latitude: (mapa['latitude'] as num?)?.toDouble(),
       longitude: (mapa['longitude'] as num?)?.toDouble(),
+      criadoEm: DateTime.tryParse(mapa['created_at']?.toString() ?? '')?.toLocal(),
     );
   }
 

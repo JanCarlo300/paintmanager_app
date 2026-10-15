@@ -8,6 +8,9 @@ import '../controllers/orcamento_controller.dart';
 import '../../../clientes/apresentacao/controllers/cliente_controller.dart';
 import '../../../../apresentacao/widgets/drawer_comum.dart';
 import '../../../../core/tema/paleta_sahara.dart';
+import '../../../../core/filtros/filtro_lista.dart';
+import '../../../../apresentacao/widgets/painel_filtro_lista.dart';
+import '../../../../apresentacao/widgets/chips_filtro_status.dart';
 
 /// Filtros disponíveis na tela de orçamentos
 enum FiltroOrcamento { todos, pendentes, aprovados, recusados }
@@ -22,6 +25,8 @@ class OrcamentoListPage extends StatefulWidget {
 class _OrcamentoListPageState extends State<OrcamentoListPage> {
   String _termoBusca = '';
   FiltroOrcamento _filtroAtual = FiltroOrcamento.todos;
+  late FiltroLista _filtro =
+      FiltroLista(maisRecentes: context.read<OrcamentoController>().maisRecentes);
 
   final _formatoMoeda = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
   final _formatoData = DateFormat('dd/MM/yyyy');
@@ -201,8 +206,12 @@ _Orçamento gerado pelo PaintManager_
     }
 
     final todos = controller.orcamentos;
-    final filtradosPorStatus = _filtrarPorStatus(todos);
-    final filtrados = _filtrarPorTexto(filtradosPorStatus);
+    final filtrados = _filtrarPorTexto(_filtrarPorStatus(todos))
+        .where((o) =>
+            _filtro.criadoNoPeriodo(o.dataCriacao) &&
+            // Prazo de validade só importa enquanto o cliente não respondeu.
+            _filtro.dentroDoPrazo(o.dataValidade, emAberto: o.status == 'Pendente'))
+        .toList();
     final clientes = clienteController.clientes;
 
     return Scaffold(
@@ -280,65 +289,42 @@ _Orçamento gerado pelo PaintManager_
 
   // === FILTRO CHIPS ===
   Widget _buildFiltroChips(List<Orcamento> todos) {
-    final qtdTodos = todos.length;
-    final qtdPendentes = todos.where((o) => o.status == 'Pendente').length;
-    final qtdAprovados = todos.where((o) => o.status == 'Aprovado').length;
-    final qtdRecusados = todos.where((o) => o.status == 'Recusado').length;
+    int qtd(String status) => todos.where((o) => o.status == status).length;
 
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: [
-          _filtroChip("Todos", FiltroOrcamento.todos, qtdTodos, Colors.blue),
-          const SizedBox(width: 8),
-          _filtroChip("Pendentes", FiltroOrcamento.pendentes, qtdPendentes, Colors.orange),
-          const SizedBox(width: 8),
-          _filtroChip("Aprovados", FiltroOrcamento.aprovados, qtdAprovados, Colors.green),
-          const SizedBox(width: 8),
-          _filtroChip("Recusados", FiltroOrcamento.recusados, qtdRecusados, Colors.red),
-        ],
-      ),
+    return ChipsFiltroStatus<FiltroOrcamento>(
+      selecionado: _filtroAtual,
+      aoSelecionar: (f) => setState(() => _filtroAtual = f),
+      opcoes: [
+        OpcaoStatus("Todos", FiltroOrcamento.todos, todos.length, Colors.blue),
+        OpcaoStatus("Pendentes", FiltroOrcamento.pendentes, qtd('Pendente'), Colors.orange),
+        OpcaoStatus("Aprovados", FiltroOrcamento.aprovados, qtd('Aprovado'), Colors.green),
+        OpcaoStatus("Recusados", FiltroOrcamento.recusados, qtd('Recusado'), Colors.red),
+      ],
     );
   }
 
-  Widget _filtroChip(String label, FiltroOrcamento filtro, int count, Color cor) {
-    final selecionado = _filtroAtual == filtro;
-    return FilterChip(
-      label: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(label, style: TextStyle(
-            fontSize: 12,
-            fontWeight: selecionado ? FontWeight.bold : FontWeight.normal,
-            color: selecionado ? Colors.white : Colors.grey[700],
-          )),
-          const SizedBox(width: 6),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
-              color: selecionado ? Colors.white.withValues(alpha: 0.3) : Colors.grey[300],
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Text(
-              count.toString(),
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold,
-                  color: selecionado ? Colors.white : Colors.grey[700]),
-            ),
-          ),
-        ],
-      ),
-      selected: selecionado,
-      selectedColor: cor,
-      backgroundColor: Colors.grey[100],
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      side: BorderSide.none,
-      showCheckmark: false,
-      onSelected: (_) => setState(() => _filtroAtual = filtro),
-    );
+  void _aplicarFiltro(FiltroLista novo) {
+    setState(() => _filtro = novo);
+    context.read<OrcamentoController>().ordenar(maisRecentes: novo.maisRecentes);
   }
 
-  // === BARRA DE BUSCA ===
+  // === BARRA DE BUSCA + BOTÃO DE FILTRO ===
   Widget _buildBarraBusca() {
+    return Row(
+      children: [
+        Expanded(child: _campoBusca()),
+        const SizedBox(width: 8),
+        BotaoFiltroLista(
+          filtro: _filtro,
+          aoAplicar: _aplicarFiltro,
+          rotuloAtrasados: "Pendentes vencidos",
+          rotuloProximos7Dias: "Vencem em 7 dias",
+        ),
+      ],
+    );
+  }
+
+  Widget _campoBusca() {
     return SizedBox(
       height: 42,
       child: TextField(
@@ -695,19 +681,24 @@ _Orçamento gerado pelo PaintManager_
   Widget _buildVazio() {
     String mensagem;
     IconData icone;
-    switch (_filtroAtual) {
-      case FiltroOrcamento.todos:
-        mensagem = "Nenhum orçamento cadastrado.";
-        icone = Icons.request_quote_outlined;
-      case FiltroOrcamento.pendentes:
-        mensagem = "Nenhum orçamento pendente.";
-        icone = Icons.schedule_outlined;
-      case FiltroOrcamento.aprovados:
-        mensagem = "Nenhum orçamento aprovado.";
-        icone = Icons.check_circle_outline;
-      case FiltroOrcamento.recusados:
-        mensagem = "Nenhum orçamento recusado.";
-        icone = Icons.cancel_outlined;
+    if (_filtro.quantidadeAtivos > 0 || _termoBusca.isNotEmpty) {
+      mensagem = "Nenhum orçamento encontrado com esses filtros.";
+      icone = Icons.filter_alt_off_outlined;
+    } else {
+      switch (_filtroAtual) {
+        case FiltroOrcamento.todos:
+          mensagem = "Nenhum orçamento cadastrado.";
+          icone = Icons.request_quote_outlined;
+        case FiltroOrcamento.pendentes:
+          mensagem = "Nenhum orçamento pendente.";
+          icone = Icons.schedule_outlined;
+        case FiltroOrcamento.aprovados:
+          mensagem = "Nenhum orçamento aprovado.";
+          icone = Icons.check_circle_outline;
+        case FiltroOrcamento.recusados:
+          mensagem = "Nenhum orçamento recusado.";
+          icone = Icons.cancel_outlined;
+      }
     }
 
     return Container(

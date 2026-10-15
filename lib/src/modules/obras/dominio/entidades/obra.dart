@@ -17,6 +17,7 @@ class Obra {
   final List<String> materiaisFaltantes;
   final double? latitude;   // item 3.2 — geocodificado a partir do endereço (Nominatim/OSM)
   final double? longitude;
+  final DateTime? criadoEm; // gerado pelo banco (created_at); usado nos filtros da lista
 
   Obra({
     this.id,
@@ -34,6 +35,7 @@ class Obra {
     this.materiaisFaltantes = const [],
     this.latitude,
     this.longitude,
+    this.criadoEm,
   }) : progresso = progresso ?? _calcularProgresso(etapasServico);
 
   bool get temCoordenadas => latitude != null && longitude != null;

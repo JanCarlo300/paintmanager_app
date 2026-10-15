@@ -14,12 +14,14 @@ class RepositorioObraImpl implements RepositorioObra {
   final SupabaseClient _supabase = SupabaseConfig.client;
 
   @override
-  Future<List<Obra>> listarObras() async {
+  Future<List<Obra>> listarObras({bool maisRecentes = true}) async {
     try {
+      // Ordem de criação; o id desempata obras criadas no mesmo instante.
       final resultado = await _supabase
           .from('obra')
           .select()
-          .order('data_inicio', ascending: false);
+          .order('created_at', ascending: !maisRecentes)
+          .order('id_obra', ascending: !maisRecentes);
 
       return (resultado as List)
           .map((mapa) => ObraModelo.deMapa(mapa))

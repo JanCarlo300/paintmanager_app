@@ -4,7 +4,7 @@ import '../../../auth/dominio/entidades/usuario.dart';
 
 /// Contrato do repositório de Obras.
 abstract class RepositorioObra {
-  Future<List<Obra>> listarObras();
+  Future<List<Obra>> listarObras({bool maisRecentes = true});
   Future<void> salvarObra(Obra obra);
   Future<void> excluirObra(int id);
 

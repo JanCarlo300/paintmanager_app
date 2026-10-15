@@ -10,12 +10,15 @@ class RepositorioOrcamentoImpl implements RepositorioOrcamento {
   final SupabaseClient _supabase = SupabaseConfig.client;
 
   @override
-  Future<List<Orcamento>> listarOrcamentos() async {
+  Future<List<Orcamento>> listarOrcamentos({bool maisRecentes = true}) async {
     try {
+      // data_criacao é só o dia; o id (sequencial) desempata pela ordem
+      // real de criação dentro do mesmo dia.
       final resultado = await _supabase
           .from('orcamento')
           .select()
-          .order('data_criacao', ascending: false);
+          .order('data_criacao', ascending: !maisRecentes)
+          .order('id_orcamento', ascending: !maisRecentes);
 
       return (resultado as List)
           .map((mapa) => OrcamentoModelo.deMapa(mapa))
