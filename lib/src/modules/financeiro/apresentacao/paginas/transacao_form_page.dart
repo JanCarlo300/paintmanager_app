@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:intl/intl.dart';
 import '../../dominio/entidades/transacao.dart';
 import '../../../clientes/dominio/entidades/cliente.dart';
 import '../../../obras/dominio/entidades/obra.dart';
@@ -9,6 +8,7 @@ import '../controllers/financeiro_controller.dart';
 import '../../../clientes/apresentacao/controllers/cliente_controller.dart';
 import '../../../obras/apresentacao/controllers/obra_controller.dart';
 import '../../../../core/tema/paleta_sahara.dart';
+import '../../../../apresentacao/widgets/campo_data.dart';
 
 class TransacaoFormPage extends StatefulWidget {
   final Transacao? transacaoParaEdicao;
@@ -285,22 +285,11 @@ class _TransacaoFormPageState extends State<TransacaoFormPage> {
     );
   }
 
-  Widget _datePicker() => InkWell(
-    onTap: () async {
-      final d = await showDatePicker(context: context, initialDate: _dataTransacao,
-        firstDate: DateTime(2020), lastDate: DateTime(2030));
-      if (d != null) setState(() => _dataTransacao = d);
-    },
-    child: InputDecorator(
-      decoration: InputDecoration(
-        labelText: "Data da Transação",
-        prefixIcon: Icon(Icons.calendar_today, size: 20, color: Colors.grey[600]),
-        filled: true, fillColor: Colors.grey[50],
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
-      ),
-      child: Text(DateFormat('dd/MM/yyyy').format(_dataTransacao)),
-    ),
+  Widget _datePicker() => CampoData(
+    rotulo: "Data da transação",
+    data: _dataTransacao,
+    tituloCalendario: "Data da transação",
+    aoMudar: (d) => setState(() => _dataTransacao = d),
   );
 
   Widget _buildDropdown(String label, String currentValue, List<String> options, IconData icon, Function(String?) onChanged) {

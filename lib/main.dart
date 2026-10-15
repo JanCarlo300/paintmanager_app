@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -127,6 +128,14 @@ class PaintManagerApp extends StatelessWidget {
     return MaterialApp(
       title: 'PaintManager',
       debugShowCheckedModeBanner: false,
+      // Português em todo o app: calendários, botões "Cancelar"/"OK" e demais textos do Flutter.
+      locale: const Locale('pt', 'BR'),
+      supportedLocales: const [Locale('pt', 'BR')],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: PaletaSahara.primary,
@@ -140,6 +149,24 @@ class PaintManagerApp extends StatelessWidget {
           outline: PaletaSahara.border,
         ),
         scaffoldBackgroundColor: PaletaSahara.background,
+        // Vale para todo showDatePicker / showDateRangePicker do app.
+        datePickerTheme: DatePickerThemeData(
+          backgroundColor: PaletaSahara.cardSurface,
+          surfaceTintColor: Colors.transparent,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          headerBackgroundColor: PaletaSahara.primary,
+          headerForegroundColor: Colors.white,
+          rangePickerHeaderBackgroundColor: PaletaSahara.primary,
+          rangePickerHeaderForegroundColor: Colors.white,
+          rangeSelectionBackgroundColor: PaletaSahara.primary.withValues(alpha: 0.15),
+          todayBorder: const BorderSide(color: PaletaSahara.primary),
+          dividerColor: PaletaSahara.border,
+          cancelButtonStyle: TextButton.styleFrom(foregroundColor: PaletaSahara.onSurfaceMuted),
+          confirmButtonStyle: TextButton.styleFrom(
+            foregroundColor: PaletaSahara.primary,
+            textStyle: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
         useMaterial3: true,
       ),
       home: const AuthCheck(),

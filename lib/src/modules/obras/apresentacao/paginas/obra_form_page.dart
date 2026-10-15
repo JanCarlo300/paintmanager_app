@@ -9,6 +9,7 @@ import '../../../clientes/apresentacao/controllers/cliente_controller.dart';
 import '../../../../core/tema/paleta_sahara.dart';
 import '../../../../core/servicos/geocodificacao_service.dart';
 import '../../../../apresentacao/widgets/campo_busca_selecao.dart';
+import '../../../../apresentacao/widgets/campo_data.dart';
 
 class ObraFormPage extends StatefulWidget {
   final Obra? obraParaEdicao;
@@ -109,6 +110,17 @@ class _ObraFormPageState extends State<ObraFormPage> {
         return;
       }
 
+      if (DateUtils.dateOnly(_dataPrevisao).isBefore(DateUtils.dateOnly(_dataInicio))) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("A previsão de término não pode ser anterior à data de início."),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        return;
+      }
+
       final controller = context.read<ObraController>();
       final etapas = _etapasControllers
           .where((c) => c.text.trim().isNotEmpty)
@@ -193,13 +205,7 @@ class _ObraFormPageState extends State<ObraFormPage> {
                     const SizedBox(height: 16),
                     _textField("Endereço", _enderecoController, Icons.location_on_outlined, "Rua, Número, Bairro, Cidade"),
                     const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(child: _datePicker("Data Início", _dataInicio, (d) => setState(() => _dataInicio = d))),
-                        const SizedBox(width: 16),
-                        Expanded(child: _datePicker("Previsão Término", _dataPrevisao, (d) => setState(() => _dataPrevisao = d))),
-                      ],
-                    ),
+                    _periodoDaObra(),
                   ],
                 ),
               ),
@@ -344,20 +350,70 @@ class _ObraFormPageState extends State<ObraFormPage> {
     validator: (v) => v == null || v.isEmpty ? "Campo obrigatório" : null,
   );
 
-  Widget _datePicker(String label, DateTime data, Function(DateTime) onChanged) => InkWell(
-    onTap: () async {
-      final d = await showDatePicker(context: context, initialDate: data,
-        firstDate: DateTime(2020), lastDate: DateTime(2030));
-      if (d != null) onChanged(d);
-    },
-    child: InputDecorator(
-      decoration: InputDecoration(labelText: label, prefixIcon: Icon(Icons.calendar_today, size: 20, color: Colors.grey[600]),
-        filled: true, fillColor: Colors.grey[50],
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!))),
-      child: Text(DateFormat('dd/MM/yyyy').format(data)),
-    ),
-  );
+  Widget _periodoDaObra() {
+    final dias = DateUtils.dateOnly(_dataPrevisao).difference(DateUtils.dateOnly(_dataInicio)).inDays + 1;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Text("Período da obra", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+            const Spacer(),
+            Text(
+              dias == 1 ? "1 dia" : "$dias dias",
+              style: const TextStyle(fontSize: 12, color: PaletaSahara.onSurfaceMuted),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: CampoData(
+                rotulo: "De",
+                data: _dataInicio,
+                tituloCalendario: "Início da obra",
+                aoMudar: _mudarInicio,
+              ),
+            ),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 6),
+              child: Icon(Icons.arrow_forward, size: 18, color: PaletaSahara.onSurfaceMuted),
+            ),
+            Expanded(
+              child: CampoData(
+                rotulo: "Até",
+                data: _dataPrevisao,
+                tituloCalendario: "Previsão de término",
+                icone: Icons.event_available_outlined,
+                primeiraData: DateUtils.dateOnly(_dataInicio),
+                aoMudar: (d) => setState(() => _dataPrevisao = d),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  // A previsão de término nunca fica antes do início: se o início passar
+  // dela, ela acompanha e o usuário é avisado.
+  void _mudarInicio(DateTime novoInicio) {
+    final ajustar = DateUtils.dateOnly(_dataPrevisao).isBefore(DateUtils.dateOnly(novoInicio));
+    setState(() {
+      _dataInicio = novoInicio;
+      if (ajustar) _dataPrevisao = novoInicio;
+    });
+    if (ajustar) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Previsão de término ajustada para ${DateFormat('dd/MM/yyyy').format(novoInicio)}."),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
 
   Widget _etapaCard(int i) => Container(
     margin: const EdgeInsets.only(bottom: 8),

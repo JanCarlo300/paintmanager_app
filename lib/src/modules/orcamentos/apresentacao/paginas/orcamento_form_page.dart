@@ -12,6 +12,7 @@ import '../../../obras/apresentacao/controllers/obra_controller.dart';
 import '../../../clientes/apresentacao/controllers/cliente_controller.dart';
 import '../../../../core/tema/paleta_sahara.dart';
 import '../../../../apresentacao/widgets/campo_busca_selecao.dart';
+import '../../../../apresentacao/widgets/campo_data.dart';
 
 class OrcamentoFormPage extends StatefulWidget {
   final Orcamento? orcamentoParaEdicao;
@@ -753,31 +754,14 @@ _Orçamento gerado pelo PaintManager_
   }
 
   Widget _buildDataPicker() {
-    return InkWell(
-      onTap: () async {
-        final data = await showDatePicker(
-          context: context,
-          initialDate: _dataValidade,
-          firstDate: DateTime.now(),
-          lastDate: DateTime.now().add(const Duration(days: 365)),
-        );
-        if (data != null) setState(() => _dataValidade = data);
-      },
-      child: InputDecorator(
-        decoration: InputDecoration(
-          labelText: "Data de Validade",
-          prefixIcon: Icon(Icons.calendar_today, size: 20, color: Colors.grey[600]),
-          filled: true,
-          fillColor: Colors.grey[50],
-          border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey[200]!)),
-          enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey[200]!)),
-        ),
-        child: Text(DateFormat('dd/MM/yyyy').format(_dataValidade)),
-      ),
+    return CampoData(
+      rotulo: "Validade do orçamento",
+      data: _dataValidade,
+      tituloCalendario: "Validade do orçamento",
+      icone: Icons.event_outlined,
+      primeiraData: DateUtils.dateOnly(DateTime.now()),
+      ultimaData: DateTime.now().add(const Duration(days: 365)),
+      aoMudar: (d) => setState(() => _dataValidade = d),
     );
   }
 
