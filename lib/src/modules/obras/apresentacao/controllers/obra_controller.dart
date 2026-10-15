@@ -63,6 +63,9 @@ class ObraController extends ChangeNotifier {
 
   /// Alterna o status de uma etapa e recalcula o progresso
   Future<void> alternarEtapa(Obra obra, int indiceEtapa) async {
+    // Etapa 5: obra concluída é definitiva — o checklist não muda mais.
+    if (obra.status == 'Concluída') return;
+
     final novasEtapas = List<EtapaServico>.from(obra.etapasServico);
     novasEtapas[indiceEtapa] = novasEtapas[indiceEtapa].copiarCom(
       concluida: !novasEtapas[indiceEtapa].concluida,
@@ -93,10 +96,16 @@ class ObraController extends ChangeNotifier {
     await salvar(obraAtualizada);
   }
 
-  /// Atualiza o status da obra (com validação de etapas para conclusão)
-  Future<String?> atualizarStatus(Obra obra, String novoStatus) async {
-    // Regra de negócio: não permitir concluir se houver etapas pendentes
-    if (novoStatus == 'Concluída' && !obra.todasEtapasConcluidas) {
+  /// Atualiza o status da obra. Ao concluir com etapas pendentes, só segue se
+  /// [marcarEtapasPendentes] (o usuário confirmou marcar todas como concluídas).
+  Future<String?> atualizarStatus(Obra obra, String novoStatus, {bool marcarEtapasPendentes = false}) async {
+    // Etapa 5: concluída é definitiva — ninguém reabre.
+    if (obra.status == 'Concluída') {
+      return 'Obra concluída: o status não pode mais ser alterado.';
+    }
+
+    final concluindo = novoStatus == 'Concluída';
+    if (concluindo && obra.etapasServico.any((e) => !e.concluida) && !marcarEtapasPendentes) {
       return 'Não é possível concluir a obra. Existem etapas pendentes.';
     }
 
@@ -116,10 +125,12 @@ class ObraController extends ChangeNotifier {
       endereco: obra.endereco,
       dataInicio: obra.dataInicio,
       dataPrevisaoTermino: obra.dataPrevisaoTermino,
-      dataConclusao: novoStatus == 'Concluída' ? DateTime.now() : obra.dataConclusao,
+      dataConclusao: concluindo ? DateTime.now() : obra.dataConclusao,
       status: novoStatus,
-      progresso: obra.progresso,
-      etapasServico: obra.etapasServico,
+      progresso: concluindo ? 100 : obra.progresso,
+      etapasServico: concluindo
+          ? obra.etapasServico.map((e) => e.copiarCom(concluida: true)).toList()
+          : obra.etapasServico,
       materiaisFaltantes: obra.materiaisFaltantes,
       latitude: obra.latitude,
       longitude: obra.longitude,

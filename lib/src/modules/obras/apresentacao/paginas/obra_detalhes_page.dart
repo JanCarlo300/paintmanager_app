@@ -120,13 +120,22 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
         foregroundColor: PaletaSahara.onSurface,
         elevation: 0.5,
         actions: [
-          if (podeGerenciarObra)
+          if (podeGerenciarObra && obraAtual.status == 'Concluída')
+            const Padding(
+              padding: EdgeInsets.only(right: 12),
+              child: Tooltip(
+                message: "Obra concluída: status definitivo",
+                child: Icon(Icons.lock_outline, color: PaletaSahara.onSurfaceMuted),
+              ),
+            )
+          else if (podeGerenciarObra)
             PopupMenuButton<String>(
               icon: const Icon(Icons.more_vert),
               onSelected: (status) => _atualizarStatus(context, obraAtual, controller, status),
               itemBuilder: (context) => [
                 'Não Iniciada', 'Em Andamento', 'Pausada', 'Concluída',
-              ].map((s) => PopupMenuItem(value: s, child: Text(s))).toList(),
+              ].where((s) => s != obraAtual.status)
+                  .map((s) => PopupMenuItem(value: s, child: Text(s))).toList(),
             ),
         ],
       ),
@@ -433,9 +442,30 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
   }
   // --- CHECKLIST DE ETAPAS ---
   Widget _buildChecklistCard(BuildContext context, Obra obraAtual, ObraController controller) {
+    final bloqueada = obraAtual.status == 'Concluída';
+
     return _card(
       child: Column(
-        children: List.generate(obraAtual.etapasServico.length, (i) {
+        children: [
+          if (bloqueada)
+            Container(
+              width: double.infinity,
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: Colors.blue.withValues(alpha: 0.06),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.lock_outline, size: 16, color: Colors.blue[700]),
+                  const SizedBox(width: 8),
+                  Text("Obra concluída: etapas bloqueadas",
+                      style: TextStyle(fontSize: 13, color: Colors.blue[800])),
+                ],
+              ),
+            ),
+          ...List.generate(obraAtual.etapasServico.length, (i) {
           final etapa = obraAtual.etapasServico[i];
           return Container(
             margin: EdgeInsets.only(bottom: i < obraAtual.etapasServico.length - 1 ? 8 : 0),
@@ -445,7 +475,7 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
               child: InkWell(
                 borderRadius: BorderRadius.circular(10),
                 // Área de toque grande para canteiro de obras
-                onTap: () => controller.alternarEtapa(obraAtual, i),
+                onTap: bloqueada ? null : () => controller.alternarEtapa(obraAtual, i),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   child: Row(
@@ -487,7 +517,8 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
               ),
             ),
           );
-        }),
+          }),
+        ],
       ),
     );
   }
@@ -579,7 +610,20 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
   }
 
   void _atualizarStatus(BuildContext context, Obra obraAtual, ObraController controller, String novoStatus) async {
-    final erro = await controller.atualizarStatus(obraAtual, novoStatus);
+    var marcarPendentes = false;
+    if (novoStatus == 'Concluída') {
+      final pendentes = obraAtual.etapasServico.where((e) => !e.concluida).length;
+      final confirmou = await _confirmarConclusao(context, pendentes);
+      if (confirmou != true) return;
+      marcarPendentes = pendentes > 0;
+    }
+    if (!context.mounted) return;
+
+    final erro = await controller.atualizarStatus(
+      obraAtual,
+      novoStatus,
+      marcarEtapasPendentes: marcarPendentes,
+    );
     if (context.mounted) {
       if (erro != null) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -591,6 +635,31 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
         );
       }
     }
+  }
+
+  // Concluir é definitivo (status e checklist travam), então sempre confirma.
+  Future<bool?> _confirmarConclusao(BuildContext context, int pendentes) {
+    return showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Concluir obra?"),
+        content: Text(
+          "${pendentes > 0 ? "Ainda há $pendentes etapa(s) pendente(s). Todas serão marcadas como concluídas.\n\n" : ""}"
+          "Depois de concluída, a obra não pode ser reaberta: o status e as etapas ficam bloqueados.",
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text("Cancelar")),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: PaletaSahara.primary,
+              foregroundColor: Colors.white,
+            ),
+            child: Text(pendentes > 0 ? "Marcar todas e concluir" : "Concluir"),
+          ),
+        ],
+      ),
+    );
   }
 
   void _abrirMapa(Obra obra) async {

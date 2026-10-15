@@ -34,6 +34,8 @@ class _ObraFormPageState extends State<ObraFormPage> {
   final List<TextEditingController> _etapasControllers = [];
   final List<String> _materiaisFaltantes = [];
 
+  bool get _obraConcluida => widget.obraParaEdicao?.status == 'Concluída';
+
   final _etapasPadrao = [
     'Preparação/Emassamento',
     'Lixamento',
@@ -122,10 +124,20 @@ class _ObraFormPageState extends State<ObraFormPage> {
       }
 
       final controller = context.read<ObraController>();
-      final etapas = _etapasControllers
-          .where((c) => c.text.trim().isNotEmpty)
-          .map((c) => EtapaServico(nome: c.text.trim()))
-          .toList();
+      final original = widget.obraParaEdicao;
+      // Na edição, cada etapa mantém se já estava concluída (pelo nome);
+      // antes o formulário recriava todas como pendentes e zerava o progresso.
+      final jaConcluidas = {
+        for (final e in original?.etapasServico ?? const <EtapaServico>[])
+          if (e.concluida) e.nome.trim(),
+      };
+      final etapas = _obraConcluida
+          ? original!.etapasServico
+          : _etapasControllers
+              .map((c) => c.text.trim())
+              .where((nome) => nome.isNotEmpty)
+              .map((nome) => EtapaServico(nome: nome, concluida: jaConcluidas.contains(nome)))
+              .toList();
 
       final enderecoDigitado = _enderecoController.text.trim();
 
@@ -136,6 +148,8 @@ class _ObraFormPageState extends State<ObraFormPage> {
 
       final obra = Obra(
         id: widget.obraParaEdicao?.id,
+        idOrcamento: widget.obraParaEdicao?.idOrcamento,
+        dataConclusao: widget.obraParaEdicao?.dataConclusao,
         idCliente: _clienteSelecionadoId ?? widget.obraParaEdicao?.idCliente ?? 0,
         clienteNome: _clienteNomeSelecionado,
         tituloDaObra: _tituloController.text.trim(),
@@ -216,15 +230,28 @@ class _ObraFormPageState extends State<ObraFormPage> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   _sectionTitle("Etapas do Serviço", Icons.checklist),
-                  TextButton.icon(
-                    onPressed: _adicionarEtapa,
-                    icon: const Icon(Icons.add_circle_outline, size: 18),
-                    label: const Text("Adicionar"),
-                    style: TextButton.styleFrom(foregroundColor: PaletaSahara.primary),
-                  ),
+                  if (!_obraConcluida)
+                    TextButton.icon(
+                      onPressed: _adicionarEtapa,
+                      icon: const Icon(Icons.add_circle_outline, size: 18),
+                      label: const Text("Adicionar"),
+                      style: TextButton.styleFrom(foregroundColor: PaletaSahara.primary),
+                    ),
                 ],
               ),
               const SizedBox(height: 12),
+              if (_obraConcluida)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    children: [
+                      Icon(Icons.lock_outline, size: 16, color: Colors.blue[700]),
+                      const SizedBox(width: 8),
+                      Text("Obra concluída: etapas bloqueadas",
+                          style: TextStyle(fontSize: 13, color: Colors.blue[800])),
+                    ],
+                  ),
+                ),
               ...List.generate(_etapasControllers.length, (i) => _etapaCard(i)),
               const SizedBox(height: 24),
 
@@ -422,11 +449,12 @@ class _ObraFormPageState extends State<ObraFormPage> {
         Expanded(
           child: TextFormField(
             controller: _etapasControllers[i],
+            readOnly: _obraConcluida,
             decoration: _inputDeco("Etapa ${i + 1}", Icons.check_circle_outline),
             validator: (v) => v == null || v.isEmpty ? "Obrigatório" : null,
           ),
         ),
-        if (_etapasControllers.length > 1)
+        if (_etapasControllers.length > 1 && !_obraConcluida)
           IconButton(icon: Icon(Icons.close, size: 18, color: Colors.red[400]), onPressed: () => _removerEtapa(i)),
       ],
     ),
