@@ -88,7 +88,7 @@ class ObraController extends ChangeNotifier {
       status: obra.status,
       progresso: novoProgresso,
       etapasServico: novasEtapas,
-      materiaisFaltantes: obra.materiaisFaltantes,
+      listaMateriais: obra.listaMateriais,
       latitude: obra.latitude,
       longitude: obra.longitude,
     );
@@ -131,7 +131,7 @@ class ObraController extends ChangeNotifier {
       etapasServico: concluindo
           ? obra.etapasServico.map((e) => e.copiarCom(concluida: true)).toList()
           : obra.etapasServico,
-      materiaisFaltantes: obra.materiaisFaltantes,
+      listaMateriais: obra.listaMateriais,
       latitude: obra.latitude,
       longitude: obra.longitude,
     );

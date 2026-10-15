@@ -164,11 +164,6 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
             _buildChecklistCard(context, obraAtual, controller),
             const SizedBox(height: 24),
 
-            // === MATERIAIS FALTANTES ===
-            _sectionTitle("Materiais Faltantes", Icons.shopping_cart_outlined),
-            const SizedBox(height: 12),
-            _buildMateriaisCard(context, obraAtual, controller),
-            const SizedBox(height: 24),
 
             // === CHAT DA OBRA (item 2.3) ===
             if (obraAtual.id != null) ...[
@@ -521,92 +516,6 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
         ],
       ),
     );
-  }
-
-  // --- MATERIAIS FALTANTES ---
-  Widget _buildMateriaisCard(BuildContext context, Obra obraAtual, ObraController controller) {
-    final textController = TextEditingController();
-
-    return _card(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: textController,
-                  decoration: InputDecoration(
-                    hintText: "Adicionar material...",
-                    hintStyle: TextStyle(color: Colors.grey[400]),
-                    prefixIcon: Icon(Icons.add_shopping_cart, size: 20, color: Colors.grey[600]),
-                    filled: true, fillColor: Colors.grey[50],
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
-                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
-                    contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                  onSubmitted: (texto) {
-                    if (texto.trim().isNotEmpty) {
-                      final novosMateriais = List<String>.from(obraAtual.materiaisFaltantes)..add(texto.trim());
-                      _salvarComMateriais(controller, obraAtual, novosMateriais);
-                      textController.clear();
-                    }
-                  },
-                ),
-              ),
-              const SizedBox(width: 8),
-              IconButton(
-                icon: const Icon(Icons.add_circle, color: PaletaSahara.primary),
-                onPressed: () {
-                  final texto = textController.text.trim();
-                  if (texto.isNotEmpty) {
-                    final novosMateriais = List<String>.from(obraAtual.materiaisFaltantes)..add(texto);
-                    _salvarComMateriais(controller, obraAtual, novosMateriais);
-                    textController.clear();
-                  }
-                },
-              ),
-            ],
-          ),
-          if (obraAtual.materiaisFaltantes.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8, runSpacing: 8,
-              children: obraAtual.materiaisFaltantes.asMap().entries.map((entry) {
-                return Chip(
-                  label: Text(entry.value, style: const TextStyle(fontSize: 13)),
-                  deleteIcon: const Icon(Icons.close, size: 16),
-                  onDeleted: () {
-                    final novosMateriais = List<String>.from(obraAtual.materiaisFaltantes)..removeAt(entry.key);
-                    _salvarComMateriais(controller, obraAtual, novosMateriais);
-                  },
-                  backgroundColor: Colors.amber.withValues(alpha: 0.15),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  side: BorderSide(color: Colors.amber[300]!),
-                );
-              }).toList(),
-            ),
-          ] else
-            Padding(
-              padding: const EdgeInsets.only(top: 12),
-              child: Text("Nenhum material pendente.", style: TextStyle(color: Colors.grey[500], fontSize: 13)),
-            ),
-        ],
-      ),
-    );
-  }
-
-  void _salvarComMateriais(ObraController controller, Obra obraAtual, List<String> materiais) {
-    controller.salvar(Obra(
-      id: obraAtual.id, idOrcamento: obraAtual.idOrcamento,
-      idCliente: obraAtual.idCliente, clienteNome: obraAtual.clienteNome,
-      tituloDaObra: obraAtual.tituloDaObra, endereco: obraAtual.endereco,
-      dataInicio: obraAtual.dataInicio, dataPrevisaoTermino: obraAtual.dataPrevisaoTermino,
-      dataConclusao: obraAtual.dataConclusao, status: obraAtual.status,
-      progresso: obraAtual.progresso, etapasServico: obraAtual.etapasServico,
-      materiaisFaltantes: materiais,
-      latitude: obraAtual.latitude, longitude: obraAtual.longitude,
-    ));
   }
 
   void _atualizarStatus(BuildContext context, Obra obraAtual, ObraController controller, String novoStatus) async {

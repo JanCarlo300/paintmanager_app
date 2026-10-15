@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../dominio/entidades/obra.dart';
 import '../../dominio/entidades/etapa_servico.dart';
+import '../../dominio/entidades/item_material.dart';
 import '../../../clientes/dominio/entidades/cliente.dart';
 import '../controllers/obra_controller.dart';
 import '../../../clientes/apresentacao/controllers/cliente_controller.dart';
@@ -27,12 +28,14 @@ class _ObraFormPageState extends State<ObraFormPage> {
   String _clienteNomeSelecionado = '';
   late TextEditingController _tituloController;
   late TextEditingController _enderecoController;
-  late TextEditingController _materialController;
+  final _materialDescricaoController = TextEditingController();
+  final _materialQuantidadeController = TextEditingController();
+  final _materialUnidadeController = TextEditingController();
   late DateTime _dataInicio;
   late DateTime _dataPrevisao;
 
   final List<TextEditingController> _etapasControllers = [];
-  final List<String> _materiaisFaltantes = [];
+  final List<ItemMaterial> _listaMateriais = [];
 
   bool get _obraConcluida => widget.obraParaEdicao?.status == 'Concluída';
 
@@ -51,7 +54,6 @@ class _ObraFormPageState extends State<ObraFormPage> {
 
     _tituloController = TextEditingController(text: obra?.tituloDaObra);
     _enderecoController = TextEditingController(text: obra?.endereco);
-    _materialController = TextEditingController();
     _dataInicio = obra?.dataInicio ?? DateTime.now();
     _dataPrevisao = obra?.dataPrevisaoTermino ?? DateTime.now().add(const Duration(days: 15));
 
@@ -61,11 +63,12 @@ class _ObraFormPageState extends State<ObraFormPage> {
       _clienteNomeSelecionado = obra.clienteNome;
     }
 
+    if (obra != null) _listaMateriais.addAll(obra.listaMateriais);
+
     if (obra != null && obra.etapasServico.isNotEmpty) {
       for (final etapa in obra.etapasServico) {
         _etapasControllers.add(TextEditingController(text: etapa.nome));
       }
-      _materiaisFaltantes.addAll(obra.materiaisFaltantes);
     } else {
       for (final nome in _etapasPadrao) {
         _etapasControllers.add(TextEditingController(text: nome));
@@ -77,7 +80,9 @@ class _ObraFormPageState extends State<ObraFormPage> {
   void dispose() {
     _tituloController.dispose();
     _enderecoController.dispose();
-    _materialController.dispose();
+    _materialDescricaoController.dispose();
+    _materialQuantidadeController.dispose();
+    _materialUnidadeController.dispose();
     for (final c in _etapasControllers) { c.dispose(); }
     super.dispose();
   }
@@ -93,14 +98,36 @@ class _ObraFormPageState extends State<ObraFormPage> {
     });
   }
 
-  void _adicionarMaterial() {
-    final texto = _materialController.text.trim();
-    if (texto.isNotEmpty) {
-      setState(() {
-        _materiaisFaltantes.add(texto);
-        _materialController.clear();
-      });
+  /// Retorna false se o material digitado é inválido (e avisa o usuário).
+  bool _adicionarMaterial() {
+    final descricao = _materialDescricaoController.text.trim();
+    if (descricao.isEmpty) {
+      _avisarMaterial("Informe a descrição do material.");
+      return false;
     }
+    final textoQtd = _materialQuantidadeController.text.trim().replaceAll(',', '.');
+    final quantidade = textoQtd.isEmpty ? null : double.tryParse(textoQtd);
+    if (textoQtd.isNotEmpty && (quantidade == null || quantidade <= 0)) {
+      _avisarMaterial("Quantidade inválida. Use um número maior que zero (ex.: 3 ou 2,5).");
+      return false;
+    }
+    setState(() {
+      _listaMateriais.add(ItemMaterial(
+        descricao: descricao,
+        quantidade: quantidade,
+        unidade: _materialUnidadeController.text.trim(),
+      ));
+      _materialDescricaoController.clear();
+      _materialQuantidadeController.clear();
+      _materialUnidadeController.clear();
+    });
+    return true;
+  }
+
+  void _avisarMaterial(String mensagem) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(mensagem), backgroundColor: Colors.red, behavior: SnackBarBehavior.floating),
+    );
   }
 
   void _salvar() async {
@@ -122,6 +149,9 @@ class _ObraFormPageState extends State<ObraFormPage> {
         );
         return;
       }
+
+      // Material digitado sem tocar no "+" entra na lista em vez de se perder.
+      if (_materialDescricaoController.text.trim().isNotEmpty && !_adicionarMaterial()) return;
 
       final controller = context.read<ObraController>();
       final original = widget.obraParaEdicao;
@@ -158,7 +188,7 @@ class _ObraFormPageState extends State<ObraFormPage> {
         dataPrevisaoTermino: _dataPrevisao,
         status: widget.obraParaEdicao?.status ?? 'Não Iniciada',
         etapasServico: etapas,
-        materiaisFaltantes: _materiaisFaltantes,
+        listaMateriais: _listaMateriais,
         latitude: coordenada?.latitude ?? widget.obraParaEdicao?.latitude,
         longitude: coordenada?.longitude ?? widget.obraParaEdicao?.longitude,
       );
@@ -255,47 +285,10 @@ class _ObraFormPageState extends State<ObraFormPage> {
               ...List.generate(_etapasControllers.length, (i) => _etapaCard(i)),
               const SizedBox(height: 24),
 
-              // === SEÇÃO 4: MATERIAIS FALTANTES ===
-              _sectionTitle("Materiais Faltantes", Icons.shopping_cart_outlined),
+              // === SEÇÃO 4: LISTA DE MATERIAIS ===
+              _sectionTitle("Lista de Materiais", Icons.inventory_2_outlined),
               const SizedBox(height: 12),
-              _card(
-                child: Column(
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _materialController,
-                            decoration: _inputDeco("Ex: Tinta Coral 18L Branca", Icons.add_shopping_cart),
-                            onSubmitted: (_) => _adicionarMaterial(),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        IconButton(
-                          onPressed: _adicionarMaterial,
-                          icon: const Icon(Icons.add_circle, color: PaletaSahara.primary),
-                          tooltip: "Adicionar material",
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: _materiaisFaltantes.asMap().entries.map((entry) {
-                        return Chip(
-                          label: Text(entry.value, style: const TextStyle(fontSize: 13)),
-                          deleteIcon: const Icon(Icons.close, size: 16),
-                          onDeleted: () => setState(() => _materiaisFaltantes.removeAt(entry.key)),
-                          backgroundColor: Colors.grey[100],
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                          side: BorderSide(color: Colors.grey[300]!),
-                        );
-                      }).toList(),
-                    ),
-                  ],
-                ),
-              ),
+              _card(child: _listaMateriaisEditor()),
               const SizedBox(height: 32),
 
               // === BOTÃO SALVAR ===
@@ -441,6 +434,85 @@ class _ObraFormPageState extends State<ObraFormPage> {
       );
     }
   }
+
+  Widget _listaMateriaisEditor() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextField(
+          controller: _materialDescricaoController,
+          textCapitalization: TextCapitalization.sentences,
+          decoration: _inputDeco("Descrição (ex.: Tinta acrílica fosca)", Icons.add_shopping_cart),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            SizedBox(
+              width: 96,
+              child: TextField(
+                controller: _materialQuantidadeController,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: _inputDecoSemIcone("Qtd."),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: TextField(
+                controller: _materialUnidadeController,
+                decoration: _inputDecoSemIcone("Unidade (ex.: lata 18 L)"),
+                onSubmitted: (_) => _adicionarMaterial(),
+              ),
+            ),
+            const SizedBox(width: 4),
+            IconButton.filled(
+              onPressed: _adicionarMaterial,
+              tooltip: "Adicionar material",
+              style: IconButton.styleFrom(backgroundColor: PaletaSahara.primary, foregroundColor: Colors.white),
+              icon: const Icon(Icons.add),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        if (_listaMateriais.isEmpty)
+          Text("Nenhum material na lista.", style: TextStyle(color: Colors.grey[500], fontSize: 13))
+        else
+          Container(
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey[200]!),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Column(
+              children: [
+                for (final (i, item) in _listaMateriais.indexed) ...[
+                  if (i > 0) Divider(height: 1, color: Colors.grey[200]),
+                  ListTile(
+                    dense: true,
+                    title: Text(item.descricao, style: const TextStyle(fontSize: 14)),
+                    subtitle: item.quantidadeComUnidade.isEmpty
+                        ? null
+                        : Text(item.quantidadeComUnidade,
+                            style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                    trailing: IconButton(
+                      icon: Icon(Icons.close, size: 18, color: Colors.red[400]),
+                      tooltip: "Remover",
+                      onPressed: () => setState(() => _listaMateriais.removeAt(i)),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  InputDecoration _inputDecoSemIcone(String label) => InputDecoration(
+    labelText: label,
+    filled: true, fillColor: Colors.grey[50],
+    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
+    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
+    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: PaletaSahara.primary, width: 1.5)),
+  );
 
   Widget _etapaCard(int i) => Container(
     margin: const EdgeInsets.only(bottom: 8),

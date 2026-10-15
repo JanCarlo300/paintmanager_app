@@ -1,4 +1,5 @@
 import 'etapa_servico.dart';
+import 'item_material.dart';
 
 /// Entidade de domínio — Obra.
 class Obra {
@@ -14,7 +15,7 @@ class Obra {
   final String status;          // Não Iniciada | Em Andamento | Pausada | Concluída
   final double progresso;       // 0 a 100
   final List<EtapaServico> etapasServico;
-  final List<String> materiaisFaltantes;
+  final List<ItemMaterial> listaMateriais;
   final double? latitude;   // item 3.2 — geocodificado a partir do endereço (Nominatim/OSM)
   final double? longitude;
   final DateTime? criadoEm; // gerado pelo banco (created_at); usado nos filtros da lista
@@ -32,7 +33,7 @@ class Obra {
     this.status = 'Não Iniciada',
     double? progresso,
     required this.etapasServico,
-    this.materiaisFaltantes = const [],
+    this.listaMateriais = const [],
     this.latitude,
     this.longitude,
     this.criadoEm,

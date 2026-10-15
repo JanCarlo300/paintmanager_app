@@ -1,5 +1,6 @@
 import '../../dominio/entidades/obra.dart';
 import '../../dominio/entidades/etapa_servico.dart';
+import '../../dominio/entidades/item_material.dart';
 
 /// Modelo de dados — converte entre Map (Supabase/PostgreSQL) e a entidade Obra.
 class ObraModelo extends Obra {
@@ -16,7 +17,7 @@ class ObraModelo extends Obra {
     super.status,
     super.progresso,
     required super.etapasServico,
-    super.materiaisFaltantes,
+    super.listaMateriais,
     super.latitude,
     super.longitude,
     super.criadoEm,
@@ -32,11 +33,14 @@ class ObraModelo extends Obra {
             .toList()
         : <EtapaServico>[];
 
-    // Deserializa materiais_faltantes (JSONB → List<String>)
-    final materiaisRaw = mapa['materiais_faltantes'];
+    // Deserializa lista_materiais (JSONB → List<ItemMaterial>)
+    final materiaisRaw = mapa['lista_materiais'];
     final materiais = materiaisRaw is List
-        ? materiaisRaw.map((m) => m.toString()).toList()
-        : <String>[];
+        ? materiaisRaw
+            .whereType<Map>()
+            .map((m) => ItemMaterial.deMapa(Map<String, dynamic>.from(m)))
+            .toList()
+        : <ItemMaterial>[];
 
     return ObraModelo(
       id: mapa['id_obra'],
@@ -53,7 +57,7 @@ class ObraModelo extends Obra {
       status: mapa['status'] ?? 'Não Iniciada',
       progresso: (mapa['progresso'] ?? 0).toDouble(),
       etapasServico: etapas,
-      materiaisFaltantes: materiais,
+      listaMateriais: materiais,
       latitude: (mapa['latitude'] as num?)?.toDouble(),
       longitude: (mapa['longitude'] as num?)?.toDouble(),
       criadoEm: DateTime.tryParse(mapa['created_at']?.toString() ?? '')?.toLocal(),
@@ -76,7 +80,7 @@ class ObraModelo extends Obra {
       'status': status,
       'progresso': progresso,
       'etapas_servico': etapasServico.map((e) => e.paraMapa()).toList(),       // JSONB
-      'materiais_faltantes': materiaisFaltantes,                               // JSONB
+      'lista_materiais': listaMateriais.map((m) => m.paraMapa()).toList(),    // JSONB
       'latitude': latitude,
       'longitude': longitude,
     };

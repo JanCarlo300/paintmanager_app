@@ -47,7 +47,7 @@ class RepositorioObraImpl implements RepositorioObra {
         status: obra.status,
         progresso: obra.progresso,
         etapasServico: obra.etapasServico,
-        materiaisFaltantes: obra.materiaisFaltantes,
+        listaMateriais: obra.listaMateriais,
         latitude: obra.latitude,
         longitude: obra.longitude,
       );
