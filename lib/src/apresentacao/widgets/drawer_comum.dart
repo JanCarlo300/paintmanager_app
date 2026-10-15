@@ -83,7 +83,7 @@ class DrawerComum extends StatelessWidget {
               padding: EdgeInsets.zero,
               children: [
                 if (funcao != 'Funcionário')
-                  _buildMenuItem(context, icon: Icons.dashboard_outlined, title: "Dashboard", route: '/home', rotaAtual: rotaAtual),
+                  _buildMenuItem(context, icon: Icons.dashboard_outlined, title: "Resumo Geral", route: '/home', rotaAtual: rotaAtual),
                 if (funcao == 'Administrador')
                   _buildMenuItem(context, icon: Icons.people_outline, title: "Usuários", route: '/usuarios', rotaAtual: rotaAtual),
                 if (funcao != 'Funcionário')
