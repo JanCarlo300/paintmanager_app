@@ -10,7 +10,7 @@ import '../../../../apresentacao/widgets/drawer_comum.dart';
 import '../../../../core/tema/paleta_sahara.dart';
 
 /// Filtros disponíveis na tela de orçamentos
-enum FiltroOrcamento { todos, pendentes, aprovados, rejeitados, concluidos }
+enum FiltroOrcamento { todos, pendentes, aprovados, recusados }
 
 class OrcamentoListPage extends StatefulWidget {
   const OrcamentoListPage({super.key});
@@ -45,18 +45,15 @@ class _OrcamentoListPageState extends State<OrcamentoListPage> {
         return orcamentos.where((o) => o.status == 'Pendente').toList();
       case FiltroOrcamento.aprovados:
         return orcamentos.where((o) => o.status == 'Aprovado').toList();
-      case FiltroOrcamento.rejeitados:
-        return orcamentos.where((o) => o.status == 'Rejeitado').toList();
-      case FiltroOrcamento.concluidos:
-        return orcamentos.where((o) => o.status == 'Concluído').toList();
+      case FiltroOrcamento.recusados:
+        return orcamentos.where((o) => o.status == 'Recusado').toList();
     }
   }
 
   Color _corStatus(String status) {
     switch (status) {
       case 'Aprovado': return Colors.green;
-      case 'Rejeitado': return Colors.red;
-      case 'Concluído': return Colors.blue;
+      case 'Recusado': return Colors.red;
       default: return Colors.orange;
     }
   }
@@ -64,8 +61,7 @@ class _OrcamentoListPageState extends State<OrcamentoListPage> {
   IconData _iconeStatus(String status) {
     switch (status) {
       case 'Aprovado': return Icons.check_circle_outline;
-      case 'Rejeitado': return Icons.cancel_outlined;
-      case 'Concluído': return Icons.task_alt_outlined;
+      case 'Recusado': return Icons.cancel_outlined;
       default: return Icons.schedule_outlined;
     }
   }
@@ -287,8 +283,7 @@ _Orçamento gerado pelo PaintManager_
     final qtdTodos = todos.length;
     final qtdPendentes = todos.where((o) => o.status == 'Pendente').length;
     final qtdAprovados = todos.where((o) => o.status == 'Aprovado').length;
-    final qtdRejeitados = todos.where((o) => o.status == 'Rejeitado').length;
-    final qtdConcluidos = todos.where((o) => o.status == 'Concluído').length;
+    final qtdRecusados = todos.where((o) => o.status == 'Recusado').length;
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -300,9 +295,7 @@ _Orçamento gerado pelo PaintManager_
           const SizedBox(width: 8),
           _filtroChip("Aprovados", FiltroOrcamento.aprovados, qtdAprovados, Colors.green),
           const SizedBox(width: 8),
-          _filtroChip("Rejeitados", FiltroOrcamento.rejeitados, qtdRejeitados, Colors.red),
-          const SizedBox(width: 8),
-          _filtroChip("Concluídos", FiltroOrcamento.concluidos, qtdConcluidos, Colors.blue[700]!),
+          _filtroChip("Recusados", FiltroOrcamento.recusados, qtdRecusados, Colors.red),
         ],
       ),
     );
@@ -712,12 +705,9 @@ _Orçamento gerado pelo PaintManager_
       case FiltroOrcamento.aprovados:
         mensagem = "Nenhum orçamento aprovado.";
         icone = Icons.check_circle_outline;
-      case FiltroOrcamento.rejeitados:
-        mensagem = "Nenhum orçamento rejeitado.";
+      case FiltroOrcamento.recusados:
+        mensagem = "Nenhum orçamento recusado.";
         icone = Icons.cancel_outlined;
-      case FiltroOrcamento.concluidos:
-        mensagem = "Nenhum orçamento concluído.";
-        icone = Icons.task_alt_outlined;
     }
 
     return Container(

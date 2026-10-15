@@ -8,7 +8,7 @@ class Orcamento {
   final String descricao;
   final DateTime dataCriacao;
   final DateTime dataValidade;
-  final String status;            // Pendente | Aprovado | Rejeitado | Concluído
+  final String status;            // Pendente | Aprovado | Recusado (quem conclui é a obra, não o orçamento)
   final List<ItemServico> itensServico;
   final bool materiaisInclusos;
   final double valorMateriais;

@@ -142,6 +142,21 @@ class RepositorioObraImpl implements RepositorioObra {
     }
   }
 
+  @override
+  Future<bool> obraTemOrcamentoAprovado(int obraId) async {
+    try {
+      final resultado = await _supabase
+          .from('orcamento')
+          .select('id_orcamento')
+          .eq('id_obra', obraId)
+          .eq('status', 'Aprovado')
+          .limit(1);
+      return (resultado as List).isNotEmpty;
+    } catch (e) {
+      throw 'Erro ao verificar orçamento da obra: $e';
+    }
+  }
+
   // === Item 2.3 — Chat da Obra ===
 
   @override

@@ -16,6 +16,9 @@ abstract class RepositorioObra {
   /// Item 2.1 — ids das obras em que este usuário está alocado (visão do Funcionário)
   Future<List<int>> listarObraIdsAlocados(int usuarioId);
 
+  /// Item 1.2 — a obra só sai de "Não Iniciada" com orçamento Aprovado
+  Future<bool> obraTemOrcamentoAprovado(int obraId);
+
   /// Item 2.3 — chat da obra (tempo real)
   Stream<List<MensagemObra>> escutarMensagens(int obraId);
   Future<void> enviarMensagem({required int obraId, required int usuarioId, required String texto});

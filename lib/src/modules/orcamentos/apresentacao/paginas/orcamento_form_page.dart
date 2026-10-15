@@ -87,9 +87,7 @@ class _OrcamentoFormPageState extends State<OrcamentoFormPage> {
     _descricaoController = TextEditingController(text: orc?.descricao);
     _dataValidade = orc?.dataValidade ?? DateTime.now().add(const Duration(days: 30));
     _formaPagamento = orc?.formaPagamento ?? 'PIX';
-    final rawStatus = orc?.status ?? 'Pendente';
-    // Normaliza 'Rejeitado' → 'Recusado' para compatibilidade com dados antigos
-    _status = rawStatus == 'Rejeitado' ? 'Recusado' : rawStatus;
+    _status = orc?.status ?? 'Pendente';
     _materiaisInclusos = orc?.materiaisInclusos ?? false;
     _valorMateriaisController = TextEditingController(
         text: orc != null ? orc.valorMateriais.toStringAsFixed(2) : '');
@@ -212,6 +210,9 @@ class _OrcamentoFormPageState extends State<OrcamentoFormPage> {
         widget.orcamentoParaEdicao?.clienteNome ??
         '';
 
+    // Recusado editado = nova proposta para o cliente: volta a aguardar resposta.
+    final reenvio = widget.orcamentoParaEdicao?.status == 'Recusado' && _status == 'Recusado';
+
     final orcamento = Orcamento(
       id: widget.orcamentoParaEdicao?.id,
       idObra: obraId,
@@ -219,7 +220,7 @@ class _OrcamentoFormPageState extends State<OrcamentoFormPage> {
       descricao: _descricaoController.text.trim(),
       dataCriacao: widget.orcamentoParaEdicao?.dataCriacao ?? DateTime.now(),
       dataValidade: _dataValidade,
-      status: _status,
+      status: reenvio ? 'Pendente' : _status,
       itensServico: itens,
       materiaisInclusos: _materiaisInclusos,
       valorMateriais: _materiaisInclusos
@@ -233,7 +234,16 @@ class _OrcamentoFormPageState extends State<OrcamentoFormPage> {
 
     try {
       await context.read<OrcamentoController>().salvar(orcamento);
-      if (mounted) _mostrarDialogEnvio(orcamento);
+      if (!mounted) return;
+      if (reenvio) {
+        setState(() => _status = 'Pendente');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text("Orçamento recusado foi editado: status voltou para Pendente."),
+              behavior: SnackBarBehavior.floating),
+        );
+      }
+      _mostrarDialogEnvio(orcamento);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -931,34 +941,11 @@ _Orçamento gerado pelo PaintManager_
     );
   }
 
-  Widget _buildDropdownStatus() {
-    return DropdownButtonFormField<String>(
-      value: _status,
-      decoration: InputDecoration(
-        labelText: "Status do Orçamento",
-        prefixIcon: Icon(Icons.flag_outlined, size: 20, color: Colors.grey[600]),
-        filled: true,
-        fillColor: Colors.grey[50],
-        border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide(color: Colors.grey[200]!)),
-        enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide(color: Colors.grey[200]!)),
-      ),
-      items: ['Pendente', 'Aprovado', 'Recusado', 'Concluído']
-          .map((s) => DropdownMenuItem(value: s, child: Text(s)))
-          .toList(),
-      onChanged: (val) => setState(() => _status = val!),
-    );
-  }
-
   Widget _buildStatusEditor() {
     const statusOptions = [
       _StatusOption('Pendente',  Colors.orange, Icons.hourglass_empty),
       _StatusOption('Aprovado',  Colors.green,  Icons.check_circle_outline),
       _StatusOption('Recusado',  Colors.red,    Icons.cancel_outlined),
-      _StatusOption('Concluído', Colors.blue,   Icons.done_all),
     ];
 
     return _buildSectionCard(

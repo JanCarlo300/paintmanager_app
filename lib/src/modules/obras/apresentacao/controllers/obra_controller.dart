@@ -90,6 +90,13 @@ class ObraController extends ChangeNotifier {
       return 'Não é possível concluir a obra. Existem etapas pendentes.';
     }
 
+    // Item 1.2: orçamento Pendente ou Recusado não libera o início da obra.
+    if (novoStatus != 'Não Iniciada' &&
+        obra.id != null &&
+        !await _repositorio.obraTemOrcamentoAprovado(obra.id!)) {
+      return 'A obra só pode ser iniciada depois que um orçamento dela for Aprovado.';
+    }
+
     final obraAtualizada = Obra(
       id: obra.id,
       idOrcamento: obra.idOrcamento,
