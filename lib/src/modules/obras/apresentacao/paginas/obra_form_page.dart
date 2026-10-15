@@ -28,9 +28,7 @@ class _ObraFormPageState extends State<ObraFormPage> {
   String _clienteNomeSelecionado = '';
   late TextEditingController _tituloController;
   late TextEditingController _enderecoController;
-  final _materialDescricaoController = TextEditingController();
-  final _materialQuantidadeController = TextEditingController();
-  final _materialUnidadeController = TextEditingController();
+  final _materialController = TextEditingController();
   late DateTime _dataInicio;
   late DateTime _dataPrevisao;
 
@@ -80,9 +78,7 @@ class _ObraFormPageState extends State<ObraFormPage> {
   void dispose() {
     _tituloController.dispose();
     _enderecoController.dispose();
-    _materialDescricaoController.dispose();
-    _materialQuantidadeController.dispose();
-    _materialUnidadeController.dispose();
+    _materialController.dispose();
     for (final c in _etapasControllers) { c.dispose(); }
     super.dispose();
   }
@@ -98,36 +94,13 @@ class _ObraFormPageState extends State<ObraFormPage> {
     });
   }
 
-  /// Retorna false se o material digitado é inválido (e avisa o usuário).
-  bool _adicionarMaterial() {
-    final descricao = _materialDescricaoController.text.trim();
-    if (descricao.isEmpty) {
-      _avisarMaterial("Informe a descrição do material.");
-      return false;
-    }
-    final textoQtd = _materialQuantidadeController.text.trim().replaceAll(',', '.');
-    final quantidade = textoQtd.isEmpty ? null : double.tryParse(textoQtd);
-    if (textoQtd.isNotEmpty && (quantidade == null || quantidade <= 0)) {
-      _avisarMaterial("Quantidade inválida. Use um número maior que zero (ex.: 3 ou 2,5).");
-      return false;
-    }
+  void _adicionarMaterial() {
+    final texto = _materialController.text.trim();
+    if (texto.isEmpty) return;
     setState(() {
-      _listaMateriais.add(ItemMaterial(
-        descricao: descricao,
-        quantidade: quantidade,
-        unidade: _materialUnidadeController.text.trim(),
-      ));
-      _materialDescricaoController.clear();
-      _materialQuantidadeController.clear();
-      _materialUnidadeController.clear();
+      _listaMateriais.add(ItemMaterial(texto));
+      _materialController.clear();
     });
-    return true;
-  }
-
-  void _avisarMaterial(String mensagem) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(mensagem), backgroundColor: Colors.red, behavior: SnackBarBehavior.floating),
-    );
   }
 
   void _salvar() async {
@@ -151,7 +124,7 @@ class _ObraFormPageState extends State<ObraFormPage> {
       }
 
       // Material digitado sem tocar no "+" entra na lista em vez de se perder.
-      if (_materialDescricaoController.text.trim().isNotEmpty && !_adicionarMaterial()) return;
+      _adicionarMaterial();
 
       final controller = context.read<ObraController>();
       final original = widget.obraParaEdicao;
@@ -439,31 +412,18 @@ class _ObraFormPageState extends State<ObraFormPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        TextField(
-          controller: _materialDescricaoController,
-          textCapitalization: TextCapitalization.sentences,
-          decoration: _inputDeco("Descrição (ex.: Tinta acrílica fosca)", Icons.add_shopping_cart),
-        ),
-        const SizedBox(height: 8),
         Row(
           children: [
-            SizedBox(
-              width: 96,
-              child: TextField(
-                controller: _materialQuantidadeController,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: _inputDecoSemIcone("Qtd."),
-              ),
-            ),
-            const SizedBox(width: 8),
             Expanded(
               child: TextField(
-                controller: _materialUnidadeController,
-                decoration: _inputDecoSemIcone("Unidade (ex.: lata 18 L)"),
+                controller: _materialController,
+                textCapitalization: TextCapitalization.sentences,
+                textInputAction: TextInputAction.done,
+                decoration: _inputDeco("Ex.: 1 lata de tinta Coral Branco Neve 18 L", Icons.add_shopping_cart),
                 onSubmitted: (_) => _adicionarMaterial(),
               ),
             ),
-            const SizedBox(width: 4),
+            const SizedBox(width: 8),
             IconButton.filled(
               onPressed: _adicionarMaterial,
               tooltip: "Adicionar material",
@@ -487,11 +447,9 @@ class _ObraFormPageState extends State<ObraFormPage> {
                   if (i > 0) Divider(height: 1, color: Colors.grey[200]),
                   ListTile(
                     dense: true,
+                    leading: Text("${i + 1}.", style: TextStyle(fontSize: 13, color: Colors.grey[600])),
+                    minLeadingWidth: 20,
                     title: Text(item.descricao, style: const TextStyle(fontSize: 14)),
-                    subtitle: item.quantidadeComUnidade.isEmpty
-                        ? null
-                        : Text(item.quantidadeComUnidade,
-                            style: TextStyle(fontSize: 12, color: Colors.grey[600])),
                     trailing: IconButton(
                       icon: Icon(Icons.close, size: 18, color: Colors.red[400]),
                       tooltip: "Remover",
@@ -505,15 +463,6 @@ class _ObraFormPageState extends State<ObraFormPage> {
       ],
     );
   }
-
-  InputDecoration _inputDecoSemIcone(String label) => InputDecoration(
-    labelText: label,
-    filled: true, fillColor: Colors.grey[50],
-    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
-    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
-    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: PaletaSahara.primary, width: 1.5)),
-  );
-
   Widget _etapaCard(int i) => Container(
     margin: const EdgeInsets.only(bottom: 8),
     child: Row(
