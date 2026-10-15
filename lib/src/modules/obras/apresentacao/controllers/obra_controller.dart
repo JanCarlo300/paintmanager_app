@@ -171,6 +171,13 @@ class ObraController extends ChangeNotifier {
     }
   }
 
+  // === Etapa 2 — buscas no banco (não mexem nas listas da tela) ===
+
+  Future<List<Obra>> buscarObras(String termo) => _repositorio.buscarObras(termo);
+
+  Future<List<Usuario>> buscarFuncionariosDisponiveis(int obraId, String termo) =>
+      _repositorio.buscarFuncionariosDisponiveis(obraId, termo);
+
   // === Item 2.3 — Chat da Obra ===
 
   Stream<List<MensagemObra>> escutarMensagens(int obraId) =>

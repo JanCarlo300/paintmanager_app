@@ -9,7 +9,8 @@ import '../controllers/obra_controller.dart';
 import '../widgets/chat_obra_card.dart';
 import '../../../../core/tema/paleta_sahara.dart';
 import '../../../auth/apresentacao/controllers/auth_controller.dart';
-import '../../../auth/apresentacao/controllers/usuario_controller.dart';
+import '../../../auth/dominio/entidades/usuario.dart';
+import '../../../../apresentacao/widgets/campo_busca_selecao.dart';
 
 class ObraDetalhesPage extends StatefulWidget {
   final Obra obra;
@@ -390,8 +391,7 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
 
   void _mostrarSelecionarFuncionario(BuildContext context, Obra obraAtual, ObraController obraController) {
     if (obraAtual.id == null) return;
-    final usuarioController = context.read<UsuarioController>();
-    Future.microtask(() => usuarioController.carregarUsuarios());
+    final obraId = obraAtual.id!;
 
     showModalBottomSheet(
       context: context,
@@ -399,72 +399,38 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
       builder: (ctx) => SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Consumer<UsuarioController>(
-            builder: (context, usuarioCtrl, _) {
-              final idsAlocados = obraController.equipeObraAtual.map((u) => u.id).toSet();
-              final disponiveis = usuarioCtrl.usuarios
-                  .where((u) => u.funcao == 'Funcionário' && u.status && !idsAlocados.contains(u.id))
-                  .toList();
-
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text("Adicionar funcionário", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 16),
-                  if (usuarioCtrl.carregando)
-                    const Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(16),
-                        child: CircularProgressIndicator(color: PaletaSahara.primary),
-                      ),
-                    )
-                  else if (disponiveis.isEmpty)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      child: Text(
-                        "Nenhum funcionário disponível para alocar.",
-                        style: TextStyle(color: Colors.grey[600]),
-                      ),
-                    )
-                  else
-                    ConstrainedBox(
-                      constraints: const BoxConstraints(maxHeight: 320),
-                      child: ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: disponiveis.length,
-                        itemBuilder: (context, i) {
-                          final u = disponiveis[i];
-                          return ListTile(
-                            leading: CircleAvatar(
-                              backgroundColor: PaletaSahara.primary,
-                              child: Text(
-                                u.nome.isNotEmpty ? u.nome[0].toUpperCase() : '?',
-                                style: const TextStyle(color: Colors.white),
-                              ),
-                            ),
-                            title: Text(u.nome),
-                            subtitle: Text(u.telefone.isNotEmpty ? u.telefone : u.email),
-                            onTap: () {
-                              Navigator.pop(ctx);
-                              if (u.id != null) {
-                                obraController.alocarFuncionario(obraAtual.id!, u.id!);
-                              }
-                            },
-                          );
-                        },
-                      ),
-                    ),
-                ],
-              );
-            },
+          // Sobe o painel junto com o teclado para a lista não ficar escondida.
+          padding: EdgeInsets.fromLTRB(20, 20, 20, 20 + MediaQuery.of(ctx).viewInsets.bottom),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text("Adicionar funcionário", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 4),
+              Text(
+                "Funcionários ativos que ainda não estão nesta obra.",
+                style: TextStyle(color: Colors.grey[600], fontSize: 13),
+              ),
+              const SizedBox(height: 16),
+              CampoBuscaSelecao<Usuario>(
+                rotulo: "Pesquisar funcionário",
+                dica: "Digite o nome...",
+                icone: Icons.person_search_outlined,
+                autofocus: true,
+                buscar: (termo) => obraController.buscarFuncionariosDisponiveis(obraId, termo),
+                tituloDe: (u) => u.nome,
+                subtituloDe: (u) => u.telefone.isNotEmpty ? u.telefone : u.email,
+                aoSelecionar: (u) {
+                  Navigator.pop(ctx);
+                  if (u.id != null) obraController.alocarFuncionario(obraId, u.id!);
+                },
+              ),
+            ],
           ),
         ),
       ),
     );
   }
-
   // --- CHECKLIST DE ETAPAS ---
   Widget _buildChecklistCard(BuildContext context, Obra obraAtual, ObraController controller) {
     return _card(

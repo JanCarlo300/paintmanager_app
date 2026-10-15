@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../dominio/entidades/obra.dart';
@@ -9,6 +8,7 @@ import '../controllers/obra_controller.dart';
 import '../../../clientes/apresentacao/controllers/cliente_controller.dart';
 import '../../../../core/tema/paleta_sahara.dart';
 import '../../../../core/servicos/geocodificacao_service.dart';
+import '../../../../apresentacao/widgets/campo_busca_selecao.dart';
 
 class ObraFormPage extends StatefulWidget {
   final Obra? obraParaEdicao;
@@ -23,10 +23,10 @@ class _ObraFormPageState extends State<ObraFormPage> {
   final _formKey = GlobalKey<FormState>();
 
   int? _clienteSelecionadoId;
+  String _clienteNomeSelecionado = '';
   late TextEditingController _tituloController;
   late TextEditingController _enderecoController;
   late TextEditingController _materialController;
-  late TextEditingController _clienteSearchController;
   late DateTime _dataInicio;
   late DateTime _dataPrevisao;
 
@@ -46,50 +46,16 @@ class _ObraFormPageState extends State<ObraFormPage> {
     super.initState();
     final obra = widget.obraParaEdicao;
 
-    // Garantir que a lista de clientes esteja presente
-    Future.microtask(() {
-      if (mounted) {
-        final ctrl = context.read<ClienteController>();
-        if (ctrl.clientes.isEmpty && !ctrl.carregando) {
-          ctrl.carregarClientes();
-        }
-      }
-    });
-
     _tituloController = TextEditingController(text: obra?.tituloDaObra);
     _enderecoController = TextEditingController(text: obra?.endereco);
     _materialController = TextEditingController();
-    _clienteSearchController = TextEditingController();
     _dataInicio = obra?.dataInicio ?? DateTime.now();
     _dataPrevisao = obra?.dataPrevisaoTermino ?? DateTime.now().add(const Duration(days: 15));
 
-    // Pré-popular o ID e o nome do cliente quando em edição
+    // Em edição o cliente já vem escolhido (o nome está guardado na própria obra)
     if (obra != null) {
       _clienteSelecionadoId = obra.idCliente;
-    }
-
-    // Aguardar clientes carregarem para preencher o campo de pesquisa com o nome
-    if (_clienteSelecionadoId != null) {
-      SchedulerBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        final clientes = context.read<ClienteController>().clientes;
-        final match = clientes.where((c) => c.id == _clienteSelecionadoId);
-        if (match.isNotEmpty) {
-          _clienteSearchController.text = match.first.nome;
-        } else {
-          // Clientes ainda carregando — ouvir mudanças para preencher depois
-          void listener() {
-            if (!mounted) return;
-            final lista = context.read<ClienteController>().clientes;
-            final found = lista.where((c) => c.id == _clienteSelecionadoId);
-            if (found.isNotEmpty) {
-              _clienteSearchController.text = found.first.nome;
-              context.read<ClienteController>().removeListener(listener);
-            }
-          }
-          context.read<ClienteController>().addListener(listener);
-        }
-      });
+      _clienteNomeSelecionado = obra.clienteNome;
     }
 
     if (obra != null && obra.etapasServico.isNotEmpty) {
@@ -109,7 +75,6 @@ class _ObraFormPageState extends State<ObraFormPage> {
     _tituloController.dispose();
     _enderecoController.dispose();
     _materialController.dispose();
-    _clienteSearchController.dispose();
     for (final c in _etapasControllers) { c.dispose(); }
     super.dispose();
   }
@@ -150,14 +115,6 @@ class _ObraFormPageState extends State<ObraFormPage> {
           .map((c) => EtapaServico(nome: c.text.trim()))
           .toList();
 
-      String nomeCliEncontrado = '';
-      if (_clienteSelecionadoId != null) {
-        try {
-          final cliente = context.read<ClienteController>().clientes.firstWhere((x) => x.id == _clienteSelecionadoId);
-          nomeCliEncontrado = cliente.nome;
-        } catch (_) {}
-      }
-
       final enderecoDigitado = _enderecoController.text.trim();
 
       // Item 3.2 — geocodifica o endereço (gratuito, via OpenStreetMap/Nominatim).
@@ -168,7 +125,7 @@ class _ObraFormPageState extends State<ObraFormPage> {
       final obra = Obra(
         id: widget.obraParaEdicao?.id,
         idCliente: _clienteSelecionadoId ?? widget.obraParaEdicao?.idCliente ?? 0,
-        clienteNome: nomeCliEncontrado.isNotEmpty ? nomeCliEncontrado : (widget.obraParaEdicao?.clienteNome ?? ''),
+        clienteNome: _clienteNomeSelecionado,
         tituloDaObra: _tituloController.text.trim(),
         endereco: enderecoDigitado,
         dataInicio: _dataInicio,
@@ -348,159 +305,24 @@ class _ObraFormPageState extends State<ObraFormPage> {
   );
 
   Widget _clienteDropdown() {
-    final cc = context.watch<ClienteController>();
-    final clientes = cc.clientes;
+    final clienteController = context.read<ClienteController>();
 
-    return FormField<int>(
-      initialValue: _clienteSelecionadoId,
-      validator: (v) => v == null ? "Selecione um cliente" : null,
-      builder: (FormFieldState<int> field) {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            LayoutBuilder(
-              builder: (context, constraints) {
-                return Autocomplete<Cliente>(
-                  optionsBuilder: (TextEditingValue textEditingValue) {
-                    if (textEditingValue.text.isEmpty) {
-                      return clientes;
-                    }
-                    final query = textEditingValue.text.toLowerCase();
-                    return clientes.where(
-                      (c) => c.nome.toLowerCase().contains(query),
-                    );
-                  },
-                  displayStringForOption: (Cliente c) => c.nome,
-                  onSelected: (Cliente cliente) {
-                    setState(() => _clienteSelecionadoId = cliente.id);
-                    field.didChange(cliente.id);
-                  },
-                  fieldViewBuilder: (context, textController, focusNode, onFieldSubmitted) {
-                    // Sincronizar o controller externo com o interno do Autocomplete
-                    if (_clienteSearchController.text.isNotEmpty && textController.text.isEmpty) {
-                      textController.text = _clienteSearchController.text;
-                    }
-                    // Manter referência para atualizações futuras (edição)
-                    _clienteSearchController = textController;
-
-                    return TextFormField(
-                      controller: textController,
-                      focusNode: focusNode,
-                      decoration: InputDecoration(
-                        labelText: "Pesquisar Cliente",
-                        hintText: "Digite o nome do cliente...",
-                        hintStyle: TextStyle(color: Colors.grey[400]),
-                        prefixIcon: Icon(Icons.person_search_outlined, size: 20, color: Colors.grey[600]),
-                        suffixIcon: textController.text.isNotEmpty
-                            ? IconButton(
-                                icon: Icon(Icons.clear, size: 18, color: Colors.grey[500]),
-                                onPressed: () {
-                                  textController.clear();
-                                  setState(() => _clienteSelecionadoId = null);
-                                  field.didChange(null);
-                                },
-                              )
-                            : Icon(Icons.arrow_drop_down, color: Colors.grey[600]),
-                        filled: true,
-                        fillColor: Colors.grey[50],
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: field.hasError ? Colors.red : Colors.grey[200]!),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: field.hasError ? Colors.red : Colors.grey[200]!),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: field.hasError ? Colors.red : PaletaSahara.primary, width: 1.5),
-                        ),
-                      ),
-                      onChanged: (value) {
-                        // Se o usuário editar o texto manualmente, limpar a seleção
-                        if (_clienteSelecionadoId != null) {
-                          final nomeAtual = clientes
-                              .where((c) => c.id == _clienteSelecionadoId)
-                              .map((c) => c.nome)
-                              .firstOrNull;
-                          if (value != nomeAtual) {
-                            setState(() => _clienteSelecionadoId = null);
-                            field.didChange(null);
-                          }
-                        }
-                      },
-                    );
-                  },
-                  optionsViewBuilder: (context, onSelected, options) {
-                    return Align(
-                      alignment: Alignment.topLeft,
-                      child: Material(
-                        elevation: 6,
-                        borderRadius: BorderRadius.circular(8),
-                        clipBehavior: Clip.antiAlias,
-                        child: ConstrainedBox(
-                          constraints: BoxConstraints(
-                            maxHeight: 240,
-                            maxWidth: constraints.maxWidth,
-                          ),
-                          child: ListView.separated(
-                            shrinkWrap: true,
-                            padding: EdgeInsets.zero,
-                            itemCount: options.length,
-                            separatorBuilder: (_, __) => Divider(height: 1, color: Colors.grey[200]),
-                            itemBuilder: (context, index) {
-                              final cliente = options.elementAt(index);
-                              final isSelected = cliente.id == _clienteSelecionadoId;
-                              return ListTile(
-                                dense: true,
-                                leading: CircleAvatar(
-                                  radius: 16,
-                                  backgroundColor: isSelected ? PaletaSahara.primary : Colors.grey[200],
-                                  child: Text(
-                                    cliente.nome.isNotEmpty ? cliente.nome[0].toUpperCase() : '?',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.bold,
-                                      color: isSelected ? Colors.white : Colors.grey[700],
-                                    ),
-                                  ),
-                                ),
-                                title: Text(
-                                  cliente.nome,
-                                  style: TextStyle(
-                                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                    color: Colors.grey[800],
-                                  ),
-                                ),
-                                subtitle: Text(
-                                  cliente.telefone,
-                                  style: TextStyle(fontSize: 12, color: Colors.grey[500]),
-                                ),
-                                selected: isSelected,
-                                selectedTileColor: Colors.grey[100],
-                                onTap: () => onSelected(cliente),
-                              );
-                            },
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
-            // Mensagem de erro de validação
-            if (field.hasError)
-              Padding(
-                padding: const EdgeInsets.only(left: 12, top: 6),
-                child: Text(
-                  field.errorText!,
-                  style: TextStyle(color: Colors.red[700], fontSize: 12),
-                ),
-              ),
-          ],
-        );
-      },
+    return CampoBuscaSelecao<Cliente>(
+      rotulo: "Pesquisar Cliente",
+      dica: "Nome, CPF ou telefone do cliente...",
+      icone: Icons.person_search_outlined,
+      mensagemObrigatorio: "Selecione um cliente",
+      buscar: clienteController.buscar,
+      tituloDe: (c) => c.nome,
+      subtituloDe: (c) => c.telefone,
+      aoSelecionar: (cliente) => setState(() {
+        _clienteSelecionadoId = cliente.id;
+        _clienteNomeSelecionado = cliente.nome;
+      }),
+      aoLimpar: () => setState(() {
+        _clienteSelecionadoId = null;
+        _clienteNomeSelecionado = '';
+      }),
     );
   }
 

@@ -16,6 +16,10 @@ abstract class RepositorioObra {
   /// Item 2.1 — ids das obras em que este usuário está alocado (visão do Funcionário)
   Future<List<int>> listarObraIdsAlocados(int usuarioId);
 
+  /// Etapa 2 — buscas no banco (no máximo 20 resultados cada)
+  Future<List<Obra>> buscarObras(String termo);
+  Future<List<Usuario>> buscarFuncionariosDisponiveis(int obraId, String termo);
+
   /// Item 1.2 — a obra só sai de "Não Iniciada" com orçamento Aprovado
   Future<bool> obraTemOrcamentoAprovado(int obraId);
 

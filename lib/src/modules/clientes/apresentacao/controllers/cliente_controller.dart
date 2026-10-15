@@ -28,6 +28,9 @@ class ClienteController extends ChangeNotifier {
     }
   }
 
+  /// Busca no banco (sem mexer na lista da tela de Clientes)
+  Future<List<Cliente>> buscar(String termo) => _repositorio.buscarClientes(termo);
+
   /// Salva (insere ou atualiza) um cliente e recarrega a lista
   Future<void> salvar(Cliente cliente) async {
     _carregando = true;

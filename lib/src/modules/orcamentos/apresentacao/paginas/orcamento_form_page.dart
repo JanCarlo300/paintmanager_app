@@ -11,6 +11,7 @@ import '../controllers/orcamento_controller.dart';
 import '../../../obras/apresentacao/controllers/obra_controller.dart';
 import '../../../clientes/apresentacao/controllers/cliente_controller.dart';
 import '../../../../core/tema/paleta_sahara.dart';
+import '../../../../apresentacao/widgets/campo_busca_selecao.dart';
 
 class OrcamentoFormPage extends StatefulWidget {
   final Orcamento? orcamentoParaEdicao;
@@ -25,7 +26,6 @@ class _OrcamentoFormPageState extends State<OrcamentoFormPage> {
   final _formKey = GlobalKey<FormState>();
 
   Obra? _obraSelecionada;
-  late TextEditingController _obraSearchController;
   late TextEditingController _descricaoController;
   late DateTime _dataValidade;
   String _formaPagamento = 'PIX';
@@ -45,7 +45,6 @@ class _OrcamentoFormPageState extends State<OrcamentoFormPage> {
     super.initState();
     final orc = widget.orcamentoParaEdicao;
 
-    _obraSearchController = TextEditingController();
 
     Future.microtask(() {
       if (!mounted) return;
@@ -67,7 +66,6 @@ class _OrcamentoFormPageState extends State<OrcamentoFormPage> {
         final match = obras.where((o) => o.id == orc.idObra);
         if (match.isNotEmpty) {
           setState(() => _obraSelecionada = match.first);
-          _obraSearchController.text = match.first.tituloDaObra;
         } else {
           void listener() {
             if (!mounted) return;
@@ -75,7 +73,6 @@ class _OrcamentoFormPageState extends State<OrcamentoFormPage> {
             final found = lista.where((o) => o.id == orc.idObra);
             if (found.isNotEmpty) {
               setState(() => _obraSelecionada = found.first);
-              _obraSearchController.text = found.first.tituloDaObra;
               context.read<ObraController>().removeListener(listener);
             }
           }
@@ -111,7 +108,6 @@ class _OrcamentoFormPageState extends State<OrcamentoFormPage> {
 
   @override
   void dispose() {
-    _obraSearchController.dispose();
     _descricaoController.dispose();
     _valorMateriaisController.dispose();
     _valorMaoDeObraController.dispose();
@@ -651,189 +647,55 @@ _Orçamento gerado pelo PaintManager_
     );
   }
 
-  /// Busca de obra com autocomplete — filtra por título e nome do cliente
+  /// Busca de obra no banco — filtra por título e nome do cliente
   Widget _buildObraSearch() {
-    final obras = context.watch<ObraController>().obras;
+    final obraController = context.read<ObraController>();
 
-    return FormField<int>(
-      initialValue: _obraSelecionada?.id,
-      validator: (v) => v == null ? "Selecione uma obra" : null,
-      builder: (FormFieldState<int> field) {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            LayoutBuilder(
-              builder: (context, constraints) {
-                return Autocomplete<Obra>(
-                  optionsBuilder: (TextEditingValue textEditingValue) {
-                    if (textEditingValue.text.isEmpty) return obras;
-                    final query = textEditingValue.text.toLowerCase();
-                    return obras.where((o) =>
-                        o.tituloDaObra.toLowerCase().contains(query) ||
-                        o.clienteNome.toLowerCase().contains(query));
-                  },
-                  displayStringForOption: (Obra o) => o.tituloDaObra,
-                  onSelected: (Obra obra) {
-                    setState(() => _obraSelecionada = obra);
-                    field.didChange(obra.id);
-                  },
-                  fieldViewBuilder: (context, textController, focusNode, _) {
-                    if (_obraSearchController.text.isNotEmpty &&
-                        textController.text.isEmpty) {
-                      textController.text = _obraSearchController.text;
-                    }
-                    _obraSearchController = textController;
-
-                    return TextFormField(
-                      controller: textController,
-                      focusNode: focusNode,
-                      decoration: InputDecoration(
-                        labelText: "Pesquisar Obra",
-                        hintText: "Digite o título ou nome do cliente...",
-                        hintStyle: TextStyle(color: Colors.grey[400]),
-                        prefixIcon: Icon(Icons.search, size: 20, color: Colors.grey[600]),
-                        suffixIcon: textController.text.isNotEmpty
-                            ? IconButton(
-                                icon: Icon(Icons.clear,
-                                    size: 18, color: Colors.grey[500]),
-                                onPressed: () {
-                                  textController.clear();
-                                  setState(() => _obraSelecionada = null);
-                                  field.didChange(null);
-                                },
-                              )
-                            : Icon(Icons.arrow_drop_down, color: Colors.grey[600]),
-                        filled: true,
-                        fillColor: Colors.grey[50],
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(
-                              color: field.hasError ? Colors.red : Colors.grey[200]!),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(
-                              color: field.hasError ? Colors.red : Colors.grey[200]!),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(
-                              color: field.hasError ? Colors.red : PaletaSahara.primary,
-                              width: 1.5),
-                        ),
-                      ),
-                      onChanged: (value) {
-                        if (_obraSelecionada != null &&
-                            value != _obraSelecionada!.tituloDaObra) {
-                          setState(() => _obraSelecionada = null);
-                          field.didChange(null);
-                        }
-                      },
-                    );
-                  },
-                  optionsViewBuilder: (context, onSelected, options) {
-                    return Align(
-                      alignment: Alignment.topLeft,
-                      child: Material(
-                        elevation: 6,
-                        borderRadius: BorderRadius.circular(8),
-                        clipBehavior: Clip.antiAlias,
-                        child: ConstrainedBox(
-                          constraints: BoxConstraints(
-                              maxHeight: 280, maxWidth: constraints.maxWidth),
-                          child: ListView.separated(
-                            shrinkWrap: true,
-                            padding: EdgeInsets.zero,
-                            itemCount: options.length,
-                            separatorBuilder: (_, __) =>
-                                Divider(height: 1, color: Colors.grey[200]),
-                            itemBuilder: (context, index) {
-                              final obra = options.elementAt(index);
-                              final isSelected = obra.id == _obraSelecionada?.id;
-                              return ListTile(
-                                dense: true,
-                                leading: CircleAvatar(
-                                  radius: 16,
-                                  backgroundColor:
-                                      isSelected ? PaletaSahara.primary : Colors.grey[200],
-                                  child: Icon(Icons.construction,
-                                      size: 14,
-                                      color: isSelected
-                                          ? Colors.white
-                                          : Colors.grey[700]),
-                                ),
-                                title: Text(
-                                  obra.tituloDaObra,
-                                  style: TextStyle(
-                                    fontWeight: isSelected
-                                        ? FontWeight.bold
-                                        : FontWeight.normal,
-                                    color: Colors.grey[800],
-                                  ),
-                                ),
-                                subtitle: Text(
-                                  "Cliente: ${obra.clienteNome}  •  ${obra.status}",
-                                  style: TextStyle(
-                                      fontSize: 12, color: Colors.grey[500]),
-                                ),
-                                selected: isSelected,
-                                selectedTileColor: Colors.grey[100],
-                                onTap: () => onSelected(obra),
-                              );
-                            },
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                );
-              },
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        CampoBuscaSelecao<Obra>(
+          rotulo: "Pesquisar Obra",
+          dica: "Digite o título ou nome do cliente...",
+          icone: Icons.search,
+          iconeItem: Icons.construction,
+          mensagemObrigatorio: "Selecione uma obra",
+          buscar: obraController.buscarObras,
+          tituloDe: (o) => o.tituloDaObra,
+          subtituloDe: (o) => "Cliente: ${o.clienteNome}  •  ${o.status}",
+          aoSelecionar: (obra) => setState(() => _obraSelecionada = obra),
+          aoLimpar: () => setState(() => _obraSelecionada = null),
+        ),
+        // Chip do cliente preenchido automaticamente
+        if (_obraSelecionada != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 12),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey[300]!),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.person_outline, size: 16, color: Colors.grey[600]),
+                  const SizedBox(width: 8),
+                  Text("Cliente: ",
+                      style: TextStyle(fontSize: 13, color: Colors.grey[600])),
+                  Expanded(
+                    child: Text(
+                      _obraSelecionada!.clienteNome,
+                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
             ),
-            // Chip do cliente preenchido automaticamente
-            if (_obraSelecionada != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 12),
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.grey[300]!),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.person_outline,
-                          size: 16, color: Colors.grey[600]),
-                      const SizedBox(width: 8),
-                      Text("Cliente: ",
-                          style: TextStyle(
-                              fontSize: 13, color: Colors.grey[600])),
-                      Expanded(
-                        child: Text(
-                          _obraSelecionada!.clienteNome,
-                          style: const TextStyle(
-                              fontSize: 13, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            if (field.hasError)
-              Padding(
-                padding: const EdgeInsets.only(left: 12, top: 6),
-                child: Text(
-                  field.errorText!,
-                  style: TextStyle(color: Colors.red[700], fontSize: 12),
-                ),
-              ),
-          ],
-        );
-      },
+          ),
+      ],
     );
   }
-
   /// Exibição read-only em modo edição
   Widget _buildObraReadOnly() {
     final obraTitle = _obraSelecionada?.tituloDaObra ??
