@@ -120,6 +120,12 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
         foregroundColor: PaletaSahara.onSurface,
         elevation: 0.5,
         actions: [
+          if (podeGerenciarObra)
+            IconButton(
+              icon: const Icon(Icons.edit_outlined),
+              tooltip: "Editar obra",
+              onPressed: () => Navigator.pushNamed(context, '/obra-formulario', arguments: obraAtual),
+            ),
           if (podeGerenciarObra && obraAtual.status == 'Concluída')
             const Padding(
               padding: EdgeInsets.only(right: 12),
