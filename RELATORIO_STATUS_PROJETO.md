@@ -1,0 +1,139 @@
+# PaintManager — Relatório de Status do Projeto
+
+**TFC II — UniRV** · Autor: Jan Carlo · **Data de referência: 15/10/2026** (criado em 12/10, atualizado a cada etapa)
+Base: código atual da branch `main` (último commit `dfaa3fd`), scripts em `db/`, testes em `test/` e o relatório anterior de 01/10/2026.
+
+---
+
+## 1. Resumo
+
+| Indicador | Situação |
+|---|---|
+| Requisitos funcionais (RF001–RF013) | **13 completos · 0 parciais · 0 não implementados** (atualizado em 15/10) |
+| Backlog de 02/10 (itens 1.x, 2.x, 3.x) | **Concluído** — 1.1 e 2.2 encerrados sem alteração por decisão do Jan; 1.2, 2.1, 2.3, 3.1 e 3.2 entregues e aprovados |
+| Plano de ajustes de outubro (Etapas 1 a 8.1) | **Todas entregues e aprovadas em 15/10** |
+| Testes automatizados | **42 testes passando** (7 arquivos): modelos, validador de CPF, filtros das listas, item de material, PDFs e regras dos relatórios. Ainda sem testes de repositórios e controllers |
+| Backend | Supabase (PostgreSQL + Auth + RLS + Edge Function + Realtime) |
+| Build Android | APK debug gerando e instalando no Samsung A55 (se o adb não achar o celular, desligar a Ancoragem USB) |
+| Cronograma | A Semana 10 (28/09–03/10, "V&V finalizada") passou com cobertura de testes baixa; desde então subiu de 4 para 42 testes |
+
+**Desde o relatório de 01/10:** todo o backlog do brief e todas as etapas do plano de ajustes foram entregues e aprovados por você.
+
+---
+
+## 2. Requisitos Funcionais (DERS)
+
+| RF | Requisito | Status | Observação |
+|---|---|---|---|
+| RF001 | Realizar Login | ✅ Completo | CPF + senha via Supabase Auth |
+| RF002 | Recuperar Senha | ✅ Completo | CPF/e-mail → código por e-mail → nova senha; troca obrigatória no primeiro acesso para todas as funções |
+| RF003 | Manter Usuário | ✅ Completo | CRUD com 3 funções; cadastro via Edge Function (sem trocar a sessão do administrador) |
+| RF004 | Manter Cliente | ✅ Completo | CRUD com inativação |
+| RF005 | Criar Orçamento | ✅ Completo | Itens de serviço estruturados, total automático |
+| RF006 | Enviar Orçamento | ✅ Completo | O administrador escolhe enviar por WhatsApp ou e-mail; considerado completo por decisão do autor (13/10) |
+| RF007 | Atualizar Status de Orçamento | ✅ Completo | Embutido no formulário; desde 15/10 só os 3 status do DERS (Pendente, Aprovado, Recusado) |
+| RF008 | Manter Obra | ✅ Completo | Agora com localização no mapa (item 3.2) |
+| RF009 | Registrar Atividades da Obra | ✅ Completo | O chat da obra registra autor, cargo e data/hora de cada mensagem, formando o histórico que o DERS pede; validado em aparelho |
+| RF010 | Alocar Equipe à Obra | ✅ Completo | Tabela `equipe_obra`; alocar/desalocar pela tela da obra |
+| RF011 | Registrar Despesas e Receitas | ✅ Completo | Desde 15/10, receita/despesa tem vínculo real com a obra (`id_obra`, opcional); só obras Em Andamento ou Concluída recebem lançamentos (app + trigger). `db/rf011_transacao_obra.sql` |
+| RF012 | Gerar Relatórios | ✅ Completo | Painel com gráficos + exportação em PDF (Financeiro e Progresso) por período e, opcionalmente, por obra, com a regra do DERS (só orçamentos aprovados e obras em andamento/concluídas) |
+| RF013 | Enviar Notificações | ✅ Completo | Alertas calculados no sino do Resumo Geral (orçamentos vencendo, obras atrasadas), dentro do app. Sem push nem e-mail, por decisão do Jan (15/10) |
+
+---
+
+## 3. Entregue nesta etapa
+
+### Item 2.1 — Funcionário só acessa obras em que está alocado ✅ validado
+- **App:** a lista mostra só as obras alocadas e abrir uma obra por navegação direta mostra "Acesso restrito".
+- **Banco:** nova política RLS em `obra` (`db/rf_item_2_1_rls_obra_por_alocacao.sql`). Administrador e Gerente leem tudo; Funcionário só lê as obras de `equipe_obra`.
+- Testado por você com os três perfis.
+
+### Item 2.3 — Chat da obra ✅ validado
+- Substitui o campo único de "Anotações". Balões com autor, cargo e horário; suas mensagens à direita, as dos outros à esquerda.
+- **Tempo real** com Supabase Realtime.
+- O texto antigo de cada obra foi migrado como primeira mensagem ("Observação importada"); a coluna `obra.anotacoes` ficou no banco como backup.
+- Segurança no banco: nome e cargo do autor preenchidos por trigger (não dá para falar em nome de outro); mesma regra de alocação do item 2.1; mensagens não são editáveis nem apagáveis.
+- Script: `db/rf_item_2_3_chat_obra.sql`.
+
+### Item 3.2 — Localização da obra ✅ validado
+- Escolhida a alternativa **gratuita OpenStreetMap/Nominatim** (sem chave de API, sem cobrança).
+- Ao salvar a obra, o endereço vira latitude/longitude. Se a busca falhar, a obra é salva normalmente, sem mapa.
+- Detalhes da obra: **mapa embutido** com marcador e botão **"Como chegar"**, que abre a rota no Google Maps pela coordenada (ou pelo endereço em texto, se não houver coordenada).
+- Script: `db/rf_item_3_2_coordenadas_obra.sql`.
+- Também corrigido um bug meu: o repositório não gravava as coordenadas no banco.
+
+### Item 2.2 — Encerrado sem alteração
+Por decisão sua, o Administrador mantém acesso ilimitado, inclusive a adicionar material faltante.
+
+### Correção — Botão voltar do Android ✅ validado
+O menu lateral e os atalhos trocavam de tela substituindo a anterior, então o voltar fechava o app. Agora a tela inicial do usuário fica na base da pilha, e o voltar só fecha o app nela. "Sair" limpa a pilha.
+
+---
+
+## 4. O que falta
+
+### 4.1 Backlog do seu brief
+
+| Item | Situação | Observação |
+|---|---|---|
+| **3.1 — parte do CPF (Módulo 11)** | ✅ Concluída e validada pelo Jan em 15/10 | `ValidadorCpf` + 9 testes unitários, formulários de cliente (CPF opcional) e usuário, triggers no banco (`db/rf_item_3_1_validacao_cpf.sql`) |
+| **3.1 — escopo** | ✅ Concluído | O pedido original do 3.1 era só a validação do CPF; não há "restante". Melhoria opcional futura: aceitar e validar CNPJ no cadastro de cliente (hoje o campo só aceita CPF) |
+| **Calendário de início/fim da obra** | ✅ Atendido pela Etapa 3 | Período "De → Até" em português e com as cores do app |
+| **Filtros nas abas de pesquisa** | ✅ Atendido pela Etapa 4 | Em Obras e Orçamentos: ordenação, período de criação, prazo e chips de status (o Jan escolheu período e prazo; valor e cliente ficaram de fora) |
+| **1.1 — "Obra pausada" como "obra ativa"** | ✅ Encerrado sem alteração | Decisão do Jan (13/10): a regra atual fica como está |
+| **1.2 — Obra só inicia com orçamento Aprovado** | ✅ Feito em 15/10 · ✅ aprovado pelo Jan | `ObraController.atualizarStatus` bloqueia sair de "Não Iniciada" sem orçamento Aprovado; trigger no banco repete a regra; obras "Em Andamento" sem orçamento aprovado voltam para "Não Iniciada" (`db/rf_item_1_2_obra_inicia_com_orcamento_aprovado.sql`). Sem botão "Iniciar obra" — a obra continua sendo iniciada na tela da obra |
+| **Etapa 8.1 — Relatórios em PDF (RF012)** | ✅ Feito em 15/10 · ✅ aprovado pelo Jan | Card "Exportar em PDF" na tela de Relatórios: usa o período selecionado e, opcionalmente, uma obra (campo de busca). PDF Financeiro: receitas, despesas, lucro, orçamentos aprovados, despesas por categoria e lançamentos. PDF de Progresso: obras iniciadas no período com status (marca atrasadas), período, % e etapas. Reaproveita o `PdfService`; regras em `relatorios/dominio/pdf_relatorios.dart` com 5 testes unitários |
+| **Etapa 7 — Aviso de mensagens do chat na tela de Obras** | ✅ Feito em 15/10 · ✅ aprovado pelo Jan | Sino na tela de Obras com o número de obras que têm mensagens novas (lista as obras e abre direto no chat) e contador no card de cada obra. Vale para todos, cada um nas suas obras; mensagens da própria pessoa não contam. Abrir o chat marca como lido. Banco: tabela `chat_leitura` + funções `chat_nao_lidas()` e `marcar_chat_lido()`, com RLS (`db/etapa_7_chat_leitura.sql`). O sino do Resumo Geral (RF013) continua igual |
+| **Etapa 6b — Lista de Materiais visível + PDF (8.2)** | ✅ Feito em 15/10 · ✅ aprovado pelo Jan | Botão "Editar obra" (lápis) nos detalhes — antes não existia nenhuma forma de abrir a edição. Card "Lista de Materiais" só leitura nos detalhes (Administrador e Gerente) com botão "Gerar PDF"; ao salvar uma obra com materiais o app oferece o PDF. PDF gerado no celular (pacotes `pdf`/`printing`, fonte Roboto embutida para acentos): cliente (nome, telefone), obra (título, endereço), materiais numerados (descrição, qtd., unidade) e observação opcional; abre o compartilhar (WhatsApp, e-mail, salvar). Serviço reutilizável `PdfService` (`lib/src/core/pdf/`) para o RF012; 3 testes unitários |
+| **Etapa 6 — Lista de Materiais** | ✅ Feito em 15/10 · ✅ aprovado pelo Jan | "Materiais Faltantes" virou "Lista de Materiais" no cadastro/edição da obra, com descrição + quantidade + unidade por item (entidade `ItemMaterial`, 4 testes unitários); editável em "Editar Obra" (Administrador e Gerente). Seção removida dos detalhes da obra — pedidos de material vão pelo chat. Banco: coluna `lista_materiais` (JSONB) no lugar de `materiais_faltantes`, itens de teste antigos descartados por decisão do Jan (`db/etapa_6_lista_materiais.sql`) |
+| **Etapa 5 — Obra concluída travada** | ✅ Feito em 15/10 · ✅ aprovado pelo Jan | Concluída é definitiva (ninguém reabre): checklist sem toque com aviso, menu de status vira cadeado, controller e trigger no banco recusam mudar status/etapas/progresso. Concluir sempre pede confirmação e, se houver etapas pendentes, marca todas como concluídas (100%). Migração corrige obras já concluídas abaixo de 100% (`db/etapa_5_obra_concluida_travada.sql`). Corrigidos no formulário de edição: etapas voltavam todas para pendente e a data de conclusão era apagada |
+| **Etapa 4 — Filtros e ordenação (Obras e Orçamentos)** | ✅ Feito em 15/10 · ✅ aprovado pelo Jan | Botão de filtro ao lado da busca abre painel com: ordenar Mais recentes/Mais antigos (feito na consulta ao banco e lembrado pelo controller), período de criação (hoje, ontem, 7 dias, 30 dias, intervalo) e prazo (obras atrasadas / terminando em 7 dias; orçamentos pendentes vencidos / vencendo em 7 dias). Obras ganhou chips de status. Componentes compartilhados: `FiltroLista` (`lib/src/core/filtros/`, 12 testes unitários), `BotaoFiltroLista`, `ChipsFiltroStatus`. Paginação ainda não feita (listas carregam tudo) |
+| **Etapa 3 — Calendário em português** | ✅ Feito em 15/10 · ✅ aprovado pelo Jan | App inteiro em pt_BR (`flutter_localizations`); calendários com as cores Sahara pelo tema (`datePickerTheme`); campo de data padrão `CampoData` na Nova Obra (período "De → Até" com contagem de dias), validade do orçamento e data da transação; previsão de término nunca antes do início. Corrigido travamento ao editar orçamento com validade vencida |
+| **Etapa 2 — Busca com filtro** | ✅ Feito em 15/10 · ✅ aprovado pelo Jan | Componente único `CampoBuscaSelecao` (`lib/src/apresentacao/widgets/`) no cliente da Nova Obra, na obra do Novo Orçamento e no "Adicionar funcionário" da equipe. Busca no banco (até 20 resultados, sem diferenciar acentos e maiúsculas; clientes também por CPF/CNPJ e telefone) via `db/etapa_2_busca_com_filtro.sql`. Lista fecha ao selecionar, limpar, tocar fora, apertar voltar ou esconder o teclado |
+| **Etapa 1 — Status do orçamento (3 opções)** | ✅ Feito em 15/10 · ✅ aprovado pelo Jan | Só Pendente / Aprovado / Recusado, como no DERS. "Concluído" migrado para Aprovado, "Rejeitado" para Recusado (corrigido o filtro de recusados que nunca mostrava nada); Recusado editado volta sozinho para Pendente; trava `CHECK` no banco (`db/orcamento_status_3_opcoes.sql`) |
+
+### 4.2 Segurança
+- **RF002 Fase B:** o login ainda consulta a tabela `usuario` direto, com a política anônima `USING (true)` de `rls_policy_usuario.sql`, o que deixa qualquer pessoa ler a tabela de usuários. O correto é o login usar a função `buscar_email_por_login` (já existe, hoje só a recuperação de senha a usa) e essa política ser removida.
+- **RLS das demais tabelas:** `cliente`, `orcamento`, `transacao`, `usuario` e as escritas em `obra` ainda liberam tudo a qualquer autenticado; a matriz de funções vale no app. Estão protegidos no banco: leitura de `obra`, chat, leitura do chat, e as regras de negócio por trigger (CPF, status do orçamento, início e conclusão da obra, obra do lançamento).
+- **Edge Function `criar-usuario`:** confirmar que está implantada no Supabase (o cadastro de usuário depende dela).
+
+### 4.3 Testes (V&V)
+- **42 testes unitários passando**, em 7 arquivos: modelos de Usuário e Cliente, `ValidadorCpf`, `FiltroLista`, `ItemMaterial`, PDF da Lista de Materiais e regras/PDFs dos relatórios.
+- **Ainda sem testes** de repositórios (Supabase), controllers e telas, nem de `ValidadorSenha` e `GeocodificacaoService`.
+- Os testes manuais de cada etapa foram feitos por você no Samsung A55 e estão registrados nas tabelas acima.
+
+### 4.4 Documentação e repositório
+- `README.md` e `ARCHITECTURE.md` desatualizados: não mencionam `equipe_obra`, `GuardaRota`, `NotificacaoController`, `PaletaSahara`, chat, mapa, PDFs, filtros nem a Edge Function.
+- Falta um `.env.example` (o README o menciona).
+- **Figura 19 (DER) do relatório do TFC:** precisa ser refeita com as tabelas reais (`usuario`, `cliente`, `obra`, `orcamento`, `transacao`, `equipe_obra`, `obra_mensagem`, `chat_leitura`).
+- Tela de **Configurações** continua sendo um placeholder.
+- Redação da monografia: não tenho como ver isso pelo código; você precisa confirmar o andamento.
+
+---
+
+## 5. Ações suas pendentes
+
+| # | Ação | Por quê |
+|---|---|---|
+| 1 | `git push` para o GitHub | Os commits desde o fim de setembro estão só no notebook |
+| 2 | Refazer a Figura 19 (DER) no relatório do TFC II | Hoje ela descreve o modelo antigo |
+
+**Limpeza do banco concluída em 16/10:** removidas as sobras do modelo do TFC I (tabelas `etapas`, `financeiro`, `material`, `observacao` e `funcionario`, todas vazias, e a coluna `orcamento.id_etapas`), via `db/limpeza_tabelas_antigas.sql` e `db/limpeza_funcionario_e_id_etapas.sql`. O banco tem exatamente as 8 tabelas do app: `chat_leitura`, `cliente`, `equipe_obra`, `obra`, `obra_mensagem`, `orcamento`, `transacao`, `usuario`.
+
+---
+
+## 6. Próximos passos sugeridos (por prioridade)
+
+1. **Ampliar os testes:** `ValidadorSenha`, repositórios com `mocktail`, controllers de Obra e de alertas.
+2. **RF002 Fase B** e RLS das demais tabelas.
+3. **Documentação:** README, ARCHITECTURE e `.env.example`.
+4. **Melhorias opcionais:** aceitar e validar CNPJ no cliente; paginação das listas; tela de Configurações.
+
+---
+
+## 7. Observações de ambiente
+- **Smart App Control do Windows foi desativado** para o Flutter voltar a compilar (ele bloqueava o `dartaotruntime.exe` e o `impellerc.exe`). O Defender continua ativo.
+- Se o `adb` não encontrar o celular no USB, desligar a **Ancoragem USB** do Samsung e escolher "Transferência de arquivos".
+- O repositório estava sem identidade do git configurada; defini **localmente** (só neste repositório) o mesmo autor dos commits anteriores.
+- A branch `main` está à frente do `origin/main`: nada foi enviado com **`git push`** ainda.
+- `HISTORICO_DO_PROJETO.md` e este relatório não estão versionados (nunca foram commitados).
