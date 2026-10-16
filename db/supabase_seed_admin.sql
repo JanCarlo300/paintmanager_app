@@ -1,6 +1,6 @@
 -- ============================================
 -- SEED: Administrador Principal — PaintManager
--- CPF: 03595976100 | Senha: 12345678jc
+-- CPF: <CPF_DO_ADMIN> | Senha: <SENHA_INICIAL_DO_ADMIN>
 -- ============================================
 -- Execute este script no SQL Editor do Supabase Dashboard.
 
@@ -11,12 +11,12 @@ BEGIN
   -- 1) Tentar encontrar o id do usuário se o email já existe
   SELECT id INTO v_auth_id 
   FROM auth.users 
-  WHERE email = 'jancarloalmeida36@gmail.com';
+  WHERE email = '<EMAIL_DO_ADMIN>';
 
   IF v_auth_id IS NOT NULL THEN
     -- Recupera o usuário mudando apenas a senha
     UPDATE auth.users 
-    SET encrypted_password = crypt('12345678jc', gen_salt('bf')),
+    SET encrypted_password = crypt('<SENHA_INICIAL_DO_ADMIN>', gen_salt('bf')),
         updated_at = now()
     WHERE id = v_auth_id;
   ELSE
@@ -34,8 +34,8 @@ BEGIN
       '00000000-0000-0000-0000-000000000000',
       v_auth_id,
       'authenticated', 'authenticated',
-      'jancarloalmeida36@gmail.com',
-      crypt('12345678jc', gen_salt('bf')),
+      '<EMAIL_DO_ADMIN>',
+      crypt('<SENHA_INICIAL_DO_ADMIN>', gen_salt('bf')),
       now(), now(), now(),
       '', '',
       '{"provider":"email","providers":["email"]}'::jsonb,
@@ -45,16 +45,16 @@ BEGIN
   END IF;
 
   -- 2) Atualizar ou inserir na tabela public.usuario
-  IF EXISTS (SELECT 1 FROM public.usuario WHERE email = 'jancarloalmeida36@gmail.com') THEN
+  IF EXISTS (SELECT 1 FROM public.usuario WHERE email = '<EMAIL_DO_ADMIN>') THEN
     UPDATE public.usuario
     SET auth_id = v_auth_id,
-        nome = 'jan carlo almeida leal',
-        cpf = '03595976100',
+        nome = '<NOME_DO_ADMIN>',
+        cpf = '<CPF_DO_ADMIN>',
         telefone = '64984250962',
         funcao = 'Administrador',
         status = true,
         primeiro_acesso = false
-    WHERE email = 'jancarloalmeida36@gmail.com';
+    WHERE email = '<EMAIL_DO_ADMIN>';
   ELSE
     -- Se não encontrar por email, insere o registro vinculando ao auth_id correto
     INSERT INTO public.usuario (
@@ -63,9 +63,9 @@ BEGIN
     )
     VALUES (
       v_auth_id,
-      'jan carlo almeida leal',
-      'jancarloalmeida36@gmail.com',
-      '03595976100',
+      '<NOME_DO_ADMIN>',
+      '<EMAIL_DO_ADMIN>',
+      '<CPF_DO_ADMIN>',
       '64984250962',
       'Administrador',
       true,

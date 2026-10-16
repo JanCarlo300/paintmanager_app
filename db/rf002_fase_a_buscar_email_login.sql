@@ -81,11 +81,11 @@ GRANT EXECUTE ON FUNCTION public.buscar_email_por_login(text) TO anon, authentic
 -- ============================================================
 
 -- 1) Buscar pelo CPF do admin cadastrado em supabase_migration.sql
---    Deve devolver: jancarloalmeida36@gmail.com
--- SELECT public.buscar_email_por_login('03595976100');
+--    Deve devolver: <EMAIL_DO_ADMIN>
+-- SELECT public.buscar_email_por_login('<CPF_DO_ADMIN>');
 
 -- 2) Buscar pelo e-mail do mesmo admin — deve devolver o mesmo e-mail
--- SELECT public.buscar_email_por_login('jancarloalmeida36@gmail.com');
+-- SELECT public.buscar_email_por_login('<EMAIL_DO_ADMIN>');
 
 -- 3) Buscar um CPF que não existe — deve devolver NULL (vazio)
 -- SELECT public.buscar_email_por_login('00000000000');

@@ -14,18 +14,23 @@ class RepositorioAutenticacaoImpl implements RepositorioAutenticacao {
       // Garante sanitização: remove qualquer caractere que não seja número
       final cleanCpf = cpf.replaceAll(RegExp(r'[^0-9]'), '');
 
-      // 1. Busca APENAS o e-mail vinculado ao CPF na tabela 'usuario' (anônimo)
-      final authData = await _supabase
-          .from('usuario')
-          .select('email')
-          .eq('cpf', cleanCpf)
-          .maybeSingle();
-
-      if (authData == null) {
-        throw 'CPF não cadastrado no sistema.';
+      // 1. Descobre o e-mail pelo CPF via função segura do banco: sem sessão,
+      // ninguém lê a tabela 'usuario' — a função devolve só o e-mail de um
+      // usuário ativo, nada mais.
+      final String? emailReal;
+      try {
+        emailReal = await _supabase.rpc(
+          'buscar_email_por_login',
+          params: {'p_login': cleanCpf},
+        ) as String?;
+      } catch (_) {
+        throw 'Não foi possível conectar ao servidor. Verifique sua internet e tente novamente.';
       }
 
-      final emailReal = authData['email'] as String;
+      // Mesma mensagem de senha errada: não revela se o CPF existe.
+      if (emailReal == null || emailReal.isEmpty) {
+        throw 'CPF ou senha incorretos.';
+      }
 
       // 2. Faz o login no Supabase Auth usando o e-mail recuperado
       final authResponse = await _supabase.auth.signInWithPassword(

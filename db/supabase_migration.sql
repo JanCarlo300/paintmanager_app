@@ -56,14 +56,14 @@ CREATE POLICY "Usuario pode atualizar proprio registro"
 
 -- ============================================================
 -- 8. CRIAR O USUÁRIO ADMINISTRADOR no Auth e na Tabela Public
---    Email: jancarloalmeida36@gmail.com
---    CPF: 03595976100
---    Senha: 12345678jc
+--    Email: <EMAIL_DO_ADMIN>
+--    CPF: <CPF_DO_ADMIN>
+--    Senha: <SENHA_INICIAL_DO_ADMIN>
 -- ============================================================
 
 -- Cria o usuário no Supabase Auth
 SELECT supabase_auth_admin.create_user(
-  '{"email": "jancarloalmeida36@gmail.com", "password": "12345678jc", "email_confirm": true}'::jsonb
+  '{"email": "<EMAIL_DO_ADMIN>", "password": "<SENHA_INICIAL_DO_ADMIN>", "email_confirm": true}'::jsonb
 );
 
 -- Como a tabela tem id_usuario inteiro (e imagino que possa ser serial/auto-increment ou não),
@@ -76,17 +76,17 @@ ALTER TABLE public.usuario ALTER COLUMN id_usuario SET DEFAULT nextval('usuario_
 INSERT INTO public.usuario (auth_id, nome, email, cpf, telefone, funcao, status, primeiro_acesso)
 SELECT 
   id,
-  'Jan Carlo',
-  'jancarloalmeida36@gmail.com',
-  '03595976100',
+  '<NOME_DO_ADMIN>',
+  '<EMAIL_DO_ADMIN>',
+  '<CPF_DO_ADMIN>',
   '',
   'Administrador',
   true,
   false
 FROM auth.users
-WHERE email = 'jancarloalmeida36@gmail.com'
+WHERE email = '<EMAIL_DO_ADMIN>'
 -- Postgres exige conflito sob constraint única, e só "usuario_pkey" (id_usuario) e "usuario_auth_id_key" são garantidas.
 -- Evitaremos erro fazendo check com WHERE NOT EXISTS
 AND NOT EXISTS (
-  SELECT 1 FROM public.usuario WHERE email = 'jancarloalmeida36@gmail.com'
+  SELECT 1 FROM public.usuario WHERE email = '<EMAIL_DO_ADMIN>'
 );
