@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/config/supabase_config.dart';
 import '../../dominio/entidades/relatorio_geral.dart';
 import '../../dominio/repositorios/repositorio_relatorio.dart';
+import '../../dominio/pdf_relatorios.dart';
 import '../../../financeiro/dominio/entidades/transacao.dart';
 import '../../../financeiro/dados/modelos/transacao_modelo.dart';
 import '../../../obras/dominio/entidades/obra.dart';
@@ -106,13 +107,13 @@ class RepositorioRelatorioImpl implements RepositorioRelatorio {
       if (obraId != null) {
         consulta = consulta.eq('id_obra', obraId);
       } else {
-        // Período da obra cruza o período do relatório.
-        consulta = consulta
-            .lte('data_inicio', _dia(fim))
-            .gte('data_previsao_termino', _dia(inicio));
+        // O banco já descarta o que começou depois do período; o resto da
+        // regra ("em execução no período") fica em obraEmExecucaoNoPeriodo.
+        consulta = consulta.lte('data_inicio', _dia(fim));
       }
       final resultado = await consulta.order('data_inicio');
-      return (resultado as List).map((m) => ObraModelo.deMapa(m)).toList();
+      final obras = (resultado as List).map((m) => ObraModelo.deMapa(m)).toList();
+      return obraId != null ? obras : obras.where((o) => obraEmExecucaoNoPeriodo(o, inicio, fim)).toList();
     } catch (e) {
       throw 'Erro ao buscar obras: $e';
     }

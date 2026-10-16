@@ -22,6 +22,24 @@ List<Transacao> filtrarLancamentosValidos(List<Transacao> transacoes, Map<int, S
       .toList();
 }
 
+DateTime _soDia(DateTime d) => DateTime(d.year, d.month, d.day);
+
+/// Relatório de Progresso: obras que estiveram EM EXECUÇÃO no período.
+/// - Não Iniciada: fica de fora;
+/// - começou depois do fim do período: fica de fora;
+/// - Em Andamento/Pausada: entra (ainda está rodando — inclusive atrasada);
+/// - Concluída: entra se foi concluída do início do período em diante
+///   (sem data de conclusão, vale a previsão de término).
+bool obraEmExecucaoNoPeriodo(Obra o, DateTime inicio, DateTime fim) {
+  if (o.status == 'Não Iniciada') return false;
+  if (_soDia(o.dataInicio).isAfter(_soDia(fim))) return false;
+  if (o.status == 'Concluída') {
+    final terminou = o.dataConclusao ?? o.dataPrevisaoTermino;
+    return !_soDia(terminou).isBefore(_soDia(inicio));
+  }
+  return true;
+}
+
 class ResumoFinanceiro {
   final double receitas;
   final double despesas;
@@ -146,11 +164,6 @@ Future<Uint8List> gerarPdfRelatorioFinanceiro({
             alinhamentos: {5: pw.Alignment.centerRight},
           ),
       ]),
-      pw.Text(
-        'Considera apenas lançamentos sem obra ou de obras Em Andamento/Concluídas, '
-        'e apenas orçamentos Aprovados (regra do DERS).',
-        style: pw.TextStyle(fontSize: 8, color: PdfService.corSecundaria),
-      ),
     ],
   );
 }

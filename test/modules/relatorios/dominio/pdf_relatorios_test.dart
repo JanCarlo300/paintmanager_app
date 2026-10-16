@@ -65,6 +65,49 @@ void main() {
     });
   });
 
+  group('obraEmExecucaoNoPeriodo (relatório de progresso)', () {
+    final inicio = DateTime(2026, 10, 1);
+    final fim = DateTime(2026, 10, 31);
+
+    Obra obra(String status, DateTime ini, DateTime previsao, {DateTime? concluida}) => Obra(
+          idCliente: 1,
+          clienteNome: 'C',
+          tituloDaObra: 'O',
+          endereco: '',
+          dataInicio: ini,
+          dataPrevisaoTermino: previsao,
+          dataConclusao: concluida,
+          status: status,
+          etapasServico: const [],
+        );
+
+    test('Não Iniciada nunca entra', () {
+      expect(obraEmExecucaoNoPeriodo(obra('Não Iniciada', DateTime(2026, 10, 5), DateTime(2026, 10, 20)), inicio, fim), isFalse);
+    });
+
+    test('começou depois do período não entra', () {
+      expect(obraEmExecucaoNoPeriodo(obra('Em Andamento', DateTime(2026, 11, 2), DateTime(2026, 11, 20)), inicio, fim), isFalse);
+    });
+
+    test('Em Andamento atrasada (previsão antes do período) entra', () {
+      expect(obraEmExecucaoNoPeriodo(obra('Em Andamento', DateTime(2026, 9, 1), DateTime(2026, 9, 20)), inicio, fim), isTrue);
+    });
+
+    test('Pausada que começou antes entra', () {
+      expect(obraEmExecucaoNoPeriodo(obra('Pausada', DateTime(2026, 8, 1), DateTime(2026, 12, 1)), inicio, fim), isTrue);
+    });
+
+    test('Concluída: entra se terminou no período ou depois; sai se terminou antes', () {
+      final noPeriodo = obra('Concluída', DateTime(2026, 9, 1), DateTime(2026, 9, 30), concluida: DateTime(2026, 10, 3));
+      final antes = obra('Concluída', DateTime(2026, 9, 1), DateTime(2026, 9, 30), concluida: DateTime(2026, 9, 28));
+      final semDataConclusao = obra('Concluída', DateTime(2026, 9, 1), DateTime(2026, 10, 1));
+
+      expect(obraEmExecucaoNoPeriodo(noPeriodo, inicio, fim), isTrue);
+      expect(obraEmExecucaoNoPeriodo(antes, inicio, fim), isFalse);
+      expect(obraEmExecucaoNoPeriodo(semDataConclusao, inicio, fim), isTrue);
+    });
+  });
+
   group('PDFs do RF012', () {
     test('Relatório Financeiro gera PDF válido', () async {
       final bytes = await gerarPdfRelatorioFinanceiro(

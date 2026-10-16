@@ -32,11 +32,11 @@ class _TransacaoFormPageState extends State<TransacaoFormPage> {
   late TextEditingController _descricaoController;
   late DateTime _dataTransacao;
 
-  Cliente? _clienteSelecionado;
+  int? _clienteId;
+  String? _clienteNome;
   // RF011: vínculo real com a obra (antes só o título era guardado).
   int? _obraId;
   String? _obraTitulo;
-  Obra? _obraEscolhida; // escolhida nesta tela — traz o cliente da obra
 
   final _categoriasReceita = ['Mão de Obra', 'Outros'];
   final _categoriasDespesa = ['Materiais', 'Ferramentas', 'Transporte', 'Alimentação', 'Outros'];
@@ -55,6 +55,8 @@ class _TransacaoFormPageState extends State<TransacaoFormPage> {
     _dataTransacao = t?.dataTransacao ?? DateTime.now();
     _obraId = t?.idObra;
     _obraTitulo = (t?.obraTitulo?.isNotEmpty ?? false) ? t!.obraTitulo : null;
+    _clienteId = t?.idCliente;
+    _clienteNome = (t?.clienteNome?.isNotEmpty ?? false) ? t!.clienteNome : null;
   }
 
   @override
@@ -87,9 +89,8 @@ class _TransacaoFormPageState extends State<TransacaoFormPage> {
         dataTransacao: _dataTransacao,
         status: _status,
         formaPagamento: _formaPagamento,
-        // Sem cliente escolhido, vale o cliente da obra escolhida.
-        idCliente: _clienteSelecionado?.id ?? _obraEscolhida?.idCliente ?? widget.transacaoParaEdicao?.idCliente,
-        clienteNome: _clienteSelecionado?.nome ?? _obraEscolhida?.clienteNome ?? widget.transacaoParaEdicao?.clienteNome,
+        idCliente: _clienteId,
+        clienteNome: _clienteNome,
         idOrcamento: widget.transacaoParaEdicao?.idOrcamento,
         idObra: _obraId,
         obraTitulo: _obraTitulo,
@@ -217,9 +218,9 @@ class _TransacaoFormPageState extends State<TransacaoFormPage> {
               _card(
                 child: Column(
                   children: [
-                    _clienteDropdown(),
-                    const SizedBox(height: 16),
                     _obraDropdown(),
+                    const SizedBox(height: 16),
+                    _clienteDropdown(),
                   ],
                 ),
               ),
@@ -316,22 +317,54 @@ class _TransacaoFormPageState extends State<TransacaoFormPage> {
   }
 
   Widget _clienteDropdown() {
-    final cc = context.watch<ClienteController>();
-    final clientes = cc.clientes;
-    return DropdownButtonFormField<Cliente>(
-      initialValue: _clienteSelecionado,
-      decoration: InputDecoration(
-        labelText: "Vincular ao Cliente (opcional)",
-        prefixIcon: Icon(Icons.person_outline, size: 20, color: Colors.grey[600]),
-        filled: true, fillColor: Colors.grey[50],
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
-      ),
-      items: [
-        const DropdownMenuItem<Cliente>(value: null, child: Text("Nenhum", style: TextStyle(color: Colors.grey))),
-        ...clientes.map((c) => DropdownMenuItem(value: c, child: Text(c.nome))),
-      ],
-      onChanged: (v) => setState(() => _clienteSelecionado = v),
+    // Com obra vinculada, o cliente é o da obra (não pode divergir dela).
+    if (_obraId != null) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.grey[100],
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.grey[300]!),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.person_outline, size: 20, color: Colors.grey[600]),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text("Cliente (da obra)", style: TextStyle(fontSize: 11, color: Colors.grey[600])),
+                  Text(
+                    (_clienteNome?.isNotEmpty ?? false) ? _clienteNome! : '—',
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Ao desvincular a obra este campo nasce de novo, já com o cliente que veio dela.
+    return CampoBuscaSelecao<Cliente>(
+      rotulo: "Vincular ao Cliente (opcional)",
+      dica: "Nome, CPF ou telefone do cliente...",
+      icone: Icons.person_search_outlined,
+      textoInicial: _clienteNome,
+      buscar: context.read<ClienteController>().buscar,
+      tituloDe: (c) => c.nome,
+      subtituloDe: (c) => c.telefone,
+      aoSelecionar: (c) => setState(() {
+        _clienteId = c.id;
+        _clienteNome = c.nome;
+      }),
+      aoLimpar: () => setState(() {
+        _clienteId = null;
+        _clienteNome = null;
+      }),
     );
   }
 
@@ -351,12 +384,12 @@ class _TransacaoFormPageState extends State<TransacaoFormPage> {
           aoSelecionar: (o) => setState(() {
             _obraId = o.id;
             _obraTitulo = o.tituloDaObra;
-            _obraEscolhida = o;
+            _clienteId = o.idCliente;
+            _clienteNome = o.clienteNome;
           }),
           aoLimpar: () => setState(() {
             _obraId = null;
             _obraTitulo = null;
-            _obraEscolhida = null;
           }),
         ),
         Padding(

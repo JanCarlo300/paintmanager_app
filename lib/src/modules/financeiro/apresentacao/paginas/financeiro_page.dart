@@ -58,13 +58,6 @@ class _FinanceiroPageState extends State<FinanceiroPage> {
         foregroundColor: PaletaSahara.onSurface,
         elevation: 0.5,
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _mostrarOpcoesNovaTransacao(context),
-        backgroundColor: PaletaSahara.primary,
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.add),
-        label: const Text("Nova Transação", style: TextStyle(fontWeight: FontWeight.bold)),
-      ),
       body: controller.carregando
           ? const Center(child: CircularProgressIndicator(color: PaletaSahara.primary))
           : _buildConteudo(controller, formatoMoeda, formatoData, podeExcluir),
@@ -88,6 +81,24 @@ class _FinanceiroPageState extends State<FinanceiroPage> {
           const Text("Gestão Financeira", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
           const SizedBox(height: 4),
           const Text("Controle receitas, despesas e fluxo de caixa.", style: TextStyle(color: Colors.grey)),
+          const SizedBox(height: 16),
+
+          // No topo (como "Nova Obra"/"Novo Orçamento"): o botão flutuante
+          // ficava por cima do lápis e da lixeira da última transação.
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () => _mostrarOpcoesNovaTransacao(context),
+              icon: const Icon(Icons.add, size: 18),
+              label: const Text("Nova Transação"),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: PaletaSahara.primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+            ),
+          ),
           const SizedBox(height: 24),
 
           // --- SELETOR DE MÊS ---
