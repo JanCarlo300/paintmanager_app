@@ -16,13 +16,19 @@ import '../../../../apresentacao/widgets/campo_busca_selecao.dart';
 class ObraDetalhesPage extends StatefulWidget {
   final Obra obra;
 
-  const ObraDetalhesPage({super.key, required this.obra});
+  /// Etapa 7: aberta pelo sino de mensagens — já desce até o chat.
+  final bool rolarParaChat;
+
+  const ObraDetalhesPage({super.key, required this.obra, this.rolarParaChat = false});
 
   @override
   State<ObraDetalhesPage> createState() => _ObraDetalhesPageState();
 }
 
 class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
+  final _chaveChat = GlobalKey();
+  bool _rolouParaChat = false;
+
   @override
   void initState() {
     super.initState();
@@ -113,6 +119,16 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
     final obraAtual = controller.obras.where((o) => o.id == widget.obra.id).firstOrNull ?? widget.obra;
     final cor = _corStatus(obraAtual.status);
 
+    if (widget.rolarParaChat && !_rolouParaChat) {
+      _rolouParaChat = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final ctx = _chaveChat.currentContext;
+        if (ctx != null) {
+          Scrollable.ensureVisible(ctx, duration: const Duration(milliseconds: 400), curve: Curves.easeOut);
+        }
+      });
+    }
+
     return Scaffold(
       backgroundColor: PaletaSahara.background,
       appBar: AppBar(
@@ -182,7 +198,7 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
 
             // === CHAT DA OBRA (item 2.3) ===
             if (obraAtual.id != null) ...[
-              _sectionTitle("Chat da Obra", Icons.forum_outlined),
+              KeyedSubtree(key: _chaveChat, child: _sectionTitle("Chat da Obra", Icons.forum_outlined)),
               const SizedBox(height: 12),
               ChatObraCard(obraId: obraAtual.id!),
               const SizedBox(height: 24),

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../dominio/entidades/obra.dart';
 import '../controllers/obra_controller.dart';
+import 'obra_detalhes_page.dart';
 import '../../../../apresentacao/widgets/drawer_comum.dart';
 import '../../../../core/tema/paleta_sahara.dart';
 import '../../../auth/apresentacao/controllers/auth_controller.dart';
@@ -30,6 +31,7 @@ class _ObraListPageState extends State<ObraListPage> {
       if (!mounted) return;
       final controller = context.read<ObraController>();
       controller.carregarObras();
+      controller.carregarNaoLidas();
 
       // Item 2.1: Funcionário só vê as obras em que está alocado.
       final usuario = context.read<AuthController>().usuarioLogado;
@@ -148,6 +150,7 @@ class _ObraListPageState extends State<ObraListPage> {
         backgroundColor: PaletaSahara.cardSurface,
         foregroundColor: PaletaSahara.onSurface,
         elevation: 0.5,
+        actions: [_buildSinoMensagens(todas)],
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(isWide ? 24 : 16),
@@ -287,9 +290,91 @@ class _ObraListPageState extends State<ObraListPage> {
     );
   }
 
+  // Ao voltar dos detalhes (onde o chat pode ter sido lido), atualiza os avisos.
+  Future<void> _abrirObra(Obra obra, {bool rolarParaChat = false}) async {
+    final controller = context.read<ObraController>();
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => ObraDetalhesPage(obra: obra, rolarParaChat: rolarParaChat)),
+    );
+    if (mounted) controller.carregarNaoLidas();
+  }
+
+  Widget _buildSinoMensagens(List<Obra> visiveis) {
+    final controller = context.watch<ObraController>();
+    final comNovas = visiveis.where((o) => controller.naoLidasDa(o.id) > 0).toList();
+
+    return IconButton(
+      tooltip: "Mensagens novas no chat",
+      icon: Badge(
+        label: Text('${comNovas.length}'),
+        isLabelVisible: comNovas.isNotEmpty,
+        backgroundColor: Colors.red,
+        child: const Icon(Icons.notifications_none_rounded),
+      ),
+      onPressed: () => _mostrarObrasComMensagens(comNovas),
+    );
+  }
+
+  void _mostrarObrasComMensagens(List<Obra> comNovas) {
+    final controller = context.read<ObraController>();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text("Mensagens novas", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 12),
+              if (comNovas.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: Text("Nenhuma mensagem nova no chat das obras.",
+                      style: TextStyle(color: Colors.grey[600])),
+                )
+              else
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 360),
+                  child: ListView(
+                    shrinkWrap: true,
+                    children: [
+                      for (final obra in comNovas)
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: const CircleAvatar(
+                            backgroundColor: Color(0x1FC2652A),
+                            child: Icon(Icons.forum_outlined, color: PaletaSahara.primary, size: 20),
+                          ),
+                          title: Text(obra.tituloDaObra, overflow: TextOverflow.ellipsis),
+                          subtitle: Text(obra.clienteNome, overflow: TextOverflow.ellipsis),
+                          trailing: Badge(
+                            label: Text('${controller.naoLidasDa(obra.id)}'),
+                            backgroundColor: Colors.red,
+                          ),
+                          onTap: () {
+                            Navigator.pop(ctx);
+                            _abrirObra(obra, rolarParaChat: true);
+                          },
+                        ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildObraCard(Obra obra, DateFormat formatoData) {
     final cor = _corStatus(obra.status);
     final progresso = obra.progresso / 100;
+    final naoLidas = context.watch<ObraController>().naoLidasDa(obra.id);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -300,7 +385,7 @@ class _ObraListPageState extends State<ObraListPage> {
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: () => Navigator.pushNamed(context, '/obra-detalhes', arguments: obra),
+        onTap: () => _abrirObra(obra),
         child: Padding(
           padding: const EdgeInsets.all(20),
           child: Column(
@@ -313,6 +398,18 @@ class _ObraListPageState extends State<ObraListPage> {
                   Expanded(
                     child: Text(obra.tituloDaObra, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis),
                   ),
+                  if (naoLidas > 0)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: Tooltip(
+                        message: "$naoLidas mensagem(ns) nova(s) no chat",
+                        child: Badge(
+                          label: Text('$naoLidas'),
+                          backgroundColor: Colors.red,
+                          child: const Icon(Icons.forum_outlined, size: 20, color: PaletaSahara.primary),
+                        ),
+                      ),
+                    ),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(

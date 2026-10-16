@@ -23,10 +23,20 @@ class _ChatObraCardState extends State<ChatObraCard> {
   final _textoController = TextEditingController();
   bool _enviando = false;
 
+  int? _totalLido;
+
   @override
   void initState() {
     super.initState();
-    _mensagens = context.read<ObraController>().escutarMensagens(widget.obraId);
+    final controller = context.read<ObraController>();
+    // Etapa 7: com o chat aberto, o que chega já conta como lido.
+    _mensagens = controller.escutarMensagens(widget.obraId).map((lista) {
+      if (mounted && lista.length != _totalLido) {
+        _totalLido = lista.length;
+        controller.marcarChatLido(widget.obraId);
+      }
+      return lista;
+    });
   }
 
   @override

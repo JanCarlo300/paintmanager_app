@@ -23,6 +23,10 @@ abstract class RepositorioObra {
   /// Item 1.2 — a obra só sai de "Não Iniciada" com orçamento Aprovado
   Future<bool> obraTemOrcamentoAprovado(int obraId);
 
+  /// Etapa 7 — mensagens não lidas do chat (id da obra -> quantidade)
+  Future<Map<int, int>> contarMensagensNaoLidas();
+  Future<void> marcarChatLido(int obraId);
+
   /// Item 2.3 — chat da obra (tempo real)
   Stream<List<MensagemObra>> escutarMensagens(int obraId);
   Future<void> enviarMensagem({required int obraId, required int usuarioId, required String texto});

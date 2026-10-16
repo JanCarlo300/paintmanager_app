@@ -190,6 +190,30 @@ class RepositorioObraImpl implements RepositorioObra {
     }
   }
 
+  // === Etapa 7 — mensagens não lidas ===
+
+  @override
+  Future<Map<int, int>> contarMensagensNaoLidas() async {
+    try {
+      final resultado = await _supabase.rpc('chat_nao_lidas');
+      return {
+        for (final linha in (resultado as List))
+          (linha['obra_id'] as num).toInt(): (linha['nao_lidas'] as num).toInt(),
+      };
+    } catch (e) {
+      throw 'Erro ao contar mensagens não lidas: $e';
+    }
+  }
+
+  @override
+  Future<void> marcarChatLido(int obraId) async {
+    try {
+      await _supabase.rpc('marcar_chat_lido', params: {'p_obra_id': obraId});
+    } catch (e) {
+      throw 'Erro ao marcar chat como lido: $e';
+    }
+  }
+
   // === Item 2.3 — Chat da Obra ===
 
   @override

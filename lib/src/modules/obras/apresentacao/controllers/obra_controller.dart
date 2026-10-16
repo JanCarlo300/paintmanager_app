@@ -199,6 +199,29 @@ class ObraController extends ChangeNotifier {
   Future<List<Usuario>> buscarFuncionariosDisponiveis(int obraId, String termo) =>
       _repositorio.buscarFuncionariosDisponiveis(obraId, termo);
 
+  // === Etapa 7 — aviso de mensagens novas do chat ===
+
+  Map<int, int> _naoLidas = {};
+  int naoLidasDa(int? obraId) => obraId == null ? 0 : (_naoLidas[obraId] ?? 0);
+
+  /// O aviso é só um complemento: se falhar (sem internet, script ainda
+  /// não rodado), a tela de Obras continua funcionando sem ele.
+  Future<void> carregarNaoLidas() async {
+    try {
+      _naoLidas = await _repositorio.contarMensagensNaoLidas();
+    } catch (_) {
+      _naoLidas = {};
+    }
+    notifyListeners();
+  }
+
+  Future<void> marcarChatLido(int obraId) async {
+    try {
+      await _repositorio.marcarChatLido(obraId);
+      if (_naoLidas.remove(obraId) != null) notifyListeners();
+    } catch (_) {}
+  }
+
   // === Item 2.3 — Chat da Obra ===
 
   Stream<List<MensagemObra>> escutarMensagens(int obraId) =>
