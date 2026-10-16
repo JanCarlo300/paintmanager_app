@@ -154,6 +154,36 @@ class AuthController extends ChangeNotifier {
     }
   }
 
+  /// Troca de senha pela tela Configurações (usuário já logado).
+  Future<bool> alterarSenha(BuildContext context, String senhaAtual, String novaSenha, String confirmacao) async {
+    if (senhaAtual.isEmpty) {
+      _mostrarMensagem(context, 'Informe a senha atual.');
+      return false;
+    }
+    final erro = ValidadorSenha.validar(novaSenha, confirmacao, cpf: _usuarioLogado?.cpf);
+    if (erro != null) {
+      _mostrarMensagem(context, erro);
+      return false;
+    }
+    if (novaSenha == senhaAtual) {
+      _mostrarMensagem(context, 'A nova senha deve ser diferente da atual.');
+      return false;
+    }
+
+    _carregando = true;
+    notifyListeners();
+    try {
+      await _repositorio.alterarSenha(senhaAtual, novaSenha);
+      return true;
+    } catch (e) {
+      if (context.mounted) _mostrarMensagem(context, e.toString(), isErro: true);
+      return false;
+    } finally {
+      _carregando = false;
+      notifyListeners();
+    }
+  }
+
   // Logout do Sistema
   Future<void> sair() async {
     await _repositorio.sair();

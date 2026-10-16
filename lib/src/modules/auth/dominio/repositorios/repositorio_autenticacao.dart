@@ -27,6 +27,10 @@ abstract class RepositorioAutenticacao {
   /// obrigatória de senha no primeiro login.
   Future<void> definirNovaSenha(String novaSenha);
 
+  /// Troca de senha pelo próprio usuário logado (tela Configurações):
+  /// confere a [senhaAtual] antes de gravar a [novaSenha].
+  Future<void> alterarSenha(String senhaAtual, String novaSenha);
+
   /// Finalizar sessão
   Future<void> sair();
 

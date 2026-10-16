@@ -158,6 +158,37 @@ class RepositorioAutenticacaoImpl implements RepositorioAutenticacao {
   }
 
   @override
+  Future<void> alterarSenha(String senhaAtual, String novaSenha) async {
+    final email = _supabase.auth.currentUser?.email;
+    if (email == null) throw 'Sessão expirada. Entre novamente.';
+
+    // 1. Confere a senha atual: quem pegar o celular desbloqueado não troca
+    // a senha sem saber a antiga.
+    try {
+      await _supabase.auth.signInWithPassword(email: email, password: senhaAtual);
+    } on AuthException catch (e) {
+      if (e.message.contains('Invalid login credentials')) {
+        throw 'Senha atual incorreta.';
+      }
+      throw 'Não foi possível conferir a senha atual. Tente novamente.';
+    } catch (_) {
+      throw 'Não foi possível conectar ao servidor. Verifique sua internet e tente novamente.';
+    }
+
+    // 2. Grava a nova senha
+    try {
+      await _supabase.auth.updateUser(UserAttributes(password: novaSenha));
+    } on AuthException catch (e) {
+      if (e.message.toLowerCase().contains('different from the old')) {
+        throw 'A nova senha deve ser diferente da atual.';
+      }
+      throw 'Erro ao alterar senha: ${e.message}';
+    } catch (_) {
+      throw 'Não foi possível conectar ao servidor. Verifique sua internet e tente novamente.';
+    }
+  }
+
+  @override
   Future<void> sair() async {
     await _supabase.auth.signOut();
   }

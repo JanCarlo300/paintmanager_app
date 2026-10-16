@@ -56,7 +56,7 @@ import 'src/modules/obras/dados/repositorios/repositorio_obra_impl.dart';
 import 'src/modules/obras/dominio/entidades/obra.dart';
 
 // Import da página placeholder
-import 'src/apresentacao/paginas/em_construcao_page.dart';
+import 'src/modules/auth/apresentacao/paginas/configuracoes_page.dart';
 
 // Imports de Relatórios
 import 'src/modules/relatorios/apresentacao/paginas/relatorios_page.dart';
@@ -205,7 +205,7 @@ class PaintManagerApp extends StatelessWidget {
               papeisPermitidos: ['Administrador', 'Gerente'],
               child: RelatoriosPage(),
             ),
-        '/configuracoes': (context) => const EmConstrucaoPage(titulo: 'Configurações'),
+        '/configuracoes': (context) => const ConfiguracoesPage(),
       },
       onGenerateRoute: (settings) {
         if (settings.name == '/cliente-formulario') {

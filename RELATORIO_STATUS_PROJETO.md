@@ -118,7 +118,7 @@ O menu lateral e os atalhos trocavam de tela substituindo a anterior, então o v
 - `README.md` e `ARCHITECTURE.md` desatualizados: não mencionam `equipe_obra`, `GuardaRota`, `NotificacaoController`, `PaletaSahara`, chat, mapa, PDFs, filtros nem a Edge Function.
 - Falta um `.env.example` (o README o menciona).
 - **Figura 19 (DER) do relatório do TFC:** precisa ser refeita com as tabelas reais (`usuario`, `cliente`, `obra`, `orcamento`, `transacao`, `equipe_obra`, `obra_mensagem`, `chat_leitura`).
-- Tela de **Configurações** continua sendo um placeholder.
+- ✅ Tela de **Configurações** (16/10, testada pelo Jan): dados da conta do usuário logado, **Alterar senha** (confere a senha atual; mesma regra de senha do primeiro acesso) e versão do app. Substituiu o placeholder "Em construção".
 - Redação da monografia: não tenho como ver isso pelo código; você precisa confirmar o andamento.
 
 ---
@@ -139,7 +139,7 @@ O menu lateral e os atalhos trocavam de tela substituindo a anterior, então o v
 1. **Ampliar os testes:** `ValidadorSenha`, repositórios com `mocktail`, controllers de Obra e de alertas.
 2. **APK de release** assinado (chave fora do git).
 3. **Documentação:** README, ARCHITECTURE e `.env.example`.
-4. **Melhorias opcionais:** aceitar e validar CNPJ no cliente; paginação das listas; tela de Configurações.
+4. **Melhorias opcionais:** aceitar e validar CNPJ no cliente; paginação das listas.
 
 ---
 
