@@ -6,6 +6,11 @@ import '../../dominio/entidades/relatorio_geral.dart';
 import '../controllers/relatorio_controller.dart';
 import '../../../../apresentacao/widgets/drawer_comum.dart';
 import '../../../../core/tema/paleta_sahara.dart';
+import '../../../../core/pdf/pdf_service.dart';
+import '../../../../apresentacao/widgets/campo_busca_selecao.dart';
+import '../../../obras/dominio/entidades/obra.dart';
+import '../../../obras/apresentacao/controllers/obra_controller.dart';
+import 'dart:typed_data';
 
 class RelatoriosPage extends StatefulWidget {
   const RelatoriosPage({super.key});
@@ -15,6 +20,9 @@ class RelatoriosPage extends StatefulWidget {
 }
 
 class _RelatoriosPageState extends State<RelatoriosPage> {
+  Obra? _obraDoPdf;
+  String? _gerandoPdf; // 'financeiro' | 'progresso' enquanto gera
+
   final _formatoMoeda = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
   final _formatoData = DateFormat('dd/MM/yyyy');
 
@@ -60,6 +68,10 @@ class _RelatoriosPageState extends State<RelatoriosPage> {
 
             // --- FILTRO DE PERÍODO ---
             _buildFiltroPeriodo(controller),
+            const SizedBox(height: 16),
+
+            // --- EXPORTAR EM PDF (etapa 8.1 / RF012) ---
+            _buildExportarPdf(controller),
             const SizedBox(height: 24),
 
             // --- CONTEÚDO ---
@@ -151,6 +163,117 @@ class _RelatoriosPageState extends State<RelatoriosPage> {
         ),
       ],
     );
+  }
+
+  // === EXPORTAR EM PDF ===
+  Widget _buildExportarPdf(RelatorioController controller) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: PaletaSahara.cardSurface,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.picture_as_pdf_outlined, size: 20, color: PaletaSahara.primary),
+              SizedBox(width: 8),
+              Text("Exportar em PDF", style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            "Usa o período selecionado acima. Escolha uma obra para um relatório só dela.",
+            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+          ),
+          const SizedBox(height: 12),
+          CampoBuscaSelecao<Obra>(
+            rotulo: "Obra (opcional — vazio = todas)",
+            dica: "Título da obra ou nome do cliente...",
+            icone: Icons.construction,
+            iconeItem: Icons.construction,
+            buscar: context.read<ObraController>().buscarObras,
+            tituloDe: (o) => o.tituloDaObra,
+            subtituloDe: (o) => "Cliente: ${o.clienteNome}  •  ${o.status}",
+            aoSelecionar: (o) => setState(() => _obraDoPdf = o),
+            aoLimpar: () => setState(() => _obraDoPdf = null),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _botaoPdf(
+                  "PDF Financeiro",
+                  Icons.attach_money,
+                  gerando: _gerandoPdf == 'financeiro',
+                  aoTocar: () => _exportar(
+                    'financeiro',
+                    () => controller.gerarPdfFinanceiro(obra: _obraDoPdf),
+                    'relatorio-financeiro',
+                    controller,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _botaoPdf(
+                  "PDF de Progresso",
+                  Icons.timeline,
+                  gerando: _gerandoPdf == 'progresso',
+                  aoTocar: () => _exportar(
+                    'progresso',
+                    () => controller.gerarPdfProgresso(obra: _obraDoPdf),
+                    'relatorio-progresso',
+                    controller,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _botaoPdf(String rotulo, IconData icone, {required bool gerando, required VoidCallback aoTocar}) {
+    return OutlinedButton.icon(
+      onPressed: _gerandoPdf != null ? null : aoTocar,
+      icon: gerando
+          ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: PaletaSahara.primary))
+          : Icon(icone, size: 18),
+      label: Text(rotulo, style: const TextStyle(fontSize: 13)),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: PaletaSahara.primary,
+        side: const BorderSide(color: PaletaSahara.primary),
+        padding: const EdgeInsets.symmetric(vertical: 12),
+      ),
+    );
+  }
+
+  Future<void> _exportar(
+    String qual,
+    Future<Uint8List> Function() gerar,
+    String prefixoArquivo,
+    RelatorioController controller,
+  ) async {
+    setState(() => _gerandoPdf = qual);
+    final mensageiro = ScaffoldMessenger.of(context);
+    try {
+      final bytes = await gerar();
+      final periodo = '${DateFormat('ddMMyyyy').format(controller.inicio)}-${DateFormat('ddMMyyyy').format(controller.fim)}';
+      final obra = _obraDoPdf != null ? '-${PdfService.nomeSeguro(_obraDoPdf!.tituloDaObra)}' : '';
+      await PdfService.compartilhar(bytes, '$prefixoArquivo-$periodo$obra.pdf');
+    } catch (e) {
+      mensageiro.showSnackBar(
+        SnackBar(content: Text("Não foi possível gerar o PDF: $e"), backgroundColor: Colors.red, behavior: SnackBarBehavior.floating),
+      );
+    } finally {
+      if (mounted) setState(() => _gerandoPdf = null);
+    }
   }
 
   void _selecionarPeriodoPersonalizado(RelatorioController controller) async {

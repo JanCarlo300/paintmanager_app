@@ -3,6 +3,12 @@ import 'package:intl/intl.dart';
 import '../../../../core/config/supabase_config.dart';
 import '../../dominio/entidades/relatorio_geral.dart';
 import '../../dominio/repositorios/repositorio_relatorio.dart';
+import '../../../financeiro/dominio/entidades/transacao.dart';
+import '../../../financeiro/dados/modelos/transacao_modelo.dart';
+import '../../../obras/dominio/entidades/obra.dart';
+import '../../../obras/dados/modelos/obra_modelo.dart';
+import '../../../orcamentos/dominio/entidades/orcamento.dart';
+import '../../../orcamentos/dados/modelos/orcamento_modelo.dart';
 
 /// Implementação do repositório de Relatórios usando Supabase (PostgreSQL).
 /// Agrega dados de 3 tabelas: transacao, obra, orcamento.
@@ -39,6 +45,77 @@ class RepositorioRelatorioImpl implements RepositorioRelatorio {
       receitasPorMes: transacoes['receitasPorMes'] as Map<String, double>,
       despesasPorMes: transacoes['despesasPorMes'] as Map<String, double>,
     );
+  }
+
+  // === Etapa 8.1 — dados dos PDFs (RF012) ===
+
+  static String _dia(DateTime d) => d.toIso8601String().split('T').first;
+
+  @override
+  Future<List<Transacao>> listarLancamentos(DateTime inicio, DateTime fim, {int? obraId}) async {
+    try {
+      var consulta = _supabase
+          .from('transacao')
+          .select()
+          .gte('data_transacao', _dia(inicio))
+          .lte('data_transacao', _dia(fim));
+      if (obraId != null) consulta = consulta.eq('id_obra', obraId);
+      final resultado = await consulta.order('data_transacao');
+      return (resultado as List).map((m) => TransacaoModelo.deMapa(m)).toList();
+    } catch (e) {
+      throw 'Erro ao buscar lançamentos: $e';
+    }
+  }
+
+  @override
+  Future<Map<int, String>> statusDasObras(Iterable<int> ids) async {
+    final lista = ids.toSet().toList();
+    if (lista.isEmpty) return {};
+    try {
+      final resultado = await _supabase.from('obra').select('id_obra, status').inFilter('id_obra', lista);
+      return {
+        for (final m in (resultado as List))
+          (m['id_obra'] as num).toInt(): (m['status'] ?? '').toString(),
+      };
+    } catch (e) {
+      throw 'Erro ao buscar status das obras: $e';
+    }
+  }
+
+  @override
+  Future<List<Orcamento>> listarOrcamentosAprovados(DateTime inicio, DateTime fim, {int? obraId}) async {
+    try {
+      var consulta = _supabase
+          .from('orcamento')
+          .select()
+          .eq('status', 'Aprovado')
+          .gte('data_criacao', _dia(inicio))
+          .lte('data_criacao', _dia(fim));
+      if (obraId != null) consulta = consulta.eq('id_obra', obraId);
+      final resultado = await consulta;
+      return (resultado as List).map((m) => OrcamentoModelo.deMapa(m)).toList();
+    } catch (e) {
+      throw 'Erro ao buscar orçamentos: $e';
+    }
+  }
+
+  @override
+  Future<List<Obra>> listarObrasParaProgresso(DateTime inicio, DateTime fim, {int? obraId}) async {
+    try {
+      var consulta = _supabase.from('obra').select().neq('status', 'Não Iniciada');
+      if (obraId != null) {
+        consulta = consulta.eq('id_obra', obraId);
+      } else {
+        // Período da obra cruza o período do relatório.
+        consulta = consulta
+            .lte('data_inicio', _dia(fim))
+            .gte('data_previsao_termino', _dia(inicio));
+      }
+      final resultado = await consulta.order('data_inicio');
+      return (resultado as List).map((m) => ObraModelo.deMapa(m)).toList();
+    } catch (e) {
+      throw 'Erro ao buscar obras: $e';
+    }
   }
 
   /// Busca transações do período e agrega receitas, despesas e breakdowns

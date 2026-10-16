@@ -1,6 +1,9 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import '../../dominio/entidades/relatorio_geral.dart';
 import '../../dominio/repositorios/repositorio_relatorio.dart';
+import '../../dominio/pdf_relatorios.dart';
+import '../../../obras/dominio/entidades/obra.dart';
 
 /// Controller do módulo Relatórios — Supabase.
 /// Segue o padrão Future + notifyListeners.
@@ -78,6 +81,31 @@ class RelatorioController extends ChangeNotifier {
     _ajustarPeriodo(filtro);
     notifyListeners();
     carregarRelatorio();
+  }
+
+  // === Etapa 8.1 — PDFs (RF012), no período selecionado na tela ===
+
+  Future<Uint8List> gerarPdfFinanceiro({Obra? obra}) async {
+    final todos = await _repositorio.listarLancamentos(_inicio, _fim, obraId: obra?.id);
+    final status = await _repositorio.statusDasObras(todos.map((t) => t.idObra).whereType<int>());
+    final orcamentos = await _repositorio.listarOrcamentosAprovados(_inicio, _fim, obraId: obra?.id);
+    return gerarPdfRelatorioFinanceiro(
+      inicio: _inicio,
+      fim: _fim,
+      obraTitulo: obra?.tituloDaObra,
+      lancamentos: filtrarLancamentosValidos(todos, status),
+      orcamentosAprovados: orcamentos,
+    );
+  }
+
+  Future<Uint8List> gerarPdfProgresso({Obra? obra}) async {
+    final obras = await _repositorio.listarObrasParaProgresso(_inicio, _fim, obraId: obra?.id);
+    return gerarPdfRelatorioProgresso(
+      inicio: _inicio,
+      fim: _fim,
+      obraTitulo: obra?.tituloDaObra,
+      obras: obras,
+    );
   }
 
   void alterarPeriodoPersonalizado(DateTime inicio, DateTime fim) {
