@@ -69,16 +69,18 @@ DROP TABLE IF EXISTS public.financeiro;
 DROP TABLE IF EXISTS public.material;
 DROP TABLE IF EXISTS public.observacao;
 
--- Conferência 1: o que foi removido de 'orcamento' (se a tabela
--- ficar vazia, a chave já não existia). 'coluna_em_orcamento' é a
--- coluna que ficou sem uso: me diga o nome para eu avaliar se ela
--- também pode sair.
-SELECT * FROM fk_removidas_limpeza;
-
--- Conferência 2: tabelas que restaram em 'public' (devem ser só as
--- do app: cliente, equipe_obra, obra, obra_mensagem, orcamento,
--- transacao, usuario).
-SELECT table_name
+-- Conferência (um resultado só, porque o SQL Editor mostra apenas a
+-- última consulta):
+--   * "coluna órfã em orcamento": a coluna que apontava para 'etapas' e
+--     ficou sem uso — mande o nome para avaliarmos se ela também sai.
+--     (Se não aparecer, a chave já tinha sido removida antes.)
+--   * "tabela": as que restaram em 'public'. Devem ser só as do app:
+--     chat_leitura, cliente, equipe_obra, obra, obra_mensagem,
+--     orcamento, transacao, usuario.
+SELECT 'coluna órfã em orcamento' AS tipo, coluna_em_orcamento AS nome
+FROM fk_removidas_limpeza
+UNION ALL
+SELECT 'tabela', table_name::text
 FROM information_schema.tables
 WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
-ORDER BY table_name;
+ORDER BY tipo, nome;
