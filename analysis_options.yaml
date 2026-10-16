@@ -9,6 +9,7 @@
 # packages, and plugins designed to encourage good coding practices.
 analyzer:
   exclude:
+    - kit_identidade_visual/**
     - build/**
     - android/**
     - ios/**
