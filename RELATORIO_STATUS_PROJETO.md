@@ -128,7 +128,7 @@ Troca da paleta "Sahara" pelo manual da marca aprovado em 15/10, seguindo `kit_i
 |---|---|---|
 | 0 — Preparação | ✅ 16/10 | Branch, imagens da marca, dependências `flutter_svg`, `material_symbols_icons`, `shared_preferences` e `flutter_launcher_icons`. Linha de base: 1.359 valores fixos em 29 arquivos |
 | 1 — Fundação do tema | ✅ 16/10 | `lib/src/core/tema/` (cores claro/escuro, tipografia, medidas, status, tema); `PaletaSahara` virou ponte temporária com as cores novas; 102 testes (60 novos de contraste WCAG e status) |
-| 2 — Componentes | ⏳ | |
+| 2 — Componentes | ✅ 16/10 | `StatusChip`, `CardApp`, `CardDestaque`, `IconeModulo`, `TelaVazia`, `LogoApp`/`AssinaturaApp` em `lib/src/apresentacao/widgets/` (ainda sem uso nas telas); 104 testes |
 | 3 — Marca (ícone, login, menu, PDF) | ⏳ | |
 | 4 — Telas (lotes A–H) | ⏳ | |
 | 5 — Modo escuro + Configurações | ⏳ | |
