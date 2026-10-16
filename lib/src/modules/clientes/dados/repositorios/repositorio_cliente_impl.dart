@@ -39,6 +39,16 @@ class RepositorioClienteImpl implements RepositorioCliente {
   }
 
   @override
+  Future<Cliente?> buscarClientePorId(int id) async {
+    try {
+      final mapa = await _supabase.from('cliente').select().eq('id_cliente', id).maybeSingle();
+      return mapa == null ? null : ClienteModelo.deMapa(mapa);
+    } catch (e) {
+      throw 'Erro ao buscar cliente: $e';
+    }
+  }
+
+  @override
   Future<List<Cliente>> buscarClientes(String termo) async {
     try {
       final resultado = await _supabase.rpc('buscar_clientes', params: {

@@ -28,6 +28,8 @@ class ClienteController extends ChangeNotifier {
     }
   }
 
+  Future<Cliente?> buscarPorId(int id) => _repositorio.buscarClientePorId(id);
+
   /// Busca no banco (sem mexer na lista da tela de Clientes)
   Future<List<Cliente>> buscar(String termo) => _repositorio.buscarClientes(termo);
 

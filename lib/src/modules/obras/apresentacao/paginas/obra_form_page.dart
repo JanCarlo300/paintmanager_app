@@ -11,6 +11,7 @@ import '../../../../core/tema/paleta_sahara.dart';
 import '../../../../core/servicos/geocodificacao_service.dart';
 import '../../../../apresentacao/widgets/campo_busca_selecao.dart';
 import '../../../../apresentacao/widgets/campo_data.dart';
+import '../widgets/pdf_lista_materiais_acao.dart';
 
 class ObraFormPage extends StatefulWidget {
   final Obra? obraParaEdicao;
@@ -195,12 +196,20 @@ class _ObraFormPageState extends State<ObraFormPage> {
 
       try {
         await controller.salvar(obra);
-        if (mounted) {
-          Navigator.pop(context);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Obra salva com sucesso!"), backgroundColor: Colors.green, behavior: SnackBarBehavior.floating),
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Obra salva com sucesso!"), backgroundColor: Colors.green, behavior: SnackBarBehavior.floating),
+        );
+        // Etapa 6b: com materiais na lista, oferece o PDF na hora (pode recusar).
+        if (obra.listaMateriais.isNotEmpty) {
+          await gerarECompartilharPdfListaMateriais(
+            context,
+            obra,
+            titulo: "Obra salva! Gerar o PDF da lista de materiais?",
+            rotuloCancelar: "Agora não",
           );
         }
+        if (mounted) Navigator.pop(context);
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(

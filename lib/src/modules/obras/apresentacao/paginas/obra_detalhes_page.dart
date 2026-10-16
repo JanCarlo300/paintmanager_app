@@ -7,6 +7,7 @@ import 'package:latlong2/latlong.dart';
 import '../../dominio/entidades/obra.dart';
 import '../controllers/obra_controller.dart';
 import '../widgets/chat_obra_card.dart';
+import '../widgets/pdf_lista_materiais_acao.dart';
 import '../../../../core/tema/paleta_sahara.dart';
 import '../../../auth/apresentacao/controllers/auth_controller.dart';
 import '../../../auth/dominio/entidades/usuario.dart';
@@ -170,6 +171,14 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
             _buildChecklistCard(context, obraAtual, controller),
             const SizedBox(height: 24),
 
+
+            // === LISTA DE MATERIAIS (etapa 6b — só leitura; edição pelo lápis) ===
+            if (podeGerenciarObra) ...[
+              _sectionTitle("Lista de Materiais", Icons.inventory_2_outlined),
+              const SizedBox(height: 12),
+              _buildListaMateriaisCard(context, obraAtual),
+              const SizedBox(height: 24),
+            ],
 
             // === CHAT DA OBRA (item 2.3) ===
             if (obraAtual.id != null) ...[
@@ -519,6 +528,61 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
             ),
           );
           }),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildListaMateriaisCard(BuildContext context, Obra obraAtual) {
+    final materiais = obraAtual.listaMateriais;
+
+    return _card(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (materiais.isEmpty)
+            Text("Nenhum material na lista. Use o lápis para adicionar.",
+                style: TextStyle(color: Colors.grey[500], fontSize: 13))
+          else ...[
+            for (final (i, item) in materiais.indexed)
+              Padding(
+                padding: EdgeInsets.only(bottom: i < materiais.length - 1 ? 10 : 0),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(
+                      width: 24,
+                      child: Text("${i + 1}.", style: TextStyle(fontSize: 13, color: Colors.grey[600])),
+                    ),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(item.descricao, style: const TextStyle(fontSize: 14)),
+                          if (item.quantidadeComUnidade.isNotEmpty)
+                            Text(item.quantidadeComUnidade,
+                                style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => gerarECompartilharPdfListaMateriais(context, obraAtual),
+                icon: const Icon(Icons.picture_as_pdf_outlined, size: 18),
+                label: const Text("Gerar PDF"),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: PaletaSahara.primary,
+                  side: const BorderSide(color: PaletaSahara.primary),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
