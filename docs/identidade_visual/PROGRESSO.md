@@ -6,3 +6,4 @@ Gerado por `dart run kit_identidade_visual/ferramentas/verificar.dart`.
 | Data | Etapa | Análise (erros/avisos) | Testes (ok/falhas) | Valores fixos restantes | Arquivos | Resultado |
 |---|---|---|---|---|---|---|
 | 16/10/2026 01:49 | Fase 0 — linha de base | 0/0 | 42/0 | 1359 | 29 | aprovado |
+| 16/10/2026 01:53 | Fase 1 | 0/0 | 102/0 | 1341 | 28 | aprovado |

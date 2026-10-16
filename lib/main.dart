@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'src/core/config/supabase_config.dart';
-import 'src/core/tema/paleta_sahara.dart';
+import 'src/core/tema/tema_app.dart';
 import 'src/apresentacao/widgets/guarda_rota.dart';
 
 // Imports de Auth
@@ -136,39 +136,11 @@ class PaintManagerApp extends StatelessWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: PaletaSahara.primary,
-          brightness: Brightness.light,
-        ).copyWith(
-          primary: PaletaSahara.primary,
-          tertiary: PaletaSahara.tertiary,
-          surface: PaletaSahara.cardSurface,
-          onSurface: PaletaSahara.onSurface,
-          onSurfaceVariant: PaletaSahara.onSurfaceMuted,
-          outline: PaletaSahara.border,
-        ),
-        scaffoldBackgroundColor: PaletaSahara.background,
-        // Vale para todo showDatePicker / showDateRangePicker do app.
-        datePickerTheme: DatePickerThemeData(
-          backgroundColor: PaletaSahara.cardSurface,
-          surfaceTintColor: Colors.transparent,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          headerBackgroundColor: PaletaSahara.primary,
-          headerForegroundColor: Colors.white,
-          rangePickerHeaderBackgroundColor: PaletaSahara.primary,
-          rangePickerHeaderForegroundColor: Colors.white,
-          rangeSelectionBackgroundColor: PaletaSahara.primary.withValues(alpha: 0.15),
-          todayBorder: const BorderSide(color: PaletaSahara.primary),
-          dividerColor: PaletaSahara.border,
-          cancelButtonStyle: TextButton.styleFrom(foregroundColor: PaletaSahara.onSurfaceMuted),
-          confirmButtonStyle: TextButton.styleFrom(
-            foregroundColor: PaletaSahara.primary,
-            textStyle: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-        ),
-        useMaterial3: true,
-      ),
+      // Tema do manual da marca (core/tema). O escuro só é liberado na Fase 5,
+      // quando nenhuma tela tiver mais cor fixa.
+      theme: temaClaro(),
+      darkTheme: temaEscuro(),
+      themeMode: ThemeMode.light,
       home: const AuthCheck(),
       routes: {
         '/login': (context) => const LoginPage(),

@@ -121,6 +121,19 @@ O menu lateral e os atalhos trocavam de tela substituindo a anterior, então o v
 - ✅ Tela de **Configurações** (16/10, testada pelo Jan): dados da conta do usuário logado, **Alterar senha** (confere a senha atual; mesma regra de senha do primeiro acesso) e versão do app. Substituiu o placeholder "Em construção".
 - Redação da monografia: não tenho como ver isso pelo código; você precisa confirmar o andamento.
 
+### 4.5 Nova identidade visual (em andamento — branch `feat/identidade-visual`)
+Troca da paleta "Sahara" pelo manual da marca aprovado em 15/10, seguindo `kit_identidade_visual/PLANO_IDENTIDADE_VISUAL.md` e o `PASSO_A_PASSO.md`. Só visual: nenhuma regra, permissão ou consulta ao banco muda. Placar da auditoria em `docs/identidade_visual/PROGRESSO.md`.
+
+| Fase | Situação | Observação |
+|---|---|---|
+| 0 — Preparação | ✅ 16/10 | Branch, imagens da marca, dependências `flutter_svg`, `material_symbols_icons`, `shared_preferences` e `flutter_launcher_icons`. Linha de base: 1.359 valores fixos em 29 arquivos |
+| 1 — Fundação do tema | ✅ 16/10 | `lib/src/core/tema/` (cores claro/escuro, tipografia, medidas, status, tema); `PaletaSahara` virou ponte temporária com as cores novas; 102 testes (60 novos de contraste WCAG e status) |
+| 2 — Componentes | ⏳ | |
+| 3 — Marca (ícone, login, menu, PDF) | ⏳ | |
+| 4 — Telas (lotes A–H) | ⏳ | |
+| 5 — Modo escuro + Configurações | ⏳ | |
+| 6 — Testes e documentação | ⏳ | |
+
 ---
 
 ## 5. Ações suas pendentes
