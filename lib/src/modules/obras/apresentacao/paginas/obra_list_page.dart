@@ -24,14 +24,17 @@ class _ObraListPageState extends State<ObraListPage> {
   late FiltroLista _filtro =
       FiltroLista(maisRecentes: context.read<ObraController>().maisRecentes);
 
+  late final ObraController _obraController = context.read<ObraController>();
+
   @override
   void initState() {
     super.initState();
     Future.microtask(() {
       if (!mounted) return;
-      final controller = context.read<ObraController>();
+      final controller = _obraController;
       controller.carregarObras();
       controller.carregarNaoLidas();
+      controller.iniciarAvisosChat();
 
       // Item 2.1: Funcionário só vê as obras em que está alocado.
       final usuario = context.read<AuthController>().usuarioLogado;
@@ -39,6 +42,12 @@ class _ObraListPageState extends State<ObraListPage> {
         controller.carregarObraIdsAlocados(usuario!.id!);
       }
     });
+  }
+
+  @override
+  void dispose() {
+    _obraController.pararAvisosChat();
+    super.dispose();
   }
 
   List<Obra> _filtrar(List<Obra> obras) {

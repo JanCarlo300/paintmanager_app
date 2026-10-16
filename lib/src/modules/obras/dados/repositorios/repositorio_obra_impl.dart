@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/config/supabase_config.dart';
 import '../../dominio/entidades/obra.dart';
@@ -212,6 +213,31 @@ class RepositorioObraImpl implements RepositorioObra {
     } catch (e) {
       throw 'Erro ao marcar chat como lido: $e';
     }
+  }
+
+  @override
+  Stream<void> escutarNovasMensagensChat() {
+    RealtimeChannel? canal;
+    late final StreamController<void> eventos;
+    eventos = StreamController<void>(
+      onListen: () {
+        // Nome único: duas telas abertas não podem dividir o mesmo canal.
+        canal = _supabase
+            .channel('avisos-chat-${DateTime.now().microsecondsSinceEpoch}')
+            .onPostgresChanges(
+              event: PostgresChangeEvent.insert,
+              schema: 'public',
+              table: 'obra_mensagem',
+              callback: (_) => eventos.add(null),
+            )
+            .subscribe();
+      },
+      onCancel: () async {
+        final c = canal;
+        if (c != null) await _supabase.removeChannel(c);
+      },
+    );
+    return eventos.stream;
   }
 
   // === Item 2.3 — Chat da Obra ===

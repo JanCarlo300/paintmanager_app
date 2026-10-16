@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../dominio/entidades/obra.dart';
 import '../../dominio/entidades/etapa_servico.dart';
@@ -227,6 +228,19 @@ class ObraController extends ChangeNotifier {
       _naoLidas = {};
     }
     notifyListeners();
+  }
+
+  StreamSubscription<void>? _avisosChat;
+
+  /// Enquanto a tela de Obras está aberta, recalcula os avisos a cada
+  /// mensagem nova (sem precisar sair e voltar).
+  void iniciarAvisosChat() {
+    _avisosChat ??= _repositorio.escutarNovasMensagensChat().listen((_) => carregarNaoLidas());
+  }
+
+  void pararAvisosChat() {
+    _avisosChat?.cancel();
+    _avisosChat = null;
   }
 
   Future<void> marcarChatLido(int obraId) async {

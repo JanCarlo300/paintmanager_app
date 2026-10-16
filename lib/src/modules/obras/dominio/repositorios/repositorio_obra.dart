@@ -27,6 +27,10 @@ abstract class RepositorioObra {
   Future<Map<int, int>> contarMensagensNaoLidas();
   Future<void> marcarChatLido(int obraId);
 
+  /// Avisa (em tempo real) sempre que uma mensagem nova entra em algum
+  /// chat que o usuário logado pode ver.
+  Stream<void> escutarNovasMensagensChat();
+
   /// Item 2.3 — chat da obra (tempo real)
   Stream<List<MensagemObra>> escutarMensagens(int obraId);
   Future<void> enviarMensagem({required int obraId, required int usuarioId, required String texto});
