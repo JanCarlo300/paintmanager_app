@@ -66,7 +66,12 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
     // status e mexe na equipe alocada — Funcionário só acompanha.
     final podeGerenciarObra = !ehFuncionario;
 
-    if (controller.carregando || (ehFuncionario && controller.carregandoAlocacoes)) {
+    // Item 2.1: só decide "acesso restrito" com as alocações DELE carregadas.
+    final idFuncionario = ehFuncionario ? usuarioLogado?.id : null;
+    if (idFuncionario != null) controller.garantirAlocacoes(idFuncionario);
+    final aguardandoAlocacoes = idFuncionario != null && !controller.alocacoesProntasPara(idFuncionario);
+
+    if (controller.carregando || aguardandoAlocacoes) {
       return Scaffold(
         backgroundColor: PaletaSahara.background,
         appBar: AppBar(

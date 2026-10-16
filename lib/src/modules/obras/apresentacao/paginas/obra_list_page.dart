@@ -106,7 +106,12 @@ class _ObraListPageState extends State<ObraListPage> {
     // Funcionário só acompanha o andamento das obras — não cadastra novas.
     final podeGerenciarObras = !ehFuncionario;
 
-    if (controller.carregando || (ehFuncionario && controller.carregandoAlocacoes)) {
+    // Item 2.1: o filtro do Funcionário só vale com as alocações DELE carregadas.
+    final idFuncionario = ehFuncionario ? usuarioLogado?.id : null;
+    if (idFuncionario != null) controller.garantirAlocacoes(idFuncionario);
+    final aguardandoAlocacoes = idFuncionario != null && !controller.alocacoesProntasPara(idFuncionario);
+
+    if (controller.carregando || aguardandoAlocacoes) {
       return Scaffold(
         backgroundColor: PaletaSahara.background,
         drawer: const DrawerComum(),

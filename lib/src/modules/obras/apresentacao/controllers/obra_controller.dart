@@ -179,6 +179,12 @@ class ObraController extends ChangeNotifier {
   bool _carregandoAlocacoes = false;
   bool get carregandoAlocacoes => _carregandoAlocacoes;
 
+  // De quem são as alocações carregadas — evita usar a lista de outro
+  // usuário depois de trocar de conta no mesmo aparelho.
+  int? _alocacoesDoUsuario;
+  bool alocacoesProntasPara(int usuarioId) =>
+      _alocacoesDoUsuario == usuarioId && !_carregandoAlocacoes;
+
   Future<void> carregarObraIdsAlocados(int usuarioId) async {
     _carregandoAlocacoes = true;
     notifyListeners();
@@ -187,9 +193,17 @@ class ObraController extends ChangeNotifier {
     } catch (e) {
       _obraIdsAlocados = [];
     } finally {
+      _alocacoesDoUsuario = usuarioId;
       _carregandoAlocacoes = false;
       notifyListeners();
     }
+  }
+
+  /// Ao reabrir o app, a tela abre antes de o usuário logado ser conhecido;
+  /// chamado no build, carrega as alocações assim que ele aparecer.
+  void garantirAlocacoes(int usuarioId) {
+    if (_carregandoAlocacoes || _alocacoesDoUsuario == usuarioId) return;
+    Future.microtask(() => carregarObraIdsAlocados(usuarioId));
   }
 
   // === Etapa 2 — buscas no banco (não mexem nas listas da tela) ===
