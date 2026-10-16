@@ -1,7 +1,7 @@
 # PaintManager — Relatório de Status do Projeto
 
-**TFC II — UniRV** · Autor: Jan Carlo · **Data de referência: 15/10/2026** (criado em 12/10, atualizado a cada etapa)
-Base: código atual da branch `main` (último commit `dfaa3fd`), scripts em `db/`, testes em `test/` e o relatório anterior de 01/10/2026.
+**TFC II — UniRV** · Autor: Jan Carlo · **Data de referência: 16/10/2026** (criado em 12/10, atualizado a cada etapa)
+Base: código atual da branch `main`, scripts em `db/`, testes em `test/` e o relatório anterior de 01/10/2026.
 
 ---
 
@@ -14,6 +14,7 @@ Base: código atual da branch `main` (último commit `dfaa3fd`), scripts em `db/
 | Plano de ajustes de outubro (Etapas 1 a 8.1) | **Todas entregues e aprovadas em 15/10** |
 | Testes automatizados | **42 testes passando** (7 arquivos): modelos, validador de CPF, filtros das listas, item de material, PDFs e regras dos relatórios. Ainda sem testes de repositórios e controllers |
 | Backend | Supabase (PostgreSQL + Auth + RLS + Edge Function + Realtime) |
+| Segurança no banco | **Matriz de funções aplicada por RLS em todas as tabelas** e login sem leitura anônima (16/10) |
 | Build Android | APK debug gerando e instalando no Samsung A55 (se o adb não achar o celular, desligar a Ancoragem USB) |
 | Cronograma | A Semana 10 (28/09–03/10, "V&V finalizada") passou com cobertura de testes baixa; desde então subiu de 4 para 42 testes |
 
@@ -93,8 +94,19 @@ O menu lateral e os atalhos trocavam de tela substituindo a anterior, então o v
 | **Etapa 1 — Status do orçamento (3 opções)** | ✅ Feito em 15/10 · ✅ aprovado pelo Jan | Só Pendente / Aprovado / Recusado, como no DERS. "Concluído" migrado para Aprovado, "Rejeitado" para Recusado (corrigido o filtro de recusados que nunca mostrava nada); Recusado editado volta sozinho para Pendente; trava `CHECK` no banco (`db/orcamento_status_3_opcoes.sql`) |
 
 ### 4.2 Segurança
-- **RF002 Fase B:** o login ainda consulta a tabela `usuario` direto, com a política anônima `USING (true)` de `rls_policy_usuario.sql`, o que deixa qualquer pessoa ler a tabela de usuários. O correto é o login usar a função `buscar_email_por_login` (já existe, hoje só a recuperação de senha a usa) e essa política ser removida.
-- **RLS das demais tabelas:** `cliente`, `orcamento`, `transacao`, `usuario` e as escritas em `obra` ainda liberam tudo a qualquer autenticado; a matriz de funções vale no app. Estão protegidos no banco: leitura de `obra`, chat, leitura do chat, e as regras de negócio por trigger (CPF, status do orçamento, início e conclusão da obra, obra do lançamento).
+- **✅ Segurança 1 — RF002 Fase B (16/10, testado pelo Jan):** o login descobre o e-mail pelo CPF só pela função `buscar_email_por_login`; a leitura anônima da tabela `usuario` foi removida (`db/seguranca_1_login_sem_leitura_anonima.sql`). Os scripts em `db/` com CPF, e-mail e senha reais do administrador foram trocados por marcadores (`<CPF_DO_ADMIN>` etc.). **Atenção:** o repositório é público e o histórico do git ainda guarda esses dados antigos — a senha do administrador foi trocada; tornar o repositório privado é recomendado.
+- **✅ Segurança 2 — Permissões por função no banco (16/10, testado pelo Jan com as 3 funções):** a matriz do app agora também vale no banco, por RLS (`db/seguranca_2_permissoes_por_funcao.sql`):
+
+  | Tabela | Administrador | Gerente | Funcionário |
+  |---|---|---|---|
+  | `cliente` | tudo | tudo, menos excluir | nada |
+  | `orcamento` | tudo | tudo | nada |
+  | `transacao` | tudo | tudo, menos excluir | nada |
+  | `obra` | tudo | tudo, menos excluir | lê as alocadas; altera só o checklist |
+  | `equipe_obra` | tudo | tudo | vê a equipe das suas obras |
+  | `usuario` | tudo | lê todos | lê o próprio e os colegas das suas obras |
+
+  Fechou a brecha em que qualquer usuário podia mudar a própria função para Administrador (trigger: fora o Administrador, no próprio cadastro só muda o "primeiro acesso"). Usuário inativado perde o acesso mesmo com a sessão aberta. Funções auxiliares `minha_funcao()`, `eh_admin()`, `eh_gestor()`, `minhas_obras()` (SECURITY DEFINER). Continuam valendo as regras de negócio por trigger (CPF, status do orçamento, início e conclusão da obra, obra do lançamento) e as do chat.
 - **Edge Function `criar-usuario`:** confirmar que está implantada no Supabase (o cadastro de usuário depende dela).
 
 ### 4.3 Testes (V&V)
@@ -115,7 +127,7 @@ O menu lateral e os atalhos trocavam de tela substituindo a anterior, então o v
 
 | # | Ação | Por quê |
 |---|---|---|
-| 1 | `git push` para o GitHub | Os commits desde o fim de setembro estão só no notebook |
+| 1 | Tornar o repositório do GitHub privado (opcional, recomendado) | O histórico antigo ainda contém CPF e e-mail do administrador |
 | 2 | Refazer a Figura 19 (DER) no relatório do TFC II | Hoje ela descreve o modelo antigo |
 
 **Limpeza do banco concluída em 16/10:** removidas as sobras do modelo do TFC I (tabelas `etapas`, `financeiro`, `material`, `observacao` e `funcionario`, todas vazias, e a coluna `orcamento.id_etapas`), via `db/limpeza_tabelas_antigas.sql` e `db/limpeza_funcionario_e_id_etapas.sql`. O banco tem exatamente as 8 tabelas do app: `chat_leitura`, `cliente`, `equipe_obra`, `obra`, `obra_mensagem`, `orcamento`, `transacao`, `usuario`.
@@ -125,7 +137,7 @@ O menu lateral e os atalhos trocavam de tela substituindo a anterior, então o v
 ## 6. Próximos passos sugeridos (por prioridade)
 
 1. **Ampliar os testes:** `ValidadorSenha`, repositórios com `mocktail`, controllers de Obra e de alertas.
-2. **RF002 Fase B** e RLS das demais tabelas.
+2. **APK de release** assinado (chave fora do git).
 3. **Documentação:** README, ARCHITECTURE e `.env.example`.
 4. **Melhorias opcionais:** aceitar e validar CNPJ no cliente; paginação das listas; tela de Configurações.
 
@@ -135,5 +147,4 @@ O menu lateral e os atalhos trocavam de tela substituindo a anterior, então o v
 - **Smart App Control do Windows foi desativado** para o Flutter voltar a compilar (ele bloqueava o `dartaotruntime.exe` e o `impellerc.exe`). O Defender continua ativo.
 - Se o `adb` não encontrar o celular no USB, desligar a **Ancoragem USB** do Samsung e escolher "Transferência de arquivos".
 - O repositório estava sem identidade do git configurada; defini **localmente** (só neste repositório) o mesmo autor dos commits anteriores.
-- A branch `main` está à frente do `origin/main`: nada foi enviado com **`git push`** ainda.
-- `HISTORICO_DO_PROJETO.md` e este relatório não estão versionados (nunca foram commitados).
+- O código está no GitHub (`git push` feito em 16/10), junto com `HISTORICO_DO_PROJETO.md` e este relatório.
