@@ -38,6 +38,7 @@ class RepositorioTransacaoImpl implements RepositorioTransacao {
         formaPagamento: transacao.formaPagamento,
         idCliente: transacao.idCliente,
         idOrcamento: transacao.idOrcamento,
+        idObra: transacao.idObra,
         clienteNome: transacao.clienteNome,
         obraTitulo: transacao.obraTitulo,
         comprovanteUrl: transacao.comprovanteUrl,

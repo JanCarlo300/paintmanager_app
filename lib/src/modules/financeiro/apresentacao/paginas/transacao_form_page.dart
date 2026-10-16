@@ -9,6 +9,7 @@ import '../../../clientes/apresentacao/controllers/cliente_controller.dart';
 import '../../../obras/apresentacao/controllers/obra_controller.dart';
 import '../../../../core/tema/paleta_sahara.dart';
 import '../../../../apresentacao/widgets/campo_data.dart';
+import '../../../../apresentacao/widgets/campo_busca_selecao.dart';
 
 class TransacaoFormPage extends StatefulWidget {
   final Transacao? transacaoParaEdicao;
@@ -32,7 +33,10 @@ class _TransacaoFormPageState extends State<TransacaoFormPage> {
   late DateTime _dataTransacao;
 
   Cliente? _clienteSelecionado;
-  Obra? _obraSelecionada;
+  // RF011: vínculo real com a obra (antes só o título era guardado).
+  int? _obraId;
+  String? _obraTitulo;
+  Obra? _obraEscolhida; // escolhida nesta tela — traz o cliente da obra
 
   final _categoriasReceita = ['Mão de Obra', 'Outros'];
   final _categoriasDespesa = ['Materiais', 'Ferramentas', 'Transporte', 'Alimentação', 'Outros'];
@@ -49,6 +53,8 @@ class _TransacaoFormPageState extends State<TransacaoFormPage> {
     _valorController = TextEditingController(text: t != null ? t.valor.toStringAsFixed(2) : '');
     _descricaoController = TextEditingController(text: t?.descricao);
     _dataTransacao = t?.dataTransacao ?? DateTime.now();
+    _obraId = t?.idObra;
+    _obraTitulo = (t?.obraTitulo?.isNotEmpty ?? false) ? t!.obraTitulo : null;
   }
 
   @override
@@ -81,10 +87,12 @@ class _TransacaoFormPageState extends State<TransacaoFormPage> {
         dataTransacao: _dataTransacao,
         status: _status,
         formaPagamento: _formaPagamento,
-        idCliente: _clienteSelecionado?.id ?? widget.transacaoParaEdicao?.idCliente,
-        clienteNome: _clienteSelecionado?.nome ?? widget.transacaoParaEdicao?.clienteNome,
+        // Sem cliente escolhido, vale o cliente da obra escolhida.
+        idCliente: _clienteSelecionado?.id ?? _obraEscolhida?.idCliente ?? widget.transacaoParaEdicao?.idCliente,
+        clienteNome: _clienteSelecionado?.nome ?? _obraEscolhida?.clienteNome ?? widget.transacaoParaEdicao?.clienteNome,
         idOrcamento: widget.transacaoParaEdicao?.idOrcamento,
-        obraTitulo: _obraSelecionada?.tituloDaObra ?? widget.transacaoParaEdicao?.obraTitulo,
+        idObra: _obraId,
+        obraTitulo: _obraTitulo,
       );
 
       try {
@@ -328,22 +336,37 @@ class _TransacaoFormPageState extends State<TransacaoFormPage> {
   }
 
   Widget _obraDropdown() {
-    final oc = context.watch<ObraController>();
-    final obras = oc.obras;
-    return DropdownButtonFormField<Obra>(
-      initialValue: _obraSelecionada,
-      decoration: InputDecoration(
-        labelText: "Vincular à Obra (opcional)",
-        prefixIcon: Icon(Icons.construction, size: 20, color: Colors.grey[600]),
-        filled: true, fillColor: Colors.grey[50],
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
-      ),
-      items: [
-        const DropdownMenuItem<Obra>(value: null, child: Text("Nenhuma", style: TextStyle(color: Colors.grey))),
-        ...obras.map((o) => DropdownMenuItem(value: o, child: Text(o.tituloDaObra))),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        CampoBuscaSelecao<Obra>(
+          rotulo: "Vincular à Obra (opcional)",
+          dica: "Título da obra ou nome do cliente...",
+          icone: Icons.construction,
+          iconeItem: Icons.construction,
+          textoInicial: _obraTitulo,
+          buscar: context.read<ObraController>().buscarObrasParaLancamento,
+          tituloDe: (o) => o.tituloDaObra,
+          subtituloDe: (o) => "Cliente: ${o.clienteNome}  •  ${o.status}",
+          aoSelecionar: (o) => setState(() {
+            _obraId = o.id;
+            _obraTitulo = o.tituloDaObra;
+            _obraEscolhida = o;
+          }),
+          aoLimpar: () => setState(() {
+            _obraId = null;
+            _obraTitulo = null;
+            _obraEscolhida = null;
+          }),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(left: 4, top: 6),
+          child: Text(
+            "Só aparecem obras Em Andamento ou Concluídas.",
+            style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+          ),
+        ),
       ],
-      onChanged: (v) => setState(() => _obraSelecionada = v),
     );
   }
 

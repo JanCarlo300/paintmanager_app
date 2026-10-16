@@ -18,6 +18,9 @@ abstract class RepositorioObra {
 
   /// Etapa 2 — buscas no banco (no máximo 20 resultados cada)
   Future<List<Obra>> buscarObras(String termo);
+
+  /// RF011 — só obras que aceitam lançamento (Em Andamento ou Concluída)
+  Future<List<Obra>> buscarObrasParaLancamento(String termo);
   Future<List<Usuario>> buscarFuncionariosDisponiveis(int obraId, String termo);
 
   /// Item 1.2 — a obra só sai de "Não Iniciada" com orçamento Aprovado

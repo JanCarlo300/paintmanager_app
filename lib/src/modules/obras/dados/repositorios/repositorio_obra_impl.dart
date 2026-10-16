@@ -161,6 +161,21 @@ class RepositorioObraImpl implements RepositorioObra {
   }
 
   @override
+  Future<List<Obra>> buscarObrasParaLancamento(String termo) async {
+    try {
+      final resultado = await _supabase.rpc('buscar_obras_para_lancamento', params: {
+        'termo': termo,
+        'limite': 20,
+      });
+      return (resultado as List)
+          .map((mapa) => ObraModelo.deMapa(Map<String, dynamic>.from(mapa)))
+          .toList();
+    } catch (e) {
+      throw 'Erro ao buscar obras: $e';
+    }
+  }
+
+  @override
   Future<List<Usuario>> buscarFuncionariosDisponiveis(int obraId, String termo) async {
     try {
       final resultado = await _supabase.rpc('buscar_funcionarios_disponiveis', params: {

@@ -211,6 +211,9 @@ class ObraController extends ChangeNotifier {
 
   Future<List<Obra>> buscarObras(String termo) => _repositorio.buscarObras(termo);
 
+  Future<List<Obra>> buscarObrasParaLancamento(String termo) =>
+      _repositorio.buscarObrasParaLancamento(termo);
+
   Future<List<Usuario>> buscarFuncionariosDisponiveis(int obraId, String termo) =>
       _repositorio.buscarFuncionariosDisponiveis(obraId, termo);
 
