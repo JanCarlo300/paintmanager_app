@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="ic_launcher_background">#3A302A</color>
+    <!-- Fundo da tela de abertura (grafite do manual da marca) -->
+    <color name="splash_fundo">#3A302A</color>
+</resources>

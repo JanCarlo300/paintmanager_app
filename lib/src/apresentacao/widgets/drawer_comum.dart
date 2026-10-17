@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../modules/auth/apresentacao/controllers/auth_controller.dart';
 import '../../core/tema/paleta_sahara.dart';
+import 'logo_app.dart';
 
 class DrawerComum extends StatelessWidget {
   const DrawerComum({super.key});
@@ -39,15 +40,10 @@ class DrawerComum extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Logo como avatar circular
-                    Container(
-                      width: 56,
-                      height: 56,
-                      decoration: BoxDecoration(
-                        color: PaletaSahara.primary,
-                        borderRadius: BorderRadius.circular(28),
-                      ),
-                      child: const Icon(Icons.format_paint, color: Colors.white, size: 28),
+                    // Assinatura do manual da marca (ícone + nome do app)
+                    AssinaturaApp(
+                      tamanhoLogo: 40,
+                      estilo: Theme.of(context).textTheme.titleLarge,
                     ),
                     const SizedBox(height: 14),
                     // Nome do usuário logado

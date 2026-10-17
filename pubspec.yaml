@@ -52,3 +52,14 @@ flutter:
     # Fonte embutida nos PDFs (acentos e símbolos sem internet). Licença Apache 2.0.
     - assets/fonts/roboto-regular.ttf
     - assets/fonts/roboto-bold.ttf
+
+# Ícone do app (manual da marca, opção D — pincel). Gerar com:
+#   dart run flutter_launcher_icons
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icone/icone_app.png"
+  remove_alpha_ios: true
+  adaptive_icon_background: "#3A302A"
+  adaptive_icon_foreground: "assets/icone/icone_foreground.png"
+  adaptive_icon_monochrome: "assets/icone/icone_monocromatico.png"

@@ -5,8 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import '../controllers/auth_controller.dart';
 import '../../../../core/tema/paleta_sahara.dart';
-
-typedef _Sahara = PaletaSahara;
+import '../../../../apresentacao/widgets/logo_app.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -31,7 +30,7 @@ class _LoginPageState extends State<LoginPage> {
     final authController = context.watch<AuthController>();
 
     return Scaffold(
-      backgroundColor: _Sahara.background,
+      backgroundColor: PaletaSahara.background,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -53,31 +52,18 @@ class _LoginPageState extends State<LoginPage> {
   Widget _buildLogo() {
     return Column(
       children: [
-        Container(
-          width: 64,
-          height: 64,
-          decoration: BoxDecoration(
-            color: _Sahara.primary,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: const Icon(Icons.format_paint_rounded, color: Colors.white, size: 30),
+        // Assinatura do manual da marca: ícone + "Paint" (terracota) "Manager".
+        // scaleDown só entra em telas muito estreitas.
+        const FittedBox(
+          fit: BoxFit.scaleDown,
+          child: AssinaturaApp(tamanhoLogo: 64),
         ),
-        const SizedBox(height: 20),
-        Text(
-          "PaintManager",
-          style: GoogleFonts.ebGaramond(
-            fontSize: 34,
-            fontWeight: FontWeight.w600,
-            color: _Sahara.onSurface,
-            letterSpacing: -0.5,
-          ),
-        ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 12),
         Text(
           "Gestão de Serviços de Pintura",
           style: GoogleFonts.manrope(
             fontSize: 13,
-            color: _Sahara.onSurfaceMuted,
+            color: PaletaSahara.onSurfaceMuted,
             letterSpacing: 0.2,
           ),
         ),
@@ -89,9 +75,12 @@ class _LoginPageState extends State<LoginPage> {
     return Container(
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
-        color: _Sahara.cardSurface,
+        color: PaletaSahara.cardSurface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _Sahara.border.withValues(alpha: 0.6), width: 1),
+        border: Border.all(
+          color: PaletaSahara.border.withValues(alpha: 0.6),
+          width: 1,
+        ),
         boxShadow: const [
           BoxShadow(
             color: Color(0x0A3A302A),
@@ -108,7 +97,7 @@ class _LoginPageState extends State<LoginPage> {
             style: GoogleFonts.ebGaramond(
               fontSize: 26,
               fontWeight: FontWeight.w600,
-              color: _Sahara.onSurface,
+              color: PaletaSahara.onSurface,
             ),
           ),
           const SizedBox(height: 4),
@@ -116,7 +105,7 @@ class _LoginPageState extends State<LoginPage> {
             "Use seu CPF para acessar o sistema",
             style: GoogleFonts.manrope(
               fontSize: 13,
-              color: _Sahara.onSurfaceMuted,
+              color: PaletaSahara.onSurfaceMuted,
             ),
           ),
           const SizedBox(height: 28),
@@ -139,9 +128,11 @@ class _LoginPageState extends State<LoginPage> {
             obscureText: !_senhaVisivel,
             suffixIcon: IconButton(
               icon: Icon(
-                _senhaVisivel ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                _senhaVisivel
+                    ? Icons.visibility_outlined
+                    : Icons.visibility_off_outlined,
                 size: 18,
-                color: _Sahara.onSurfaceMuted,
+                color: PaletaSahara.onSurfaceMuted,
               ),
               onPressed: () => setState(() => _senhaVisivel = !_senhaVisivel),
             ),
@@ -163,7 +154,7 @@ class _LoginPageState extends State<LoginPage> {
       style: GoogleFonts.manrope(
         fontSize: 13,
         fontWeight: FontWeight.w600,
-        color: _Sahara.onSurface,
+        color: PaletaSahara.onSurface,
         letterSpacing: 0.1,
       ),
     );
@@ -182,28 +173,31 @@ class _LoginPageState extends State<LoginPage> {
       obscureText: obscureText,
       keyboardType: keyboardType,
       inputFormatters: formatters,
-      style: GoogleFonts.manrope(fontSize: 14, color: _Sahara.onSurface),
+      style: GoogleFonts.manrope(fontSize: 14, color: PaletaSahara.onSurface),
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: GoogleFonts.manrope(
           fontSize: 14,
-          color: _Sahara.onSurfaceMuted,
+          color: PaletaSahara.onSurfaceMuted,
         ),
         filled: true,
         fillColor: Colors.white,
         suffixIcon: suffixIcon,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: _Sahara.border, width: 1),
+          borderSide: BorderSide(color: PaletaSahara.border, width: 1),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: _Sahara.primary, width: 1.5),
+          borderSide: const BorderSide(color: PaletaSahara.primary, width: 1.5),
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: _Sahara.border, width: 1),
+          borderSide: BorderSide(color: PaletaSahara.border, width: 1),
         ),
       ),
     );
@@ -217,18 +211,16 @@ class _LoginPageState extends State<LoginPage> {
         onPressed: authController.carregando
             ? null
             : () => authController.realizarLogin(
-                  context,
-                  cpfMask.getUnmaskedText(),
-                  _senhaController.text,
-                ),
+                context,
+                cpfMask.getUnmaskedText(),
+                _senhaController.text,
+              ),
         style: ElevatedButton.styleFrom(
-          backgroundColor: _Sahara.primary,
+          backgroundColor: PaletaSahara.primary,
           foregroundColor: Colors.white,
-          disabledBackgroundColor: _Sahara.border,
+          disabledBackgroundColor: PaletaSahara.border,
           elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
         child: authController.carregando
             ? const SizedBox(
@@ -252,35 +244,41 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Widget _buildFooterLinks() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        TextButton(
-          onPressed: () => Navigator.pushNamed(context, '/recuperar-senha'),
-          child: Text(
-            "Esqueci minha senha",
-            style: GoogleFonts.manrope(
-              fontSize: 13,
-              color: _Sahara.onSurfaceMuted,
-              decoration: TextDecoration.underline,
-              decorationColor: _Sahara.onSurfaceMuted,
+    // Wrap: lado a lado quando cabe; em tela estreita ou fonte grande do
+    // celular, o segundo link desce para a linha de baixo (sem estourar).
+    return SizedBox(
+      width: double.infinity,
+      child: Wrap(
+        alignment: WrapAlignment.spaceBetween,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          TextButton(
+            onPressed: () => Navigator.pushNamed(context, '/recuperar-senha'),
+            child: Text(
+              "Esqueci minha senha",
+              style: GoogleFonts.manrope(
+                fontSize: 13,
+                color: PaletaSahara.onSurfaceMuted,
+                decoration: TextDecoration.underline,
+                decorationColor: PaletaSahara.onSurfaceMuted,
+              ),
             ),
           ),
-        ),
-        TextButton(
-          onPressed: () => _mostrarDicaPrimeiroAcesso(context),
-          child: Text(
-            "Primeiro Acesso?",
-            style: GoogleFonts.manrope(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: _Sahara.tertiary,
-              decoration: TextDecoration.underline,
-              decorationColor: _Sahara.tertiary,
+          TextButton(
+            onPressed: () => _mostrarDicaPrimeiroAcesso(context),
+            child: Text(
+              "Primeiro Acesso?",
+              style: GoogleFonts.manrope(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: PaletaSahara.tertiary,
+                decoration: TextDecoration.underline,
+                decorationColor: PaletaSahara.tertiary,
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -288,11 +286,15 @@ class _LoginPageState extends State<LoginPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: _Sahara.background,
+        backgroundColor: PaletaSahara.background,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
           children: [
-            Icon(Icons.info_outline_rounded, color: _Sahara.primary, size: 22),
+            Icon(
+              Icons.info_outline_rounded,
+              color: PaletaSahara.primary,
+              size: 22,
+            ),
             const SizedBox(width: 10),
             Flexible(
               child: Text(
@@ -300,7 +302,7 @@ class _LoginPageState extends State<LoginPage> {
                 style: GoogleFonts.ebGaramond(
                   fontSize: 20,
                   fontWeight: FontWeight.w600,
-                  color: _Sahara.onSurface,
+                  color: PaletaSahara.onSurface,
                 ),
               ),
             ),
@@ -315,23 +317,26 @@ class _LoginPageState extends State<LoginPage> {
               style: GoogleFonts.manrope(
                 fontWeight: FontWeight.w600,
                 fontSize: 13,
-                color: _Sahara.onSurface,
+                color: PaletaSahara.onSurface,
               ),
             ),
             const SizedBox(height: 12),
             Text(
               "1. Digite seu CPF no campo indicado.\n2. No campo Senha, use inicialmente apenas os números do seu CPF.",
-              style: GoogleFonts.manrope(fontSize: 13, color: _Sahara.onSurface),
+              style: GoogleFonts.manrope(
+                fontSize: 13,
+                color: PaletaSahara.onSurface,
+              ),
             ),
             const SizedBox(height: 16),
-            Divider(color: _Sahara.border, thickness: 1),
+            Divider(color: PaletaSahara.border, thickness: 1),
             const SizedBox(height: 16),
             Text(
               "E a minha senha definitiva?",
               style: GoogleFonts.manrope(
                 fontWeight: FontWeight.w600,
                 fontSize: 13,
-                color: _Sahara.onSurface,
+                color: PaletaSahara.onSurface,
               ),
             ),
             const SizedBox(height: 8),
@@ -339,7 +344,7 @@ class _LoginPageState extends State<LoginPage> {
               "Ao entrar com o CPF, o sistema vai pedir automaticamente que você cadastre uma senha definitiva antes de continuar.",
               style: GoogleFonts.manrope(
                 fontSize: 13,
-                color: _Sahara.onSurfaceMuted,
+                color: PaletaSahara.onSurfaceMuted,
               ),
             ),
           ],
@@ -347,7 +352,7 @@ class _LoginPageState extends State<LoginPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            style: TextButton.styleFrom(foregroundColor: _Sahara.primary),
+            style: TextButton.styleFrom(foregroundColor: PaletaSahara.primary),
             child: Text(
               "Entendi",
               style: GoogleFonts.manrope(
