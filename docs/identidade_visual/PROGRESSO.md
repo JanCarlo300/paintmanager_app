@@ -13,3 +13,5 @@ Gerado por `dart run kit_identidade_visual/ferramentas/verificar.dart`.
 | 16/10/2026 23:22 | Fase 4 — Lote B | 0/0 | 104/0 | 970 | 13 | aprovado |
 | 16/10/2026 23:31 | Fase 4 — Lote C | 0/0 | 104/0 | 882 | 12 | aprovado |
 | 16/10/2026 23:44 | Fase 4 — Lote D | 0/0 | 104/0 | 767 | 10 | aprovado |
+| 16/10/2026 23:47 | Fase 4 — Lote E | 0/0 | 104/0 | 767 | 10 | pendente |
+| 16/10/2026 23:52 | Fase 4 — Lote E | 0/0 | 104/0 | 474 | 5 | aprovado |

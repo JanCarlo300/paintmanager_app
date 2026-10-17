@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../dominio/entidades/obra.dart';
 import '../controllers/obra_controller.dart';
 import 'obra_detalhes_page.dart';
+import '../../../../apresentacao/widgets/card_app.dart';
 import '../../../../apresentacao/widgets/drawer_comum.dart';
-import '../../../../core/tema/paleta_sahara.dart';
+import '../../../../apresentacao/widgets/status_chip.dart';
+import '../../../../apresentacao/widgets/tela_vazia.dart';
+import '../../../../core/tema/cores_app.dart';
+import '../../../../core/tema/medidas_app.dart';
+import '../../../../core/tema/status_visual.dart';
 import '../../../auth/apresentacao/controllers/auth_controller.dart';
 import '../../../../core/filtros/filtro_lista.dart';
 import '../../../../apresentacao/widgets/painel_filtro_lista.dart';
@@ -72,37 +78,36 @@ class _ObraListPageState extends State<ObraListPage> {
   }
 
   Widget _buildChipsStatus(List<Obra> todas) {
+    final c = context.cores;
     int qtd(String status) => todas.where((o) => o.status == status).length;
+    // Mesma cor de cada status em todo o app (core/tema/status_visual.dart).
+    OpcaoStatus<String?> opcao(String status) =>
+        OpcaoStatus(status, status, qtd(status), visualDoStatus(status, c).cor);
 
     return ChipsFiltroStatus<String?>(
       selecionado: _statusSelecionado,
       aoSelecionar: (s) => setState(() => _statusSelecionado = s),
       opcoes: [
-        OpcaoStatus("Todas", null, todas.length, PaletaSahara.primary),
-        OpcaoStatus("Não Iniciada", "Não Iniciada", qtd("Não Iniciada"), Colors.grey[600]!),
-        OpcaoStatus("Em Andamento", "Em Andamento", qtd("Em Andamento"), Colors.green),
-        OpcaoStatus("Pausada", "Pausada", qtd("Pausada"), Colors.orange),
-        OpcaoStatus("Concluída", "Concluída", qtd("Concluída"), Colors.blue),
+        OpcaoStatus("Todas", null, todas.length, c.primary),
+        opcao("Não Iniciada"),
+        opcao("Em Andamento"),
+        opcao("Pausada"),
+        opcao("Concluída"),
       ],
     );
   }
 
-  Color _corStatus(String status) {
-    switch (status) {
-      case 'Em Andamento': return Colors.green;
-      case 'Pausada': return Colors.orange;
-      case 'Concluída': return Colors.blue;
-      default: return Colors.grey;
-    }
-  }
-
-  IconData _iconeStatus(String status) {
-    switch (status) {
-      case 'Em Andamento': return Icons.play_circle_outline;
-      case 'Pausada': return Icons.pause_circle_outline;
-      case 'Concluída': return Icons.check_circle_outline;
-      default: return Icons.schedule;
-    }
+  PreferredSizeWidget _appBar({List<Widget>? actions}) {
+    return AppBar(
+      leading: Builder(
+        builder: (context) => IconButton(
+          icon: const Icon(Symbols.menu_rounded),
+          onPressed: () => Scaffold.of(context).openDrawer(),
+        ),
+      ),
+      title: const Text("Obras"),
+      actions: actions,
+    );
   }
 
   @override
@@ -114,6 +119,8 @@ class _ObraListPageState extends State<ObraListPage> {
     final ehFuncionario = usuarioLogado?.funcao == 'Funcionário';
     // Funcionário só acompanha o andamento das obras — não cadastra novas.
     final podeGerenciarObras = !ehFuncionario;
+    final c = context.cores;
+    final texto = Theme.of(context).textTheme;
 
     // Item 2.1: o filtro do Funcionário só vale com as alocações DELE carregadas.
     final idFuncionario = ehFuncionario ? usuarioLogado?.id : null;
@@ -122,22 +129,9 @@ class _ObraListPageState extends State<ObraListPage> {
 
     if (controller.carregando || aguardandoAlocacoes) {
       return Scaffold(
-        backgroundColor: PaletaSahara.background,
         drawer: const DrawerComum(),
-        appBar: AppBar(
-          leading: Builder(
-            builder: (context) => IconButton(
-              icon: const Icon(Icons.menu),
-              onPressed: () => Scaffold.of(context).openDrawer(),
-            ),
-          ),
-          title: const Text("Obras", style: TextStyle(fontWeight: FontWeight.bold)),
-          centerTitle: false,
-          backgroundColor: PaletaSahara.cardSurface,
-          foregroundColor: PaletaSahara.onSurface,
-          elevation: 0.5,
-        ),
-        body: const Center(child: CircularProgressIndicator(color: PaletaSahara.primary)),
+        appBar: _appBar(),
+        body: const Center(child: CircularProgressIndicator()),
       );
     }
 
@@ -148,83 +142,54 @@ class _ObraListPageState extends State<ObraListPage> {
     final filtradas = _filtrar(todas);
     final emAndamento = todas.where((o) => o.status == 'Em Andamento').length;
     final concluidas = todas.where((o) => o.status == 'Concluída').length;
+    final comFiltro = _filtro.quantidadeAtivos > 0 || _termoBusca.isNotEmpty || _statusSelecionado != null;
 
     return Scaffold(
-      backgroundColor: PaletaSahara.background,
       drawer: const DrawerComum(),
-      appBar: AppBar(
-        leading: Builder(
-          builder: (context) => IconButton(
-            icon: const Icon(Icons.menu),
-            onPressed: () => Scaffold.of(context).openDrawer(),
-          ),
-        ),
-        title: const Text("Obras", style: TextStyle(fontWeight: FontWeight.bold)),
-        centerTitle: false,
-        backgroundColor: PaletaSahara.cardSurface,
-        foregroundColor: PaletaSahara.onSurface,
-        elevation: 0.5,
-        actions: [_buildSinoMensagens(todas)],
-      ),
+      appBar: _appBar(actions: [_buildSinoMensagens(todas)]),
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(isWide ? 24 : 16),
+        padding: EdgeInsets.all(isWide ? Espaco.x6 : Espaco.margemTela),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // --- HEADER ---
-            const Text("Gestão de Obras", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 4),
-            const Text("Acompanhe o progresso de cada serviço.", style: TextStyle(color: Colors.grey, fontSize: 13)),
-            const SizedBox(height: 16),
+            Text("Gestão de Obras", style: texto.headlineMedium),
+            const SizedBox(height: Espaco.x1),
+            Text("Acompanhe o progresso de cada serviço.", style: texto.bodyMedium?.copyWith(color: c.inkMuted)),
+            const SizedBox(height: Espaco.x4),
             if (podeGerenciarObras) ...[
               SizedBox(
                 width: isWide ? null : double.infinity,
-                child: ElevatedButton.icon(
+                child: FilledButton.icon(
                   onPressed: () => Navigator.pushNamed(context, '/obra-formulario'),
-                  icon: const Icon(Icons.add, size: 18),
+                  icon: const Icon(Symbols.add_rounded, size: TamanhoIcone.pequeno),
                   label: const Text("Nova Obra"),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: PaletaSahara.primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  ),
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: Espaco.x6),
             ],
 
             // --- SUMMARY CARDS ---
             _buildSummaryRow(todas.length, emAndamento, concluidas),
-            const SizedBox(height: 24),
+            const SizedBox(height: Espaco.x6),
 
             // --- FILTRO POR STATUS ---
             _buildChipsStatus(todas),
-            const SizedBox(height: 16),
+            const SizedBox(height: Espaco.x4),
 
             // --- BUSCA + BOTÃO DE FILTRO ---
             Row(
               children: [
                 Expanded(
-                  child: SizedBox(
-                    height: 42,
-                    child: TextField(
-                      onChanged: (v) => setState(() => _termoBusca = v),
-                      decoration: InputDecoration(
-                        hintText: "Buscar obras...",
-                        hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
-                        prefixIcon: Icon(Icons.search, color: Colors.grey[400], size: 20),
-                        filled: true,
-                        fillColor: Colors.white,
-                        contentPadding: const EdgeInsets.symmetric(vertical: 0),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Colors.grey[200]!)),
-                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Colors.grey[200]!)),
-                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: PaletaSahara.primary, width: 1.5)),
-                      ),
+                  child: TextField(
+                    onChanged: (v) => setState(() => _termoBusca = v),
+                    decoration: const InputDecoration(
+                      hintText: "Buscar obras...",
+                      prefixIcon: Icon(Symbols.search_rounded, size: TamanhoIcone.pequeno),
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: Espaco.x2),
                 BotaoFiltroLista(
                   filtro: _filtro,
                   aoAplicar: _aplicarFiltro,
@@ -234,32 +199,23 @@ class _ObraListPageState extends State<ObraListPage> {
               ],
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12),
+              padding: const EdgeInsets.symmetric(vertical: Espaco.x3),
               child: Text(
                 "${filtradas.length} obra(s) encontrada(s)",
-                style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                style: texto.bodyMedium?.copyWith(color: c.inkMuted),
               ),
             ),
 
             // --- LISTA DE CARDS ---
             if (filtradas.isEmpty)
-              Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(40),
-                  child: Column(
-                    children: [
-                      Icon(Icons.construction_outlined, size: 48, color: Colors.grey[400]),
-                      const SizedBox(height: 12),
-                      Text(
-                        _filtro.quantidadeAtivos > 0 || _termoBusca.isNotEmpty || _statusSelecionado != null
-                            ? "Nenhuma obra encontrada com esses filtros."
-                            : "Nenhuma obra encontrada.",
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.grey),
-                      ),
-                    ],
-                  ),
-                ),
+              TelaVazia(
+                ilustracao: comFiltro ? IlustracaoVazia.busca : IlustracaoVazia.obras,
+                titulo: comFiltro ? "Nenhuma obra com esses filtros" : "Nenhuma obra encontrada",
+                texto: comFiltro
+                    ? "Mude a busca, o status ou os filtros para ver outras obras."
+                    : ehFuncionario
+                        ? "Você ainda não foi alocado em nenhuma obra."
+                        : "Cadastre a primeira obra pelo botão Nova Obra.",
               )
             else
               ...filtradas.map((obra) => _buildObraCard(obra, formatoData)),
@@ -270,35 +226,41 @@ class _ObraListPageState extends State<ObraListPage> {
   }
 
   Widget _buildSummaryRow(int total, int emAndamento, int concluidas) {
-    return Wrap(
-      spacing: 12,
-      runSpacing: 12,
+    final c = context.cores;
+    return Column(
       children: [
-        SizedBox(width: double.infinity, child: _buildSummaryCard("Total", total.toString(), Colors.blue)),
-        SizedBox(width: double.infinity, child: Row(children: [
-          Expanded(child: _buildSummaryCard("Em Andamento", emAndamento.toString(), Colors.green)),
-          const SizedBox(width: 12),
-          Expanded(child: _buildSummaryCard("Concluídas", concluidas.toString(), Colors.blue.shade800)),
-        ])),
+        _buildSummaryCard("Total", total.toString(), Symbols.construction_rounded, c.primary),
+        const SizedBox(height: Espaco.x3),
+        Row(children: [
+          Expanded(child: _buildSummaryCard("Em Andamento", emAndamento.toString(), Symbols.autorenew_rounded, c.info)),
+          const SizedBox(width: Espaco.x3),
+          Expanded(child: _buildSummaryCard("Concluídas", concluidas.toString(), Symbols.check_circle_rounded, c.success)),
+        ]),
       ],
     );
   }
 
-  Widget _buildSummaryCard(String title, String value, Color accent) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: PaletaSahara.cardSurface,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)],
-        border: Border(top: BorderSide(color: accent, width: 3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildSummaryCard(String title, String value, IconData icone, Color cor) {
+    final c = context.cores;
+    final texto = Theme.of(context).textTheme;
+    return CardApp(
+      child: Row(
         children: [
-          Text(title, style: TextStyle(color: Colors.grey[600], fontSize: 13)),
-          const SizedBox(height: 8),
-          Text(value, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
+          Icon(icone, color: cor, size: TamanhoIcone.medio),
+          const SizedBox(width: Espaco.x3),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: texto.bodySmall?.copyWith(color: c.inkMuted, letterSpacing: 0), overflow: TextOverflow.ellipsis),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(value, style: texto.displayMedium),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -316,6 +278,7 @@ class _ObraListPageState extends State<ObraListPage> {
 
   Widget _buildSinoMensagens(List<Obra> visiveis) {
     final controller = context.watch<ObraController>();
+    final c = context.cores;
     final comNovas = visiveis.where((o) => controller.naoLidasDa(o.id) > 0).toList();
 
     return IconButton(
@@ -323,8 +286,9 @@ class _ObraListPageState extends State<ObraListPage> {
       icon: Badge(
         label: Text('${comNovas.length}'),
         isLabelVisible: comNovas.isNotEmpty,
-        backgroundColor: Colors.red,
-        child: const Icon(Icons.notifications_none_rounded),
+        backgroundColor: c.secondary,
+        textColor: c.onSecondary,
+        child: const Icon(Symbols.notifications_rounded),
       ),
       onPressed: () => _mostrarObrasComMensagens(comNovas),
     );
@@ -332,24 +296,25 @@ class _ObraListPageState extends State<ObraListPage> {
 
   void _mostrarObrasComMensagens(List<Obra> comNovas) {
     final controller = context.read<ObraController>();
+    final c = context.cores;
+    final texto = Theme.of(context).textTheme;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
       builder: (ctx) => SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(Espaco.x5),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text("Mensagens novas", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 12),
+              Text("Mensagens novas", style: texto.titleMedium),
+              const SizedBox(height: Espaco.x3),
               if (comNovas.isEmpty)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  child: Text("Nenhuma mensagem nova no chat das obras.",
-                      style: TextStyle(color: Colors.grey[600])),
+                const TelaVazia(
+                  ilustracao: IlustracaoVazia.notificacoes,
+                  titulo: "Nenhuma mensagem nova",
+                  texto: "Quando alguém escrever no chat de uma obra, ela aparece aqui.",
                 )
               else
                 ConstrainedBox(
@@ -360,15 +325,20 @@ class _ObraListPageState extends State<ObraListPage> {
                       for (final obra in comNovas)
                         ListTile(
                           contentPadding: EdgeInsets.zero,
-                          leading: const CircleAvatar(
-                            backgroundColor: Color(0x1FC2652A),
-                            child: Icon(Icons.forum_outlined, color: PaletaSahara.primary, size: 20),
+                          leading: CircleAvatar(
+                            backgroundColor: c.primarySoft,
+                            child: Icon(Symbols.forum_rounded, color: c.primary, size: TamanhoIcone.pequeno),
                           ),
                           title: Text(obra.tituloDaObra, overflow: TextOverflow.ellipsis),
-                          subtitle: Text(obra.clienteNome, overflow: TextOverflow.ellipsis),
+                          subtitle: Text(
+                            obra.clienteNome,
+                            overflow: TextOverflow.ellipsis,
+                            style: texto.bodyMedium?.copyWith(color: c.inkMuted),
+                          ),
                           trailing: Badge(
                             label: Text('${controller.naoLidasDa(obra.id)}'),
-                            backgroundColor: Colors.red,
+                            backgroundColor: c.secondary,
+                            textColor: c.onSecondary,
                           ),
                           onTap: () {
                             Navigator.pop(ctx);
@@ -386,115 +356,83 @@ class _ObraListPageState extends State<ObraListPage> {
   }
 
   Widget _buildObraCard(Obra obra, DateFormat formatoData) {
-    final cor = _corStatus(obra.status);
     final progresso = obra.progresso / 100;
     final naoLidas = context.watch<ObraController>().naoLidasDa(obra.id);
+    final c = context.cores;
+    final texto = Theme.of(context).textTheme;
+    final estiloInfo = texto.bodyMedium?.copyWith(color: c.inkMuted);
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: PaletaSahara.cardSurface,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)],
-      ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: () => _abrirObra(obra),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Título + Status
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Text(obra.tituloDaObra, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis),
+    Widget linha(IconData icone, String valor) => Row(
+          children: [
+            Icon(icone, size: 16, color: c.inkMuted),
+            const SizedBox(width: 6),
+            Expanded(child: Text(valor, style: estiloInfo, overflow: TextOverflow.ellipsis)),
+          ],
+        );
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: Espaco.x4),
+      child: CardApp(
+        aoTocar: () => _abrirObra(obra),
+        padding: const EdgeInsets.all(Espaco.x5),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Título + Status
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    obra.tituloDaObra,
+                    style: texto.titleMedium,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  if (naoLidas > 0)
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: Tooltip(
-                        message: "$naoLidas mensagem(ns) nova(s) no chat",
-                        child: Badge(
-                          label: Text('$naoLidas'),
-                          backgroundColor: Colors.red,
-                          child: const Icon(Icons.forum_outlined, size: 20, color: PaletaSahara.primary),
-                        ),
-                      ),
-                    ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: cor.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(_iconeStatus(obra.status), size: 14, color: cor),
-                        const SizedBox(width: 4),
-                        Text(obra.status, style: TextStyle(color: cor, fontSize: 12, fontWeight: FontWeight.bold)),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-
-              // Cliente
-              Row(
-                children: [
-                  Icon(Icons.person_outline, size: 16, color: Colors.grey[500]),
-                  const SizedBox(width: 6),
-                  Text(obra.clienteNome, style: TextStyle(color: Colors.grey[600], fontSize: 13)),
-                ],
-              ),
-              const SizedBox(height: 4),
-
-              // Endereço
-              Row(
-                children: [
-                  Icon(Icons.location_on_outlined, size: 16, color: Colors.grey[500]),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(obra.endereco, style: TextStyle(color: Colors.grey[600], fontSize: 13), overflow: TextOverflow.ellipsis),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 4),
-
-              // Datas
-              Row(
-                children: [
-                  Icon(Icons.calendar_today, size: 16, color: Colors.grey[500]),
-                  const SizedBox(width: 6),
-                  Text("${formatoData.format(obra.dataInicio)} → ${formatoData.format(obra.dataPrevisaoTermino)}", style: TextStyle(color: Colors.grey[600], fontSize: 13)),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              // Barra de progresso
-              Row(
-                children: [
-                  Expanded(
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(6),
-                      child: LinearProgressIndicator(
-                        value: progresso,
-                        backgroundColor: Colors.grey[200],
-                        valueColor: AlwaysStoppedAnimation<Color>(cor),
-                        minHeight: 8,
+                ),
+                if (naoLidas > 0)
+                  Padding(
+                    padding: const EdgeInsets.only(right: Espaco.x2),
+                    child: Tooltip(
+                      message: "$naoLidas mensagem(ns) nova(s) no chat",
+                      child: Badge(
+                        label: Text('$naoLidas'),
+                        backgroundColor: c.secondary,
+                        textColor: c.onSecondary,
+                        child: Icon(Symbols.forum_rounded, size: TamanhoIcone.pequeno, color: c.primary),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Text("${obra.progresso.toStringAsFixed(0)}%", style: TextStyle(fontWeight: FontWeight.bold, color: cor, fontSize: 14)),
-                ],
-              ),
-            ],
-          ),
+                StatusChip(obra.status),
+              ],
+            ),
+            const SizedBox(height: Espaco.x2),
+
+            linha(Symbols.person_rounded, obra.clienteNome),
+            const SizedBox(height: Espaco.x1),
+            linha(Symbols.location_on_rounded, obra.endereco),
+            const SizedBox(height: Espaco.x1),
+            linha(
+              Symbols.calendar_today_rounded,
+              "${formatoData.format(obra.dataInicio)} → ${formatoData.format(obra.dataPrevisaoTermino)}",
+            ),
+            const SizedBox(height: Espaco.x4),
+
+            // Barra de progresso: trilho surfaceSunken, preenchimento brand (tema).
+            Row(
+              children: [
+                Expanded(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(Raio.pilula),
+                    child: LinearProgressIndicator(value: progresso, minHeight: 8),
+                  ),
+                ),
+                const SizedBox(width: Espaco.x3),
+                Text(
+                  "${obra.progresso.toStringAsFixed(0)}%",
+                  style: texto.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );

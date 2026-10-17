@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -8,7 +9,10 @@ import '../../dominio/entidades/obra.dart';
 import '../controllers/obra_controller.dart';
 import '../widgets/chat_obra_card.dart';
 import '../widgets/pdf_lista_materiais_acao.dart';
-import '../../../../core/tema/paleta_sahara.dart';
+import '../../../../apresentacao/widgets/card_app.dart';
+import '../../../../apresentacao/widgets/status_chip.dart';
+import '../../../../core/tema/cores_app.dart';
+import '../../../../core/tema/medidas_app.dart';
 import '../../../auth/apresentacao/controllers/auth_controller.dart';
 import '../../../auth/dominio/entidades/usuario.dart';
 import '../../../../apresentacao/widgets/campo_busca_selecao.dart';
@@ -47,15 +51,6 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
     });
   }
 
-  Color _corStatus(String status) {
-    switch (status) {
-      case 'Em Andamento': return Colors.green;
-      case 'Pausada': return Colors.orange;
-      case 'Concluída': return Colors.blue;
-      default: return Colors.grey;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final controller = context.watch<ObraController>();
@@ -65,6 +60,7 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
     // Só o responsável técnico (Gerente/Administrador) confirma mudanças de
     // status e mexe na equipe alocada — Funcionário só acompanha.
     final podeGerenciarObra = !ehFuncionario;
+    final c = context.cores;
 
     // Item 2.1: só decide "acesso restrito" com as alocações DELE carregadas.
     final idFuncionario = ehFuncionario ? usuarioLogado?.id : null;
@@ -73,14 +69,8 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
 
     if (controller.carregando || aguardandoAlocacoes) {
       return Scaffold(
-        backgroundColor: PaletaSahara.background,
-        appBar: AppBar(
-          title: const Text("Detalhes da Obra", style: TextStyle(fontWeight: FontWeight.bold)),
-          backgroundColor: PaletaSahara.cardSurface,
-          foregroundColor: PaletaSahara.onSurface,
-          elevation: 0.5,
-        ),
-        body: const Center(child: CircularProgressIndicator(color: PaletaSahara.primary)),
+        appBar: AppBar(title: const Text("Detalhes da Obra")),
+        body: const Center(child: CircularProgressIndicator()),
       );
     }
 
@@ -88,27 +78,21 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
     // mesmo navegando direto (não é só esconder da lista).
     if (ehFuncionario && !controller.obraIdsAlocados.contains(widget.obra.id)) {
       return Scaffold(
-        backgroundColor: PaletaSahara.background,
-        appBar: AppBar(
-          title: const Text("Acesso restrito", style: TextStyle(fontWeight: FontWeight.bold)),
-          backgroundColor: PaletaSahara.cardSurface,
-          foregroundColor: PaletaSahara.onSurface,
-          elevation: 0.5,
-        ),
+        appBar: AppBar(title: const Text("Acesso restrito")),
         body: Center(
           child: Padding(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(Espaco.x6),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.lock_outline, size: 56, color: Colors.grey),
-                const SizedBox(height: 16),
-                const Text(
+                Icon(Symbols.lock_rounded, size: 56, color: c.inkMuted),
+                const SizedBox(height: Espaco.x4),
+                Text(
                   'Você não está alocado nesta obra.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 16),
+                  style: Theme.of(context).textTheme.bodyLarge,
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: Espaco.x6),
                 OutlinedButton(
                   onPressed: () => Navigator.of(context).pop(),
                   child: const Text('Voltar'),
@@ -122,7 +106,6 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
 
     // Encontrar a versão mais atualizada desta obra
     final obraAtual = controller.obras.where((o) => o.id == widget.obra.id).firstOrNull ?? widget.obra;
-    final cor = _corStatus(obraAtual.status);
 
     if (widget.rolarParaChat && !_rolouParaChat) {
       _rolouParaChat = true;
@@ -135,30 +118,26 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
     }
 
     return Scaffold(
-      backgroundColor: PaletaSahara.background,
       appBar: AppBar(
-        title: const Text("Detalhes da Obra", style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: PaletaSahara.cardSurface,
-        foregroundColor: PaletaSahara.onSurface,
-        elevation: 0.5,
+        title: const Text("Detalhes da Obra"),
         actions: [
           if (podeGerenciarObra)
             IconButton(
-              icon: const Icon(Icons.edit_outlined),
+              icon: const Icon(Symbols.edit_rounded),
               tooltip: "Editar obra",
               onPressed: () => Navigator.pushNamed(context, '/obra-formulario', arguments: obraAtual),
             ),
           if (podeGerenciarObra && obraAtual.status == 'Concluída')
-            const Padding(
-              padding: EdgeInsets.only(right: 12),
+            Padding(
+              padding: const EdgeInsets.only(right: Espaco.x3),
               child: Tooltip(
                 message: "Obra concluída: status definitivo",
-                child: Icon(Icons.lock_outline, color: PaletaSahara.onSurfaceMuted),
+                child: Icon(Symbols.lock_rounded, color: c.inkMuted),
               ),
             )
           else if (podeGerenciarObra)
             PopupMenuButton<String>(
-              icon: const Icon(Icons.more_vert),
+              icon: const Icon(Symbols.more_vert_rounded),
               onSelected: (status) => _atualizarStatus(context, obraAtual, controller, status),
               itemBuilder: (context) => [
                 'Não Iniciada', 'Em Andamento', 'Pausada', 'Concluída',
@@ -168,45 +147,45 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(Espaco.margemTela),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // === CABEÇALHO ===
-            _buildCabecalho(obraAtual, cor, formatoData, context),
-            const SizedBox(height: 24),
+            _buildCabecalho(obraAtual, formatoData, context),
+            const SizedBox(height: Espaco.x6),
 
             // === BARRA DE PROGRESSO ===
-            _buildProgressoCard(obraAtual, cor),
-            const SizedBox(height: 24),
+            _buildProgressoCard(obraAtual),
+            const SizedBox(height: Espaco.x6),
 
             // === EQUIPE ALOCADA ===
-            _sectionTitle("Equipe Alocada", Icons.groups_outlined),
-            const SizedBox(height: 12),
+            _sectionTitle("Equipe Alocada", Symbols.groups_rounded),
+            const SizedBox(height: Espaco.x3),
             _buildEquipeCard(context, obraAtual, controller, podeGerenciarObra),
-            const SizedBox(height: 24),
+            const SizedBox(height: Espaco.x6),
 
             // === CHECKLIST DE ETAPAS ===
-            _sectionTitle("Checklist de Etapas", Icons.checklist),
-            const SizedBox(height: 12),
+            _sectionTitle("Checklist de Etapas", Symbols.checklist_rounded),
+            const SizedBox(height: Espaco.x3),
             _buildChecklistCard(context, obraAtual, controller),
-            const SizedBox(height: 24),
+            const SizedBox(height: Espaco.x6),
 
 
             // === LISTA DE MATERIAIS (etapa 6b — só leitura; edição pelo lápis) ===
             if (podeGerenciarObra) ...[
-              _sectionTitle("Lista de Materiais", Icons.inventory_2_outlined),
-              const SizedBox(height: 12),
+              _sectionTitle("Lista de Materiais", Symbols.inventory_2_rounded),
+              const SizedBox(height: Espaco.x3),
               _buildListaMateriaisCard(context, obraAtual),
-              const SizedBox(height: 24),
+              const SizedBox(height: Espaco.x6),
             ],
 
             // === CHAT DA OBRA (item 2.3) ===
             if (obraAtual.id != null) ...[
-              KeyedSubtree(key: _chaveChat, child: _sectionTitle("Chat da Obra", Icons.forum_outlined)),
-              const SizedBox(height: 12),
+              KeyedSubtree(key: _chaveChat, child: _sectionTitle("Chat da Obra", Symbols.forum_rounded)),
+              const SizedBox(height: Espaco.x3),
               ChatObraCard(obraId: obraAtual.id!),
-              const SizedBox(height: 24),
+              const SizedBox(height: Espaco.x6),
             ],
           ],
         ),
@@ -215,58 +194,54 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
   }
 
   Widget _sectionTitle(String t, IconData ic) => Row(children: [
-    Icon(ic, size: 20, color: Colors.grey[700]), const SizedBox(width: 8),
-    Text(t, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+    Icon(ic, size: TamanhoIcone.pequeno, color: context.cores.primary), const SizedBox(width: Espaco.x2),
+    Text(t, style: Theme.of(context).textTheme.titleMedium),
   ]);
 
-  Widget _card({required Widget child}) => Container(
-    width: double.infinity, padding: const EdgeInsets.all(20),
-    decoration: BoxDecoration(color: PaletaSahara.cardSurface, borderRadius: BorderRadius.circular(12),
-      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)]),
-    child: child,
+  Widget _card({required Widget child}) => SizedBox(
+    width: double.infinity,
+    child: CardApp(padding: const EdgeInsets.all(Espaco.x5), child: child),
   );
 
   // --- CABEÇALHO ---
-  Widget _buildCabecalho(Obra obraAtual, Color cor, DateFormat fmt, BuildContext context) {
+  Widget _buildCabecalho(Obra obraAtual, DateFormat fmt, BuildContext context) {
+    final c = context.cores;
+    final texto = Theme.of(context).textTheme;
+
     return _card(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Text(obraAtual.tituloDaObra, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(color: cor.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(8)),
-                child: Text(obraAtual.status, style: TextStyle(color: cor, fontWeight: FontWeight.bold, fontSize: 13)),
-              ),
+              Expanded(child: Text(obraAtual.tituloDaObra, style: texto.titleLarge)),
+              const SizedBox(width: Espaco.x2),
+              StatusChip(obraAtual.status),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: Espaco.x4),
 
           // Cliente
-          _infoRow(Icons.person_outline, "Cliente", obraAtual.clienteNome),
+          _infoRow(Symbols.person_rounded, "Cliente", obraAtual.clienteNome),
           const SizedBox(height: 10),
 
           // Endereço com botão de mapa
           Row(
             children: [
-              Icon(Icons.location_on_outlined, size: 18, color: Colors.grey[500]),
-              const SizedBox(width: 8),
+              Icon(Symbols.location_on_rounded, size: TamanhoIcone.pequeno, color: c.inkMuted),
+              const SizedBox(width: Espaco.x2),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text("Endereço", style: TextStyle(color: Colors.grey[500], fontSize: 12)),
-                    Text(obraAtual.endereco, style: const TextStyle(fontSize: 14)),
+                    Text("Endereço", style: _legenda()),
+                    Text(obraAtual.endereco, style: texto.bodyMedium),
                   ],
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.directions_outlined, color: Colors.blue),
+                icon: Icon(Symbols.directions_rounded, color: c.info),
                 tooltip: "Como chegar",
                 onPressed: () => _abrirMapa(obraAtual),
               ),
@@ -274,32 +249,35 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
           ),
           if (obraAtual.temCoordenadas) ...[
             const SizedBox(height: 10),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: SizedBox(
-                height: 160,
-                child: IgnorePointer(
-                  child: FlutterMap(
-                    options: MapOptions(
-                      initialCenter: LatLng(obraAtual.latitude!, obraAtual.longitude!),
-                      initialZoom: 15,
-                      interactionOptions: const InteractionOptions(flags: InteractiveFlag.none),
-                    ),
-                    children: [
-                      TileLayer(
-                        urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                        userAgentPackageName: 'com.paintmanager.app',
-                      ),
-                      MarkerLayer(markers: [
-                        Marker(
-                          point: LatLng(obraAtual.latitude!, obraAtual.longitude!),
-                          width: 36,
-                          height: 36,
-                          child: const Icon(Icons.location_pin, color: Colors.red, size: 36),
-                        ),
-                      ]),
-                    ],
+            // Os blocos do OpenStreetMap são sempre claros; aqui só borda e cantos.
+            Container(
+              height: 160,
+              clipBehavior: Clip.antiAlias,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(Raio.botao),
+                border: Border.all(color: c.border),
+              ),
+              child: IgnorePointer(
+                child: FlutterMap(
+                  options: MapOptions(
+                    initialCenter: LatLng(obraAtual.latitude!, obraAtual.longitude!),
+                    initialZoom: 15,
+                    interactionOptions: const InteractionOptions(flags: InteractiveFlag.none),
                   ),
+                  children: [
+                    TileLayer(
+                      urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      userAgentPackageName: 'com.paintmanager.app',
+                    ),
+                    MarkerLayer(markers: [
+                      Marker(
+                        point: LatLng(obraAtual.latitude!, obraAtual.longitude!),
+                        width: 36,
+                        height: 36,
+                        child: Icon(Symbols.location_on_rounded, fill: 1, color: c.error, size: 36),
+                      ),
+                    ]),
+                  ],
                 ),
               ),
             ),
@@ -309,37 +287,42 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
           // Datas
           Row(
             children: [
-              Expanded(child: _infoRow(Icons.calendar_today, "Início", fmt.format(obraAtual.dataInicio))),
-              Expanded(child: _infoRow(Icons.event, "Previsão", fmt.format(obraAtual.dataPrevisaoTermino))),
+              Expanded(child: _infoRow(Symbols.calendar_today_rounded, "Início", fmt.format(obraAtual.dataInicio))),
+              Expanded(child: _infoRow(Symbols.event_rounded, "Previsão", fmt.format(obraAtual.dataPrevisaoTermino))),
             ],
           ),
           if (obraAtual.dataConclusao != null) ...[
             const SizedBox(height: 10),
-            _infoRow(Icons.check_circle_outline, "Concluída em", fmt.format(obraAtual.dataConclusao!)),
+            _infoRow(Symbols.check_circle_rounded, "Concluída em", fmt.format(obraAtual.dataConclusao!)),
           ],
         ],
       ),
     );
   }
 
+  TextStyle? _legenda() =>
+      Theme.of(context).textTheme.bodySmall?.copyWith(color: context.cores.inkMuted, letterSpacing: 0);
+
   Widget _infoRow(IconData ic, String label, String value) => Row(
     children: [
-      Icon(ic, size: 18, color: Colors.grey[500]),
-      const SizedBox(width: 8),
+      Icon(ic, size: TamanhoIcone.pequeno, color: context.cores.inkMuted),
+      const SizedBox(width: Espaco.x2),
       Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: TextStyle(color: Colors.grey[500], fontSize: 12)),
-          Text(value, style: const TextStyle(fontSize: 14)),
+          Text(label, style: _legenda()),
+          Text(value, style: Theme.of(context).textTheme.bodyMedium),
         ],
       ),
     ],
   );
 
   // --- PROGRESSO ---
-  Widget _buildProgressoCard(Obra obraAtual, Color cor) {
+  Widget _buildProgressoCard(Obra obraAtual) {
     final concluidas = obraAtual.etapasServico.where((e) => e.concluida).length;
     final total = obraAtual.etapasServico.length;
+    final c = context.cores;
+    final texto = Theme.of(context).textTheme;
 
     return _card(
       child: Column(
@@ -348,23 +331,21 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text("Progresso Geral", style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
-              Text("$concluidas/$total etapas", style: TextStyle(color: Colors.grey[600], fontSize: 13)),
+              Text("Progresso Geral", style: texto.bodyLarge?.copyWith(fontWeight: FontWeight.w700)),
+              Text("$concluidas/$total etapas", style: texto.bodyMedium?.copyWith(color: c.inkMuted)),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: Espaco.x3),
+          // Trilho surfaceSunken e preenchimento brand vêm do tema.
           ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: LinearProgressIndicator(
-              value: obraAtual.progresso / 100,
-              backgroundColor: Colors.grey[200],
-              valueColor: AlwaysStoppedAnimation<Color>(cor),
-              minHeight: 12,
-            ),
+            borderRadius: BorderRadius.circular(Raio.pilula),
+            child: LinearProgressIndicator(value: obraAtual.progresso / 100, minHeight: 12),
           ),
-          const SizedBox(height: 8),
-          Text("${obraAtual.progresso.toStringAsFixed(0)}% concluído",
-              style: TextStyle(color: cor, fontWeight: FontWeight.bold, fontSize: 16)),
+          const SizedBox(height: Espaco.x2),
+          Text(
+            "${obraAtual.progresso.toStringAsFixed(0)}% concluído",
+            style: texto.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
+          ),
         ],
       ),
     );
@@ -373,6 +354,8 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
   // --- EQUIPE ALOCADA (RF010) ---
   Widget _buildEquipeCard(BuildContext context, Obra obraAtual, ObraController controller, bool podeGerenciar) {
     final equipe = controller.equipeObraAtual;
+    final c = context.cores;
+    final texto = Theme.of(context).textTheme;
 
     return _card(
       child: Column(
@@ -381,47 +364,41 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
           if (controller.carregandoEquipe)
             const Center(
               child: Padding(
-                padding: EdgeInsets.all(8),
-                child: CircularProgressIndicator(color: PaletaSahara.primary, strokeWidth: 2),
+                padding: EdgeInsets.all(Espaco.x2),
+                child: CircularProgressIndicator(strokeWidth: 2),
               ),
             )
           else if (equipe.isEmpty)
-            Text("Nenhum funcionário alocado.", style: TextStyle(color: Colors.grey[500], fontSize: 13))
+            Text("Nenhum funcionário alocado.", style: texto.bodyMedium?.copyWith(color: c.inkMuted))
           else
             Wrap(
-              spacing: 8,
-              runSpacing: 8,
+              spacing: Espaco.x2,
+              runSpacing: Espaco.x2,
               children: equipe.map((u) {
                 return Chip(
                   avatar: CircleAvatar(
-                    backgroundColor: PaletaSahara.primary,
+                    backgroundColor: c.primary,
                     child: Text(
                       u.nome.isNotEmpty ? u.nome[0].toUpperCase() : '?',
-                      style: const TextStyle(color: Colors.white, fontSize: 12),
+                      style: texto.labelSmall?.copyWith(color: c.onPrimary, letterSpacing: 0),
                     ),
                   ),
-                  label: Text(u.nome, style: const TextStyle(fontSize: 13)),
+                  label: Text(u.nome, style: texto.bodyMedium),
                   onDeleted: podeGerenciar && obraAtual.id != null && u.id != null
                       ? () => controller.desalocarFuncionario(obraAtual.id!, u.id!)
                       : null,
-                  backgroundColor: PaletaSahara.primary.withValues(alpha: 0.08),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    side: BorderSide(color: PaletaSahara.primary.withValues(alpha: 0.25)),
-                  ),
+                  backgroundColor: c.primarySoft,
+                  side: BorderSide.none,
+                  shape: const StadiumBorder(),
                 );
               }).toList(),
             ),
           if (podeGerenciar) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: Espaco.x3),
             OutlinedButton.icon(
               onPressed: () => _mostrarSelecionarFuncionario(context, obraAtual, controller),
-              icon: const Icon(Icons.person_add_alt_1, size: 18),
+              icon: const Icon(Symbols.person_add_rounded, size: TamanhoIcone.pequeno),
               label: const Text("Adicionar funcionário"),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: PaletaSahara.primary,
-                side: const BorderSide(color: PaletaSahara.primary),
-              ),
             ),
           ],
         ],
@@ -432,30 +409,31 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
   void _mostrarSelecionarFuncionario(BuildContext context, Obra obraAtual, ObraController obraController) {
     if (obraAtual.id == null) return;
     final obraId = obraAtual.id!;
+    final texto = Theme.of(context).textTheme;
+    final c = context.cores;
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
       builder: (ctx) => SafeArea(
         child: Padding(
           // Sobe o painel junto com o teclado para a lista não ficar escondida.
-          padding: EdgeInsets.fromLTRB(20, 20, 20, 20 + MediaQuery.of(ctx).viewInsets.bottom),
+          padding: EdgeInsets.fromLTRB(Espaco.x5, Espaco.x5, Espaco.x5, Espaco.x5 + MediaQuery.of(ctx).viewInsets.bottom),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text("Adicionar funcionário", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 4),
+              Text("Adicionar funcionário", style: texto.titleMedium),
+              const SizedBox(height: Espaco.x1),
               Text(
                 "Funcionários ativos que ainda não estão nesta obra.",
-                style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                style: texto.bodyMedium?.copyWith(color: c.inkMuted),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: Espaco.x4),
               CampoBuscaSelecao<Usuario>(
                 rotulo: "Pesquisar funcionário",
                 dica: "Digite o nome...",
-                icone: Icons.person_search_outlined,
+                icone: Symbols.person_search_rounded,
                 autofocus: true,
                 buscar: (termo) => obraController.buscarFuncionariosDisponiveis(obraId, termo),
                 tituloDe: (u) => u.nome,
@@ -474,6 +452,8 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
   // --- CHECKLIST DE ETAPAS ---
   Widget _buildChecklistCard(BuildContext context, Obra obraAtual, ObraController controller) {
     final bloqueada = obraAtual.status == 'Concluída';
+    final c = context.cores;
+    final texto = Theme.of(context).textTheme;
 
     return _card(
       child: Column(
@@ -481,65 +461,67 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
           if (bloqueada)
             Container(
               width: double.infinity,
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              margin: const EdgeInsets.only(bottom: Espaco.x3),
+              padding: const EdgeInsets.symmetric(horizontal: Espaco.x3, vertical: 10),
               decoration: BoxDecoration(
-                color: Colors.blue.withValues(alpha: 0.06),
-                borderRadius: BorderRadius.circular(8),
+                color: c.infoSoft,
+                borderRadius: BorderRadius.circular(Raio.campo),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.lock_outline, size: 16, color: Colors.blue[700]),
-                  const SizedBox(width: 8),
-                  Text("Obra concluída: etapas bloqueadas",
-                      style: TextStyle(fontSize: 13, color: Colors.blue[800])),
+                  Icon(Symbols.lock_rounded, size: 16, color: c.info),
+                  const SizedBox(width: Espaco.x2),
+                  Expanded(
+                    child: Text(
+                      "Obra concluída: etapas bloqueadas",
+                      style: texto.bodyMedium?.copyWith(color: c.info),
+                    ),
+                  ),
                 ],
               ),
             ),
           ...List.generate(obraAtual.etapasServico.length, (i) {
           final etapa = obraAtual.etapasServico[i];
           return Container(
-            margin: EdgeInsets.only(bottom: i < obraAtual.etapasServico.length - 1 ? 8 : 0),
+            margin: EdgeInsets.only(bottom: i < obraAtual.etapasServico.length - 1 ? Espaco.x2 : 0),
             child: Material(
-              color: etapa.concluida ? Colors.green.withValues(alpha: 0.06) : Colors.grey[50],
-              borderRadius: BorderRadius.circular(10),
+              color: etapa.concluida ? c.successSoft : c.surfaceSunken,
+              borderRadius: BorderRadius.circular(Raio.botao),
               child: InkWell(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(Raio.botao),
                 // Área de toque grande para canteiro de obras
                 onTap: bloqueada ? null : () => controller.alternarEtapa(obraAtual, i),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  padding: const EdgeInsets.symmetric(horizontal: Espaco.x4, vertical: 14),
                   child: Row(
                     children: [
                       // Checkbox grande para facilitar uso com mãos sujas
                       Container(
                         width: 28, height: 28,
                         decoration: BoxDecoration(
-                          color: etapa.concluida ? Colors.green : Colors.white,
+                          color: etapa.concluida ? c.success : c.surfaceCard,
                           borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: etapa.concluida ? Colors.green : Colors.grey[400]!, width: 2),
+                          border: Border.all(color: etapa.concluida ? c.success : c.decor, width: 2),
                         ),
                         child: etapa.concluida
-                            ? const Icon(Icons.check, color: Colors.white, size: 18)
+                            ? Icon(Symbols.check_rounded, color: c.surfaceCard, size: 18)
                             : null,
                       ),
                       const SizedBox(width: 14),
                       Expanded(
                         child: Text(
                           etapa.nome,
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500,
+                          style: texto.bodyLarge?.copyWith(
                             decoration: etapa.concluida ? TextDecoration.lineThrough : null,
-                            color: etapa.concluida ? Colors.grey[500] : PaletaSahara.onSurface,
+                            color: etapa.concluida ? c.inkMuted : c.ink,
                           ),
                         ),
                       ),
                       Text(
                         etapa.concluida ? "Concluído" : "Pendente",
-                        style: TextStyle(
-                          fontSize: 12, fontWeight: FontWeight.w600,
-                          color: etapa.concluida ? Colors.green : Colors.orange,
+                        style: texto.labelSmall?.copyWith(
+                          letterSpacing: 0,
+                          color: etapa.concluida ? c.success : c.warning,
                         ),
                       ),
                     ],
@@ -556,14 +538,18 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
 
   Widget _buildListaMateriaisCard(BuildContext context, Obra obraAtual) {
     final materiais = obraAtual.listaMateriais;
+    final c = context.cores;
+    final texto = Theme.of(context).textTheme;
 
     return _card(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (materiais.isEmpty)
-            Text("Nenhum material na lista. Use o lápis para adicionar.",
-                style: TextStyle(color: Colors.grey[500], fontSize: 13))
+            Text(
+              "Nenhum material na lista. Use o lápis para adicionar.",
+              style: texto.bodyMedium?.copyWith(color: c.inkMuted),
+            )
           else ...[
             for (final (i, item) in materiais.indexed)
               Padding(
@@ -573,34 +559,28 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
                   children: [
                     SizedBox(
                       width: 24,
-                      child: Text("${i + 1}.", style: TextStyle(fontSize: 13, color: Colors.grey[600])),
+                      child: Text("${i + 1}.", style: texto.bodyMedium?.copyWith(color: c.inkMuted)),
                     ),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(item.descricao, style: const TextStyle(fontSize: 14)),
+                          Text(item.descricao, style: texto.bodyMedium),
                           if (item.quantidadeComUnidade.isNotEmpty)
-                            Text(item.quantidadeComUnidade,
-                                style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                            Text(item.quantidadeComUnidade, style: _legenda()),
                         ],
                       ),
                     ),
                   ],
                 ),
               ),
-            const SizedBox(height: 16),
+            const SizedBox(height: Espaco.x4),
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
                 onPressed: () => gerarECompartilharPdfListaMateriais(context, obraAtual),
-                icon: const Icon(Icons.picture_as_pdf_outlined, size: 18),
+                icon: const Icon(Symbols.picture_as_pdf_rounded, size: TamanhoIcone.pequeno),
                 label: const Text("Gerar PDF"),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: PaletaSahara.primary,
-                  side: const BorderSide(color: PaletaSahara.primary),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                ),
               ),
             ),
           ],
@@ -625,13 +605,14 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
       marcarEtapasPendentes: marcarPendentes,
     );
     if (context.mounted) {
+      final c = context.cores;
       if (erro != null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(erro), backgroundColor: Colors.red, behavior: SnackBarBehavior.floating),
+          SnackBar(content: Text(erro, style: TextStyle(color: c.onError)), backgroundColor: c.error),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Status atualizado para: $novoStatus"), backgroundColor: Colors.green, behavior: SnackBarBehavior.floating),
+          SnackBar(content: Text("Status atualizado para: $novoStatus")),
         );
       }
     }
@@ -649,12 +630,8 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text("Cancelar")),
-          ElevatedButton(
+          FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: PaletaSahara.primary,
-              foregroundColor: Colors.white,
-            ),
             child: Text(pendentes > 0 ? "Marcar todas e concluir" : "Concluir"),
           ),
         ],

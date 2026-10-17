@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../dominio/entidades/obra.dart';
@@ -7,7 +8,9 @@ import '../../dominio/entidades/item_material.dart';
 import '../../../clientes/dominio/entidades/cliente.dart';
 import '../controllers/obra_controller.dart';
 import '../../../clientes/apresentacao/controllers/cliente_controller.dart';
-import '../../../../core/tema/paleta_sahara.dart';
+import '../../../../apresentacao/widgets/card_app.dart';
+import '../../../../core/tema/cores_app.dart';
+import '../../../../core/tema/medidas_app.dart';
 import '../../../../core/servicos/geocodificacao_service.dart';
 import '../../../../apresentacao/widgets/campo_busca_selecao.dart';
 import '../../../../apresentacao/widgets/campo_data.dart';
@@ -125,29 +128,24 @@ class _ObraFormPageState extends State<ObraFormPage> {
     return true;
   }
 
-  void _avisarMaterial(String mensagem) {
+  void _avisarMaterial(String mensagem) => _avisarErro(mensagem);
+
+  void _avisarErro(String mensagem) {
+    final c = context.cores;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(mensagem), backgroundColor: Colors.red, behavior: SnackBarBehavior.floating),
+      SnackBar(content: Text(mensagem, style: TextStyle(color: c.onError)), backgroundColor: c.error),
     );
   }
 
   void _salvar() async {
     if (_formKey.currentState!.validate()) {
       if (_clienteSelecionadoId == null && widget.obraParaEdicao == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Selecione um cliente."), backgroundColor: Colors.red, behavior: SnackBarBehavior.floating),
-        );
+        _avisarErro("Selecione um cliente.");
         return;
       }
 
       if (DateUtils.dateOnly(_dataPrevisao).isBefore(DateUtils.dateOnly(_dataInicio))) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("A previsão de término não pode ser anterior à data de início."),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        _avisarErro("A previsão de término não pode ser anterior à data de início.");
         return;
       }
 
@@ -198,7 +196,7 @@ class _ObraFormPageState extends State<ObraFormPage> {
         await controller.salvar(obra);
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Obra salva com sucesso!"), backgroundColor: Colors.green, behavior: SnackBarBehavior.floating),
+          const SnackBar(content: Text("Obra salva com sucesso!")),
         );
         // Etapa 6b: com materiais na lista, oferece o PDF na hora (pode recusar).
         if (obra.listaMateriais.isNotEmpty) {
@@ -211,11 +209,7 @@ class _ObraFormPageState extends State<ObraFormPage> {
         }
         if (mounted) Navigator.pop(context);
       } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Erro ao salvar: $e"), backgroundColor: Colors.red, behavior: SnackBarBehavior.floating),
-          );
-        }
+        if (mounted) _avisarErro("Erro ao salvar: $e");
       }
     }
   }
@@ -225,99 +219,93 @@ class _ObraFormPageState extends State<ObraFormPage> {
     final isEdicao = widget.obraParaEdicao != null;
     final carregando = context.watch<ObraController>().carregando;
 
+    final c = context.cores;
+    final texto = Theme.of(context).textTheme;
+
     return Scaffold(
-      backgroundColor: PaletaSahara.background,
-      appBar: AppBar(
-        title: Text(isEdicao ? "Editar Obra" : "Nova Obra", style: const TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: PaletaSahara.cardSurface,
-        foregroundColor: PaletaSahara.onSurface,
-        elevation: 0.5,
-      ),
+      appBar: AppBar(title: Text(isEdicao ? "Editar Obra" : "Nova Obra")),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(Espaco.margemTela),
         child: Form(
           key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // === SEÇÃO 1: CLIENTE ===
-              _sectionTitle("Dados do Cliente", Icons.person_outline),
-              const SizedBox(height: 12),
+              _sectionTitle("Dados do Cliente", Symbols.person_rounded),
+              const SizedBox(height: Espaco.x3),
               _card(child: isEdicao
                   ? _readOnlyField("Cliente", widget.obraParaEdicao!.clienteNome)
                   : _clienteDropdown()),
-              const SizedBox(height: 24),
+              const SizedBox(height: Espaco.x6),
 
               // === SEÇÃO 2: DADOS DA OBRA ===
-              _sectionTitle("Dados da Obra", Icons.construction),
-              const SizedBox(height: 12),
+              _sectionTitle("Dados da Obra", Symbols.construction_rounded),
+              const SizedBox(height: Espaco.x3),
               _card(
                 child: Column(
                   children: [
-                    _textField("Título da Obra", _tituloController, Icons.title, "Ex: Pintura Externa Casa Centro"),
-                    const SizedBox(height: 16),
-                    _textField("Endereço", _enderecoController, Icons.location_on_outlined, "Rua, Número, Bairro, Cidade"),
-                    const SizedBox(height: 16),
+                    _textField("Título da Obra", _tituloController, Symbols.title_rounded, "Ex: Pintura Externa Casa Centro"),
+                    const SizedBox(height: Espaco.x4),
+                    _textField("Endereço", _enderecoController, Symbols.location_on_rounded, "Rua, Número, Bairro, Cidade"),
+                    const SizedBox(height: Espaco.x4),
                     _periodoDaObra(),
                   ],
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: Espaco.x6),
 
               // === SEÇÃO 3: ETAPAS ===
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _sectionTitle("Etapas do Serviço", Icons.checklist),
+                  Flexible(child: _sectionTitle("Etapas do Serviço", Symbols.checklist_rounded)),
                   if (!_obraConcluida)
                     TextButton.icon(
                       onPressed: _adicionarEtapa,
-                      icon: const Icon(Icons.add_circle_outline, size: 18),
+                      icon: const Icon(Symbols.add_circle_rounded, size: TamanhoIcone.pequeno),
                       label: const Text("Adicionar"),
-                      style: TextButton.styleFrom(foregroundColor: PaletaSahara.primary),
                     ),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: Espaco.x3),
               if (_obraConcluida)
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.only(bottom: Espaco.x2),
                   child: Row(
                     children: [
-                      Icon(Icons.lock_outline, size: 16, color: Colors.blue[700]),
-                      const SizedBox(width: 8),
-                      Text("Obra concluída: etapas bloqueadas",
-                          style: TextStyle(fontSize: 13, color: Colors.blue[800])),
+                      Icon(Symbols.lock_rounded, size: 16, color: c.info),
+                      const SizedBox(width: Espaco.x2),
+                      Expanded(
+                        child: Text(
+                          "Obra concluída: etapas bloqueadas",
+                          style: texto.bodyMedium?.copyWith(color: c.info),
+                        ),
+                      ),
                     ],
                   ),
                 ),
               ...List.generate(_etapasControllers.length, (i) => _etapaCard(i)),
-              const SizedBox(height: 24),
+              const SizedBox(height: Espaco.x6),
 
               // === SEÇÃO 4: LISTA DE MATERIAIS ===
-              _sectionTitle("Lista de Materiais", Icons.inventory_2_outlined),
-              const SizedBox(height: 12),
+              _sectionTitle("Lista de Materiais", Symbols.inventory_2_rounded),
+              const SizedBox(height: Espaco.x3),
               _card(child: _listaMateriaisEditor()),
-              const SizedBox(height: 32),
+              const SizedBox(height: Espaco.x8),
 
               // === BOTÃO SALVAR ===
               SizedBox(
                 width: double.infinity,
-                height: 52,
-                child: ElevatedButton.icon(
+                child: FilledButton.icon(
                   onPressed: carregando ? null : _salvar,
                   icon: carregando
-                      ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : const Icon(Icons.save_outlined, size: 20),
-                  label: Text(carregando ? "Salvando..." : "Salvar Obra", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: PaletaSahara.primary,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  ),
+                      ? SizedBox(height: 18, width: 18, child: CircularProgressIndicator(color: c.inkMuted, strokeWidth: 2))
+                      : const Icon(Symbols.save_rounded, size: TamanhoIcone.pequeno),
+                  label: Text(carregando ? "Salvando..." : "Salvar Obra"),
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: Espaco.x6),
             ],
           ),
         ),
@@ -327,16 +315,14 @@ class _ObraFormPageState extends State<ObraFormPage> {
 
   // --- WIDGETS AUXILIARES ---
 
-  Widget _sectionTitle(String t, IconData ic) => Row(children: [
-    Icon(ic, size: 20, color: Colors.grey[700]), const SizedBox(width: 8),
-    Text(t, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+  Widget _sectionTitle(String t, IconData ic) => Row(mainAxisSize: MainAxisSize.min, children: [
+    Icon(ic, size: TamanhoIcone.pequeno, color: context.cores.primary), const SizedBox(width: Espaco.x2),
+    Flexible(child: Text(t, style: Theme.of(context).textTheme.titleMedium)),
   ]);
 
-  Widget _card({required Widget child}) => Container(
-    width: double.infinity, padding: const EdgeInsets.all(20),
-    decoration: BoxDecoration(color: PaletaSahara.cardSurface, borderRadius: BorderRadius.circular(12),
-      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)]),
-    child: child,
+  Widget _card({required Widget child}) => SizedBox(
+    width: double.infinity,
+    child: CardApp(padding: const EdgeInsets.all(Espaco.x5), child: child),
   );
 
   Widget _clienteDropdown() {
@@ -345,7 +331,7 @@ class _ObraFormPageState extends State<ObraFormPage> {
     return CampoBuscaSelecao<Cliente>(
       rotulo: "Pesquisar Cliente",
       dica: "Nome, CPF ou telefone do cliente...",
-      icone: Icons.person_search_outlined,
+      icone: Symbols.person_search_rounded,
       mensagemObrigatorio: "Selecione um cliente",
       buscar: clienteController.buscar,
       tituloDe: (c) => c.nome,
@@ -361,21 +347,23 @@ class _ObraFormPageState extends State<ObraFormPage> {
     );
   }
 
+  // Campos: fundo, borda, foco e erro vêm do tema (InputDecorationTheme).
   Widget _readOnlyField(String label, String value) => TextFormField(
     initialValue: value, readOnly: true,
-    decoration: InputDecoration(labelText: label, prefixIcon: Icon(Icons.person_outline, size: 20, color: Colors.grey[600]),
-      filled: true, fillColor: Colors.grey[100],
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none)),
+    decoration: InputDecoration(
+      labelText: label,
+      prefixIcon: const Icon(Symbols.person_rounded, size: TamanhoIcone.pequeno),
+      fillColor: context.cores.disabledBg,
+    ),
   );
 
   Widget _textField(String label, TextEditingController c, IconData ic, String hint) => TextFormField(
     controller: c,
-    decoration: InputDecoration(labelText: label, hintText: hint, hintStyle: TextStyle(color: Colors.grey[400]),
-      prefixIcon: Icon(ic, size: 20, color: Colors.grey[600]),
-      filled: true, fillColor: Colors.grey[50],
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
-      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
-      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: PaletaSahara.primary, width: 1.5))),
+    decoration: InputDecoration(
+      labelText: label,
+      hintText: hint,
+      prefixIcon: Icon(ic, size: TamanhoIcone.pequeno),
+    ),
     validator: (v) => v == null || v.isEmpty ? "Campo obrigatório" : null,
   );
 
@@ -387,15 +375,15 @@ class _ObraFormPageState extends State<ObraFormPage> {
       children: [
         Row(
           children: [
-            const Text("Período da obra", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+            Text("Período da obra", style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700)),
             const Spacer(),
             Text(
               dias == 1 ? "1 dia" : "$dias dias",
-              style: const TextStyle(fontSize: 12, color: PaletaSahara.onSurfaceMuted),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: context.cores.inkMuted, letterSpacing: 0),
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: Espaco.x2),
         Row(
           children: [
             Expanded(
@@ -406,16 +394,16 @@ class _ObraFormPageState extends State<ObraFormPage> {
                 aoMudar: _mudarInicio,
               ),
             ),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 6),
-              child: Icon(Icons.arrow_forward, size: 18, color: PaletaSahara.onSurfaceMuted),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6),
+              child: Icon(Symbols.arrow_forward_rounded, size: 18, color: context.cores.inkMuted),
             ),
             Expanded(
               child: CampoData(
                 rotulo: "Até",
                 data: _dataPrevisao,
                 tituloCalendario: "Previsão de término",
-                icone: Icons.event_available_outlined,
+                icone: Symbols.event_available_rounded,
                 primeiraData: DateUtils.dateOnly(_dataInicio),
                 aoMudar: (d) => setState(() => _dataPrevisao = d),
               ),
@@ -438,22 +426,23 @@ class _ObraFormPageState extends State<ObraFormPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text("Previsão de término ajustada para ${DateFormat('dd/MM/yyyy').format(novoInicio)}."),
-          behavior: SnackBarBehavior.floating,
         ),
       );
     }
   }
 
   Widget _listaMateriaisEditor() {
+    final c = context.cores;
+    final texto = Theme.of(context).textTheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         TextField(
           controller: _materialDescricaoController,
           textCapitalization: TextCapitalization.sentences,
-          decoration: _inputDeco("Descrição (ex.: Tinta acrílica fosca)", Icons.add_shopping_cart),
+          decoration: _inputDeco("Descrição (ex.: Tinta acrílica fosca)", Symbols.add_shopping_cart_rounded),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: Espaco.x2),
         Row(
           children: [
             SizedBox(
@@ -464,7 +453,7 @@ class _ObraFormPageState extends State<ObraFormPage> {
                 decoration: _inputDecoSemIcone("Qtd."),
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: Espaco.x2),
             Expanded(
               child: TextField(
                 controller: _materialUnidadeController,
@@ -472,37 +461,36 @@ class _ObraFormPageState extends State<ObraFormPage> {
                 onSubmitted: (_) => _adicionarMaterial(),
               ),
             ),
-            const SizedBox(width: 4),
+            const SizedBox(width: Espaco.x1),
             IconButton.filled(
               onPressed: _adicionarMaterial,
               tooltip: "Adicionar material",
-              style: IconButton.styleFrom(backgroundColor: PaletaSahara.primary, foregroundColor: Colors.white),
-              icon: const Icon(Icons.add),
+              icon: const Icon(Symbols.add_rounded),
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: Espaco.x3),
         if (_listaMateriais.isEmpty)
-          Text("Nenhum material na lista.", style: TextStyle(color: Colors.grey[500], fontSize: 13))
+          Text("Nenhum material na lista.", style: texto.bodyMedium?.copyWith(color: c.inkMuted))
         else
           Container(
             decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey[200]!),
-              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: c.border),
+              borderRadius: BorderRadius.circular(Raio.campo),
             ),
             child: Column(
               children: [
                 for (final (i, item) in _listaMateriais.indexed) ...[
-                  if (i > 0) Divider(height: 1, color: Colors.grey[200]),
+                  if (i > 0) const Divider(height: 1),
                   ListTile(
                     dense: true,
-                    title: Text(item.descricao, style: const TextStyle(fontSize: 14)),
+                    title: Text(item.descricao, style: texto.bodyMedium),
                     subtitle: item.quantidadeComUnidade.isEmpty
                         ? null
                         : Text(item.quantidadeComUnidade,
-                            style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                            style: texto.bodySmall?.copyWith(color: c.inkMuted, letterSpacing: 0)),
                     trailing: IconButton(
-                      icon: Icon(Icons.close, size: 18, color: Colors.red[400]),
+                      icon: Icon(Symbols.close_rounded, size: 18, color: c.error),
                       tooltip: "Remover",
                       onPressed: () => setState(() => _listaMateriais.removeAt(i)),
                     ),
@@ -515,37 +503,32 @@ class _ObraFormPageState extends State<ObraFormPage> {
     );
   }
 
-  InputDecoration _inputDecoSemIcone(String label) => InputDecoration(
-    labelText: label,
-    filled: true, fillColor: Colors.grey[50],
-    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
-    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
-    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: PaletaSahara.primary, width: 1.5)),
-  );
+  InputDecoration _inputDecoSemIcone(String label) => InputDecoration(labelText: label);
 
   Widget _etapaCard(int i) => Container(
-    margin: const EdgeInsets.only(bottom: 8),
+    margin: const EdgeInsets.only(bottom: Espaco.x2),
     child: Row(
       children: [
         Expanded(
           child: TextFormField(
             controller: _etapasControllers[i],
             readOnly: _obraConcluida,
-            decoration: _inputDeco("Etapa ${i + 1}", Icons.check_circle_outline),
+            decoration: _inputDeco("Etapa ${i + 1}", Symbols.check_circle_rounded),
             validator: (v) => v == null || v.isEmpty ? "Obrigatório" : null,
           ),
         ),
         if (_etapasControllers.length > 1 && !_obraConcluida)
-          IconButton(icon: Icon(Icons.close, size: 18, color: Colors.red[400]), onPressed: () => _removerEtapa(i)),
+          IconButton(
+            icon: Icon(Symbols.close_rounded, size: 18, color: context.cores.error),
+            tooltip: "Remover etapa",
+            onPressed: () => _removerEtapa(i),
+          ),
       ],
     ),
   );
 
   InputDecoration _inputDeco(String label, IconData ic) => InputDecoration(
-    labelText: label, prefixIcon: Icon(ic, size: 20, color: Colors.grey[600]),
-    filled: true, fillColor: Colors.grey[50],
-    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
-    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
-    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: PaletaSahara.primary, width: 1.5)),
+    labelText: label,
+    prefixIcon: Icon(ic, size: TamanhoIcone.pequeno),
   );
 }
