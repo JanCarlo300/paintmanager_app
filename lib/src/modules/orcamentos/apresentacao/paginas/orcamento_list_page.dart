@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -6,8 +7,13 @@ import '../../dominio/entidades/orcamento.dart';
 import '../../../clientes/dominio/entidades/cliente.dart';
 import '../controllers/orcamento_controller.dart';
 import '../../../clientes/apresentacao/controllers/cliente_controller.dart';
+import '../../../../apresentacao/widgets/card_app.dart';
 import '../../../../apresentacao/widgets/drawer_comum.dart';
-import '../../../../core/tema/paleta_sahara.dart';
+import '../../../../apresentacao/widgets/status_chip.dart';
+import '../../../../apresentacao/widgets/tela_vazia.dart';
+import '../../../../core/tema/cores_app.dart';
+import '../../../../core/tema/medidas_app.dart';
+import '../../../../core/tema/status_visual.dart';
 import '../../../../core/filtros/filtro_lista.dart';
 import '../../../../apresentacao/widgets/painel_filtro_lista.dart';
 import '../../../../apresentacao/widgets/chips_filtro_status.dart';
@@ -55,20 +61,11 @@ class _OrcamentoListPageState extends State<OrcamentoListPage> {
     }
   }
 
-  Color _corStatus(String status) {
-    switch (status) {
-      case 'Aprovado': return Colors.green;
-      case 'Recusado': return Colors.red;
-      default: return Colors.orange;
-    }
-  }
-
-  IconData _iconeStatus(String status) {
-    switch (status) {
-      case 'Aprovado': return Icons.check_circle_outline;
-      case 'Recusado': return Icons.cancel_outlined;
-      default: return Icons.schedule_outlined;
-    }
+  void _avisarErro(String mensagem) {
+    final c = context.cores;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(mensagem, style: TextStyle(color: c.onError)), backgroundColor: c.error),
+    );
   }
 
   // === FORMATAR MENSAGEM DO ORÇAMENTO ===
@@ -111,11 +108,7 @@ _Orçamento gerado pelo PaintManager_
     final cliente = clientes.where((c) => c.nome == orc.clienteNome).firstOrNull;
 
     if (cliente == null || cliente.telefone.isEmpty) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Cliente sem telefone cadastrado."), backgroundColor: Colors.red, behavior: SnackBarBehavior.floating),
-        );
-      }
+      if (mounted) _avisarErro("Cliente sem telefone cadastrado.");
       return;
     }
 
@@ -128,11 +121,7 @@ _Orçamento gerado pelo PaintManager_
     try {
       await launchUrl(url, mode: LaunchMode.externalApplication);
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Erro ao abrir WhatsApp: $e"), backgroundColor: Colors.red, behavior: SnackBarBehavior.floating),
-        );
-      }
+      if (mounted) _avisarErro("Erro ao abrir WhatsApp: $e");
     }
   }
 
@@ -141,11 +130,7 @@ _Orçamento gerado pelo PaintManager_
     final cliente = clientes.where((c) => c.nome == orc.clienteNome).firstOrNull;
 
     if (cliente == null || cliente.email.isEmpty) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Cliente sem e-mail cadastrado."), backgroundColor: Colors.red, behavior: SnackBarBehavior.floating),
-        );
-      }
+      if (mounted) _avisarErro("Cliente sem e-mail cadastrado.");
       return;
     }
 
@@ -161,11 +146,7 @@ _Orçamento gerado pelo PaintManager_
     try {
       await launchUrl(url);
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Erro ao abrir e-mail: $e"), backgroundColor: Colors.red, behavior: SnackBarBehavior.floating),
-        );
-      }
+      if (mounted) _avisarErro("Erro ao abrir e-mail: $e");
     }
   }
 
@@ -179,29 +160,30 @@ _Orçamento gerado pelo PaintManager_
     });
   }
 
+  PreferredSizeWidget _appBar() {
+    return AppBar(
+      leading: Builder(
+        builder: (ctx) => IconButton(
+          icon: const Icon(Symbols.menu_rounded),
+          onPressed: () => Scaffold.of(ctx).openDrawer(),
+        ),
+      ),
+      title: const Text("Orçamentos"),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final controller = context.watch<OrcamentoController>();
     final clienteController = context.watch<ClienteController>();
+    final c = context.cores;
+    final texto = Theme.of(context).textTheme;
 
     if (controller.carregando) {
       return Scaffold(
-        backgroundColor: PaletaSahara.background,
         drawer: const DrawerComum(),
-        appBar: AppBar(
-          leading: Builder(
-            builder: (ctx) => IconButton(
-              icon: const Icon(Icons.menu),
-              onPressed: () => Scaffold.of(ctx).openDrawer(),
-            ),
-          ),
-          title: const Text("Orçamentos", style: TextStyle(fontWeight: FontWeight.bold)),
-          centerTitle: false,
-          backgroundColor: PaletaSahara.cardSurface,
-          foregroundColor: PaletaSahara.onSurface,
-          elevation: 0.5,
-        ),
-        body: const Center(child: CircularProgressIndicator(color: PaletaSahara.primary)),
+        appBar: _appBar(),
+        body: const Center(child: CircularProgressIndicator()),
       );
     }
 
@@ -215,64 +197,47 @@ _Orçamento gerado pelo PaintManager_
     final clientes = clienteController.clientes;
 
     return Scaffold(
-      backgroundColor: PaletaSahara.background,
       drawer: const DrawerComum(),
-      appBar: AppBar(
-        leading: Builder(
-          builder: (ctx) => IconButton(
-            icon: const Icon(Icons.menu),
-            onPressed: () => Scaffold.of(ctx).openDrawer(),
-          ),
-        ),
-        title: const Text("Orçamentos", style: TextStyle(fontWeight: FontWeight.bold)),
-        centerTitle: false,
-        backgroundColor: PaletaSahara.cardSurface,
-        foregroundColor: PaletaSahara.onSurface,
-        elevation: 0.5,
-      ),
+      appBar: _appBar(),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(Espaco.margemTela),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // --- HEADER ---
-            const Text("Gestão de Orçamentos", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 4),
-            const Text("Crie e gerencie orçamentos para seus clientes.",
-                style: TextStyle(color: Colors.grey, fontSize: 13)),
-            const SizedBox(height: 16),
+            Text("Gestão de Orçamentos", style: texto.headlineMedium),
+            const SizedBox(height: Espaco.x1),
+            Text(
+              "Crie e gerencie orçamentos para seus clientes.",
+              style: texto.bodyMedium?.copyWith(color: c.inkMuted),
+            ),
+            const SizedBox(height: Espaco.x4),
 
             // --- BOTÃO NOVO ORÇAMENTO ---
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton.icon(
+              child: FilledButton.icon(
                 onPressed: () => Navigator.pushNamed(context, '/orcamento-formulario'),
-                icon: const Icon(Icons.add, size: 18),
+                icon: const Icon(Symbols.add_rounded, size: TamanhoIcone.pequeno),
                 label: const Text("Novo Orçamento"),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: PaletaSahara.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                ),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: Espaco.x5),
 
             // --- FILTRO POR STATUS ---
             _buildFiltroChips(todos),
-            const SizedBox(height: 16),
+            const SizedBox(height: Espaco.x4),
 
             // --- BARRA DE BUSCA ---
             _buildBarraBusca(),
-            const SizedBox(height: 8),
+            const SizedBox(height: Espaco.x2),
 
             // --- CONTADOR ---
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
+              padding: const EdgeInsets.symmetric(vertical: Espaco.x2),
               child: Text(
                 "${filtrados.length} orçamento(s) encontrado(s)",
-                style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                style: texto.bodyMedium?.copyWith(color: c.inkMuted),
               ),
             ),
 
@@ -289,16 +254,19 @@ _Orçamento gerado pelo PaintManager_
 
   // === FILTRO CHIPS ===
   Widget _buildFiltroChips(List<Orcamento> todos) {
+    final c = context.cores;
     int qtd(String status) => todos.where((o) => o.status == status).length;
+    // Mesma cor de cada status em todo o app (core/tema/status_visual.dart).
+    Color cor(String status) => visualDoStatus(status, c).cor;
 
     return ChipsFiltroStatus<FiltroOrcamento>(
       selecionado: _filtroAtual,
       aoSelecionar: (f) => setState(() => _filtroAtual = f),
       opcoes: [
-        OpcaoStatus("Todos", FiltroOrcamento.todos, todos.length, Colors.blue),
-        OpcaoStatus("Pendentes", FiltroOrcamento.pendentes, qtd('Pendente'), Colors.orange),
-        OpcaoStatus("Aprovados", FiltroOrcamento.aprovados, qtd('Aprovado'), Colors.green),
-        OpcaoStatus("Recusados", FiltroOrcamento.recusados, qtd('Recusado'), Colors.red),
+        OpcaoStatus("Todos", FiltroOrcamento.todos, todos.length, c.primary),
+        OpcaoStatus("Pendentes", FiltroOrcamento.pendentes, qtd('Pendente'), cor('Pendente')),
+        OpcaoStatus("Aprovados", FiltroOrcamento.aprovados, qtd('Aprovado'), cor('Aprovado')),
+        OpcaoStatus("Recusados", FiltroOrcamento.recusados, qtd('Recusado'), cor('Recusado')),
       ],
     );
   }
@@ -312,8 +280,16 @@ _Orçamento gerado pelo PaintManager_
   Widget _buildBarraBusca() {
     return Row(
       children: [
-        Expanded(child: _campoBusca()),
-        const SizedBox(width: 8),
+        Expanded(
+          child: TextField(
+            onChanged: (v) => setState(() => _termoBusca = v),
+            decoration: const InputDecoration(
+              hintText: "Buscar por cliente ou descrição...",
+              prefixIcon: Icon(Symbols.search_rounded, size: TamanhoIcone.pequeno),
+            ),
+          ),
+        ),
+        const SizedBox(width: Espaco.x2),
         BotaoFiltroLista(
           filtro: _filtro,
           aoAplicar: _aplicarFiltro,
@@ -324,155 +300,105 @@ _Orçamento gerado pelo PaintManager_
     );
   }
 
-  Widget _campoBusca() {
-    return SizedBox(
-      height: 42,
-      child: TextField(
-        onChanged: (v) => setState(() => _termoBusca = v),
-        decoration: InputDecoration(
-          hintText: "Buscar por cliente ou descrição...",
-          hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
-          prefixIcon: Icon(Icons.search, color: Colors.grey[400], size: 20),
-          filled: true,
-          fillColor: Colors.white,
-          contentPadding: const EdgeInsets.symmetric(vertical: 0),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide(color: Colors.grey[200]!),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide(color: Colors.grey[200]!),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: const BorderSide(color: PaletaSahara.primary, width: 1.5),
-          ),
-        ),
-      ),
+  /// Ícone do status num círculo com o fundo suave do status.
+  Widget _avatarStatus(String status, {required double raio}) {
+    final visual = visualDoStatus(status, context.cores);
+    return CircleAvatar(
+      radius: raio,
+      backgroundColor: visual.fundo,
+      child: Icon(visual.icone, color: visual.cor, size: TamanhoIcone.pequeno, fill: 1),
     );
   }
 
   // === CARD DO ORÇAMENTO ===
   Widget _buildOrcamentoCard(Orcamento orc, OrcamentoController controller, List<Cliente> clientes) {
-    final corSt = _corStatus(orc.status);
+    final c = context.cores;
+    final texto = Theme.of(context).textTheme;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Material(
-        color: PaletaSahara.cardSurface,
-        borderRadius: BorderRadius.circular(12),
-        elevation: 0,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: () => _mostrarOpcoes(context, orc, controller, clientes),
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey[200]!),
-              boxShadow: [
-                BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2)),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.only(bottom: Espaco.x3),
+      child: CardApp(
+        aoTocar: () => _mostrarOpcoes(context, orc, controller, clientes),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Cliente + Status
+            Row(
               children: [
-                // Cliente + Status Badge
-                Row(
-                  children: [
-                    // Avatar com iniciais do cliente
-                    CircleAvatar(
-                      radius: 20,
-                      backgroundColor: corSt.withValues(alpha: 0.15),
-                      child: Icon(_iconeStatus(orc.status), color: corSt, size: 22),
-                    ),
-                    const SizedBox(width: 12),
-                    // Cliente e descrição
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            orc.clienteNome,
-                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            orc.descricao,
-                            style: TextStyle(fontSize: 13, color: Colors.grey[600]),
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 1,
-                          ),
-                        ],
+                _avatarStatus(orc.status, raio: 20),
+                const SizedBox(width: Espaco.x3),
+                // Cliente e descrição
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        orc.clienteNome,
+                        style: texto.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    // Badge de status
-                    _badge(orc.status, corSt),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                const Divider(height: 1),
-                const SizedBox(height: 12),
-                // Valor + Datas
-                Row(
-                  children: [
-                    Expanded(
-                      child: _infoItem(Icons.attach_money, _formatoMoeda.format(orc.valorTotal), fontWeight: FontWeight.w700),
-                    ),
-                    Expanded(
-                      child: _infoItem(Icons.calendar_today_outlined, _formatoData.format(orc.dataCriacao)),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _infoItem(Icons.payments_outlined, orc.formaPagamento),
-                    ),
-                    Expanded(
-                      child: _infoItem(
-                        Icons.event_outlined,
-                        "Val: ${_formatoData.format(orc.dataValidade)}",
-                        color: orc.dataValidade.isBefore(DateTime.now()) ? Colors.red : null,
+                      const SizedBox(height: 2),
+                      Text(
+                        orc.descricao,
+                        style: texto.bodyMedium?.copyWith(color: c.inkMuted),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
+                ),
+                const SizedBox(width: Espaco.x2),
+                StatusChip(orc.status),
+              ],
+            ),
+            const SizedBox(height: Espaco.x3),
+            const Divider(height: 1),
+            const SizedBox(height: Espaco.x3),
+            // Valor + Datas
+            Row(
+              children: [
+                Expanded(
+                  child: _infoItem(Symbols.payments_rounded, _formatoMoeda.format(orc.valorTotal), destaque: true),
+                ),
+                Expanded(
+                  child: _infoItem(Symbols.calendar_today_rounded, _formatoData.format(orc.dataCriacao)),
                 ),
               ],
             ),
-          ),
+            const SizedBox(height: Espaco.x2),
+            Row(
+              children: [
+                Expanded(
+                  child: _infoItem(Symbols.credit_card_rounded, orc.formaPagamento),
+                ),
+                Expanded(
+                  child: _infoItem(
+                    Symbols.event_rounded,
+                    "Val: ${_formatoData.format(orc.dataValidade)}",
+                    color: orc.dataValidade.isBefore(DateTime.now()) ? c.error : null,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _badge(String label, Color cor) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: cor.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: cor),
-      ),
-    );
-  }
-
-  Widget _infoItem(IconData icon, String text, {FontWeight? fontWeight, Color? color}) {
+  Widget _infoItem(IconData icon, String text, {bool destaque = false, Color? color}) {
+    final c = context.cores;
     return Row(
       children: [
-        Icon(icon, size: 15, color: color ?? Colors.grey[500]),
+        Icon(icon, size: 16, color: color ?? c.inkMuted),
         const SizedBox(width: 6),
         Flexible(
           child: Text(
             text,
-            style: TextStyle(fontSize: 13, color: color ?? Colors.grey[700], fontWeight: fontWeight),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: color ?? (destaque ? c.ink : c.inkMuted),
+                  fontWeight: destaque ? FontWeight.w700 : null,
+                ),
             overflow: TextOverflow.ellipsis,
           ),
         ),
@@ -480,50 +406,54 @@ _Orçamento gerado pelo PaintManager_
     );
   }
 
+  /// Ícone de ação num quadrado arredondado com fundo suave.
+  Widget _iconeAcao(IconData icone, Color cor, Color fundo, {double tamanho = TamanhoIcone.pequeno}) {
+    return Container(
+      padding: const EdgeInsets.all(Espaco.x2),
+      decoration: BoxDecoration(color: fundo, borderRadius: BorderRadius.circular(Raio.campo)),
+      child: Icon(icone, color: cor, size: tamanho),
+    );
+  }
+
   // === BOTTOM SHEET COM OPÇÕES ===
   void _mostrarOpcoes(BuildContext context, Orcamento orc, OrcamentoController controller, List<Cliente> clientes) {
+    final c = context.cores;
+    final texto = Theme.of(context).textTheme;
+    final legenda = texto.bodySmall?.copyWith(color: c.inkMuted, letterSpacing: 0);
+
     showModalBottomSheet(
       context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
       builder: (ctx) => SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
+          padding: const EdgeInsets.symmetric(vertical: Espaco.x2),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               // Indicador
               Container(
                 width: 40, height: 4,
-                margin: const EdgeInsets.only(bottom: 12),
-                decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2)),
+                margin: const EdgeInsets.only(bottom: Espaco.x3),
+                decoration: BoxDecoration(color: c.border, borderRadius: BorderRadius.circular(2)),
               ),
               // Info do orçamento
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: Espaco.x5, vertical: Espaco.x2),
                 child: Row(
                   children: [
-                    CircleAvatar(
-                      radius: 18,
-                      backgroundColor: _corStatus(orc.status).withValues(alpha: 0.15),
-                      child: Icon(_iconeStatus(orc.status), color: _corStatus(orc.status), size: 20),
-                    ),
-                    const SizedBox(width: 12),
+                    _avatarStatus(orc.status, raio: 18),
+                    const SizedBox(width: Espaco.x3),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(orc.clienteNome, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                              overflow: TextOverflow.ellipsis),
-                          Text(orc.descricao, style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                              overflow: TextOverflow.ellipsis),
+                          Text(orc.clienteNome, style: texto.titleMedium, overflow: TextOverflow.ellipsis),
+                          Text(orc.descricao, style: legenda, overflow: TextOverflow.ellipsis),
                         ],
                       ),
                     ),
                     Text(
                       _formatoMoeda.format(orc.valorTotal),
-                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                      style: texto.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
                     ),
                   ],
                 ),
@@ -531,16 +461,9 @@ _Orçamento gerado pelo PaintManager_
               const Divider(),
               // Enviar
               ListTile(
-                leading: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF25D366).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(Icons.send_outlined, color: Color(0xFF25D366), size: 20),
-                ),
-                title: const Text("Enviar para o Cliente", style: TextStyle(fontWeight: FontWeight.w500)),
-                subtitle: const Text("WhatsApp ou E-mail", style: TextStyle(fontSize: 12)),
+                leading: _iconeAcao(Symbols.send_rounded, c.success, c.successSoft),
+                title: const Text("Enviar para o Cliente"),
+                subtitle: Text("WhatsApp ou E-mail", style: legenda),
                 onTap: () {
                   Navigator.pop(ctx);
                   _mostrarOpcoesEnvio(orc, clientes);
@@ -548,16 +471,9 @@ _Orçamento gerado pelo PaintManager_
               ),
               // Editar
               ListTile(
-                leading: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.blue.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(Icons.edit_outlined, color: Colors.blue, size: 20),
-                ),
-                title: const Text("Editar", style: TextStyle(fontWeight: FontWeight.w500)),
-                subtitle: const Text("Alterar dados do orçamento", style: TextStyle(fontSize: 12)),
+                leading: _iconeAcao(Symbols.edit_rounded, c.info, c.infoSoft),
+                title: const Text("Editar"),
+                subtitle: Text("Alterar dados do orçamento", style: legenda),
                 onTap: () {
                   Navigator.pop(ctx);
                   Navigator.pushNamed(context, '/orcamento-formulario', arguments: orc);
@@ -565,16 +481,9 @@ _Orçamento gerado pelo PaintManager_
               ),
               // Excluir
               ListTile(
-                leading: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.red.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(Icons.delete_outline, color: Colors.red, size: 20),
-                ),
-                title: const Text("Excluir", style: TextStyle(fontWeight: FontWeight.w500, color: Colors.red)),
-                subtitle: const Text("Remover este orçamento", style: TextStyle(fontSize: 12)),
+                leading: _iconeAcao(Symbols.delete_rounded, c.error, c.errorSoft),
+                title: Text("Excluir", style: TextStyle(color: c.error)),
+                subtitle: Text("Remover este orçamento", style: legenda),
                 onTap: () {
                   Navigator.pop(ctx);
                   _confirmarExclusao(context, orc, controller);
@@ -589,45 +498,39 @@ _Orçamento gerado pelo PaintManager_
 
   // === DIALOG DE ENVIO ===
   void _mostrarOpcoesEnvio(Orcamento orc, List<Cliente> clientes) {
+    final c = context.cores;
+    final texto = Theme.of(context).textTheme;
+
     showModalBottomSheet(
       context: context,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
       builder: (context) => SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(Espaco.x6),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text("Enviar Orçamento", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 4),
-              Text("Enviar para ${orc.clienteNome}", style: TextStyle(color: Colors.grey[600])),
-              const SizedBox(height: 20),
+              Text("Enviar Orçamento", style: texto.titleMedium),
+              const SizedBox(height: Espaco.x1),
+              Text("Enviar para ${orc.clienteNome}", style: texto.bodyMedium?.copyWith(color: c.inkMuted)),
+              const SizedBox(height: Espaco.x5),
 
               // WhatsApp
               ListTile(
-                leading: Container(
-                  width: 44, height: 44,
-                  decoration: BoxDecoration(color: const Color(0xFF25D366).withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
-                  child: const Icon(Icons.chat, color: Color(0xFF25D366)),
-                ),
-                title: const Text("Enviar por WhatsApp", style: TextStyle(fontWeight: FontWeight.w600)),
+                leading: _iconeAcao(Symbols.chat_rounded, c.success, c.successSoft, tamanho: TamanhoIcone.medio),
+                title: Text("Enviar por WhatsApp", style: texto.bodyLarge?.copyWith(fontWeight: FontWeight.w700)),
                 subtitle: const Text("Abre o WhatsApp com a mensagem pronta"),
                 onTap: () {
                   Navigator.pop(context);
                   _enviarWhatsApp(orc, clientes);
                 },
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: Espaco.x2),
 
               // E-mail
               ListTile(
-                leading: Container(
-                  width: 44, height: 44,
-                  decoration: BoxDecoration(color: Colors.blue.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
-                  child: const Icon(Icons.email_outlined, color: Colors.blue),
-                ),
-                title: const Text("Enviar por E-mail", style: TextStyle(fontWeight: FontWeight.w600)),
+                leading: _iconeAcao(Symbols.mail_rounded, c.info, c.infoSoft, tamanho: TamanhoIcone.medio),
+                title: Text("Enviar por E-mail", style: texto.bodyLarge?.copyWith(fontWeight: FontWeight.w700)),
                 subtitle: const Text("Abre o cliente de e-mail com o orçamento"),
                 onTap: () {
                   Navigator.pop(context);
@@ -643,34 +546,28 @@ _Orçamento gerado pelo PaintManager_
 
   // === CONFIRMAÇÃO DE EXCLUSÃO ===
   void _confirmarExclusao(BuildContext context, Orcamento orcamento, OrcamentoController controller) {
+    final c = context.cores;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         title: const Text("Excluir Orçamento?"),
         content: Text("Tem certeza que deseja remover o orçamento \"${orcamento.descricao}\"?"),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text("Cancelar", style: TextStyle(color: Colors.grey)),
+            style: TextButton.styleFrom(foregroundColor: c.inkMuted),
+            child: const Text("Cancelar"),
           ),
-          ElevatedButton(
+          FilledButton(
             onPressed: () {
               controller.excluir(orcamento.id!);
               Navigator.pop(ctx);
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text("Orçamento excluído com sucesso!"),
-                  backgroundColor: Colors.orange,
-                  behavior: SnackBarBehavior.floating,
-                ),
+                const SnackBar(content: Text("Orçamento excluído com sucesso!")),
               );
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            child: const Text("Excluir", style: TextStyle(color: Colors.white)),
+            style: FilledButton.styleFrom(backgroundColor: c.error, foregroundColor: c.onError),
+            child: const Text("Excluir"),
           ),
         ],
       ),
@@ -679,43 +576,19 @@ _Orçamento gerado pelo PaintManager_
 
   // === VAZIO ===
   Widget _buildVazio() {
-    String mensagem;
-    IconData icone;
     if (_filtro.quantidadeAtivos > 0 || _termoBusca.isNotEmpty) {
-      mensagem = "Nenhum orçamento encontrado com esses filtros.";
-      icone = Icons.filter_alt_off_outlined;
-    } else {
-      switch (_filtroAtual) {
-        case FiltroOrcamento.todos:
-          mensagem = "Nenhum orçamento cadastrado.";
-          icone = Icons.request_quote_outlined;
-        case FiltroOrcamento.pendentes:
-          mensagem = "Nenhum orçamento pendente.";
-          icone = Icons.schedule_outlined;
-        case FiltroOrcamento.aprovados:
-          mensagem = "Nenhum orçamento aprovado.";
-          icone = Icons.check_circle_outline;
-        case FiltroOrcamento.recusados:
-          mensagem = "Nenhum orçamento recusado.";
-          icone = Icons.cancel_outlined;
-      }
+      return const TelaVazia(
+        ilustracao: IlustracaoVazia.busca,
+        titulo: "Nenhum orçamento com esses filtros",
+        texto: "Mude a busca ou os filtros para ver outros orçamentos.",
+      );
     }
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(40),
-      decoration: BoxDecoration(
-        color: PaletaSahara.cardSurface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
-      ),
-      child: Column(
-        children: [
-          Icon(icone, size: 48, color: Colors.grey[400]),
-          const SizedBox(height: 12),
-          Text(mensagem, style: TextStyle(color: Colors.grey[600], fontSize: 14), textAlign: TextAlign.center),
-        ],
-      ),
-    );
+    final (titulo, texto) = switch (_filtroAtual) {
+      FiltroOrcamento.todos => ("Nenhum orçamento cadastrado", "Crie o primeiro pelo botão Novo Orçamento."),
+      FiltroOrcamento.pendentes => ("Nenhum orçamento pendente", "Orçamentos aguardando resposta aparecem aqui."),
+      FiltroOrcamento.aprovados => ("Nenhum orçamento aprovado", "Orçamentos aceitos pelo cliente aparecem aqui."),
+      FiltroOrcamento.recusados => ("Nenhum orçamento recusado", "Orçamentos recusados pelo cliente aparecem aqui."),
+    };
+    return TelaVazia(ilustracao: IlustracaoVazia.orcamentos, titulo: titulo, texto: texto);
   }
 }
