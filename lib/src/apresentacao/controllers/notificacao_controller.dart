@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// RF013 (versão simplificada) - um alerta computado a partir de dados já
@@ -8,14 +9,17 @@ class AlertaItem {
   final String titulo;
   final String subtitulo;
   final IconData icone;
-  final Color cor;
+
+  /// true = já venceu / atrasou (cor de erro); false = está para vencer
+  /// (cor de atenção). A cor em si vem do tema, na tela.
+  final bool urgente;
   final String rota;
 
   const AlertaItem({
     required this.titulo,
     required this.subtitulo,
     required this.icone,
-    required this.cor,
+    required this.urgente,
     required this.rota,
   });
 }
@@ -54,16 +58,16 @@ class NotificacaoController extends ChangeNotifier {
           novosAlertas.add(AlertaItem(
             titulo: 'Orçamento vencido',
             subtitulo: '$cliente — venceu há ${-dias} dia(s)',
-            icone: Icons.request_quote_outlined,
-            cor: Colors.red,
+            icone: Symbols.request_quote_rounded,
+            urgente: true,
             rota: '/orcamentos',
           ));
         } else if (dias <= 3) {
           novosAlertas.add(AlertaItem(
             titulo: 'Orçamento vencendo',
             subtitulo: '$cliente — vence ${dias == 0 ? 'hoje' : 'em $dias dia(s)'}',
-            icone: Icons.request_quote_outlined,
-            cor: Colors.orange,
+            icone: Symbols.request_quote_rounded,
+            urgente: false,
             rota: '/orcamentos',
           ));
         }
@@ -88,8 +92,8 @@ class NotificacaoController extends ChangeNotifier {
         novosAlertas.add(AlertaItem(
           titulo: 'Obra com prazo estourado',
           subtitulo: '${o['titulo_da_obra'] ?? 'Obra'} — atrasada há $dias dia(s)',
-          icone: Icons.construction_outlined,
-          cor: Colors.red,
+          icone: Symbols.construction_rounded,
+          urgente: true,
           rota: '/obras',
         ));
       }

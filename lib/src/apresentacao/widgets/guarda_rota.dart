@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:provider/provider.dart';
 import '../../modules/auth/apresentacao/controllers/auth_controller.dart';
-import '../../core/tema/paleta_sahara.dart';
+import '../../core/tema/cores_app.dart';
+import '../../core/tema/medidas_app.dart';
 
 /// Bloqueia uma tela para quem não tem a função permitida. É a segunda
 /// camada de proteção (além do menu lateral já esconder o que cada
@@ -20,7 +22,7 @@ class GuardaRota extends StatelessWidget {
       // Cache do usuário logado (AuthController) ainda carregando de
       // forma assíncrona — não é motivo para negar acesso.
       return const Scaffold(
-        body: Center(child: CircularProgressIndicator(color: PaletaSahara.primary)),
+        body: Center(child: CircularProgressIndicator()),
       );
     }
 
@@ -29,35 +31,25 @@ class GuardaRota extends StatelessWidget {
     }
 
     return Scaffold(
-      backgroundColor: PaletaSahara.background,
-      appBar: AppBar(
-        title: const Text('Acesso restrito'),
-        backgroundColor: PaletaSahara.cardSurface,
-        foregroundColor: PaletaSahara.onSurface,
-        elevation: 0.5,
-      ),
+      appBar: AppBar(title: const Text('Acesso restrito')),
       body: Center(
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(Espaco.x6),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.lock_outline, size: 56, color: Colors.grey),
-              const SizedBox(height: 16),
-              const Text(
+              Icon(Symbols.lock_rounded, size: 56, color: context.cores.inkMuted),
+              const SizedBox(height: Espaco.x4),
+              Text(
                 'Sua função não tem acesso a esta tela.',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16),
+                style: Theme.of(context).textTheme.bodyLarge,
               ),
-              const SizedBox(height: 24),
-              ElevatedButton(
+              const SizedBox(height: Espaco.x6),
+              FilledButton(
                 onPressed: () => Navigator.of(context).pushNamedAndRemoveUntil(
                   rotaInicialParaFuncao(usuario.funcao),
                   (_) => false,
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: PaletaSahara.primary,
-                  foregroundColor: Colors.white,
                 ),
                 child: const Text('Voltar ao início'),
               ),

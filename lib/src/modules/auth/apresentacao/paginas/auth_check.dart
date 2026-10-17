@@ -120,7 +120,7 @@ class _AuthCheckState extends State<AuthCheck> {
     if (_isLoading) {
       return const Scaffold(
         body: Center(
-          child: CircularProgressIndicator(color: Colors.black),
+          child: CircularProgressIndicator(),
         ),
       );
     }

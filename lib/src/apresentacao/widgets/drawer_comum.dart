@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:provider/provider.dart';
 import '../../modules/auth/apresentacao/controllers/auth_controller.dart';
-import '../../core/tema/paleta_sahara.dart';
+import '../../core/tema/cores_app.dart';
+import '../../core/tema/medidas_app.dart';
 import 'logo_app.dart';
 
 class DrawerComum extends StatelessWidget {
@@ -13,9 +15,10 @@ class DrawerComum extends StatelessWidget {
     final usuarioLogado = authController.usuarioLogado;
     final funcao = usuarioLogado?.funcao ?? '';
     final rotaAtual = ModalRoute.of(context)?.settings.name;
+    final c = context.cores;
+    final texto = Theme.of(context).textTheme;
 
     return Drawer(
-      backgroundColor: PaletaSahara.cardSurface,
       child: Column(
         children: [
           // Cabeçalho com Logo + Info do Usuário
@@ -26,16 +29,13 @@ class DrawerComum extends StatelessWidget {
               return Container(
                 width: double.infinity,
                 padding: EdgeInsets.only(
-                  top: MediaQuery.of(context).padding.top + 24,
-                  bottom: 20,
-                  left: 20,
-                  right: 20,
+                  top: MediaQuery.of(context).padding.top + Espaco.x6,
+                  bottom: Espaco.x5,
+                  left: Espaco.x5,
+                  right: Espaco.x5,
                 ),
                 decoration: BoxDecoration(
-                  color: PaletaSahara.cardSurface,
-                  border: const Border(
-                    bottom: BorderSide(color: Color(0xFFEEEEEE), width: 1),
-                  ),
+                  border: Border(bottom: BorderSide(color: c.border)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -43,55 +43,45 @@ class DrawerComum extends StatelessWidget {
                     // Assinatura do manual da marca (ícone + nome do app)
                     AssinaturaApp(
                       tamanhoLogo: 40,
-                      estilo: Theme.of(context).textTheme.titleLarge,
+                      estilo: texto.titleLarge,
                     ),
-                    const SizedBox(height: 14),
+                    const SizedBox(height: Espaco.x4),
                     // Nome do usuário logado
                     Text(
                       nome,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 16,
-                        color: PaletaSahara.onSurface,
-                      ),
+                      style: texto.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
                     ),
                     const SizedBox(height: 2),
                     // Cargo / Função
                     if (funcao.isNotEmpty)
-                      Text(
-                        funcao,
-                        style: const TextStyle(
-                          color: Color(0xFFFF9800),
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                      Text(funcao, style: texto.bodySmall?.copyWith(color: c.primary)),
                   ],
                 ),
               );
             },
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: Espaco.x2),
 
-          // Itens de Navegação (scrollable para evitar overflow), filtrados por função
+          // Itens de Navegação (scrollable para evitar overflow), filtrados por função.
+          // Ordem do manual da marca: Usuários perto do fim, antes de Configurações.
           Expanded(
             child: ListView(
               padding: EdgeInsets.zero,
               children: [
                 if (funcao != 'Funcionário')
-                  _buildMenuItem(context, icon: Icons.dashboard_outlined, title: "Resumo Geral", route: '/home', rotaAtual: rotaAtual),
+                  _buildMenuItem(context, icon: Symbols.dashboard_rounded, title: "Resumo Geral", route: '/home', rotaAtual: rotaAtual),
+                if (funcao != 'Funcionário')
+                  _buildMenuItem(context, icon: Symbols.group_rounded, title: "Clientes", route: '/clientes', rotaAtual: rotaAtual),
+                _buildMenuItem(context, icon: Symbols.construction_rounded, title: "Obras", route: '/obras', rotaAtual: rotaAtual),
+                if (funcao != 'Funcionário')
+                  _buildMenuItem(context, icon: Symbols.request_quote_rounded, title: "Orçamentos", route: '/orcamentos', rotaAtual: rotaAtual),
+                if (funcao != 'Funcionário')
+                  _buildMenuItem(context, icon: Symbols.account_balance_wallet_rounded, title: "Financeiro", route: '/financeiro', rotaAtual: rotaAtual),
+                if (funcao != 'Funcionário')
+                  _buildMenuItem(context, icon: Symbols.bar_chart_rounded, title: "Relatórios", route: '/relatorios', rotaAtual: rotaAtual),
                 if (funcao == 'Administrador')
-                  _buildMenuItem(context, icon: Icons.people_outline, title: "Usuários", route: '/usuarios', rotaAtual: rotaAtual),
-                if (funcao != 'Funcionário')
-                  _buildMenuItem(context, icon: Icons.person_outline, title: "Clientes", route: '/clientes', rotaAtual: rotaAtual),
-                _buildMenuItem(context, icon: Icons.construction_outlined, title: "Obras", route: '/obras', rotaAtual: rotaAtual),
-                if (funcao != 'Funcionário')
-                  _buildMenuItem(context, icon: Icons.request_quote_outlined, title: "Orçamentos", route: '/orcamentos', rotaAtual: rotaAtual),
-                if (funcao != 'Funcionário')
-                  _buildMenuItem(context, icon: Icons.attach_money, title: "Financeiro", route: '/financeiro', rotaAtual: rotaAtual),
-                if (funcao != 'Funcionário')
-                  _buildMenuItem(context, icon: Icons.bar_chart_outlined, title: "Relatórios", route: '/relatorios', rotaAtual: rotaAtual),
-                _buildMenuItem(context, icon: Icons.settings_outlined, title: "Configurações", route: '/configuracoes', rotaAtual: rotaAtual),
+                  _buildMenuItem(context, icon: Symbols.manage_accounts_rounded, title: "Usuários", route: '/usuarios', rotaAtual: rotaAtual),
+                _buildMenuItem(context, icon: Symbols.settings_rounded, title: "Configurações", route: '/configuracoes', rotaAtual: rotaAtual),
               ],
             ),
           ),
@@ -99,8 +89,11 @@ class DrawerComum extends StatelessWidget {
 
           // Botão de Sair
           ListTile(
-            leading: const Icon(Icons.logout, color: Colors.red),
-            title: const Text("Sair do Sistema", style: TextStyle(color: Colors.red, fontSize: 14)),
+            leading: Icon(Symbols.logout_rounded, color: c.error),
+            title: Text(
+              "Sair do Sistema",
+              style: texto.bodyMedium?.copyWith(color: c.error, fontWeight: FontWeight.w600),
+            ),
             onTap: () async {
               await authController.sair();
               if (context.mounted) {
@@ -108,7 +101,7 @@ class DrawerComum extends StatelessWidget {
               }
             },
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: Espaco.x4),
         ],
       ),
     );
@@ -121,22 +114,25 @@ class DrawerComum extends StatelessWidget {
     String? rotaAtual,
   }) {
     final selecionado = rotaAtual == route;
+    final c = context.cores;
 
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(
-        color: selecionado ? Colors.orange.withValues(alpha: 0.1) : Colors.transparent,
-        borderRadius: BorderRadius.circular(8),
-      ),
+    // Item ativo: ícone preenchido em primary sobre primarySoft (manual da marca).
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: Espaco.x2, vertical: 2),
       child: ListTile(
-        leading: Icon(icon, color: selecionado ? Colors.orange : Colors.grey[700], size: 22),
+        selected: selecionado,
+        leading: Icon(
+          icon,
+          fill: selecionado ? 1 : 0,
+          color: selecionado ? c.primary : c.inkMuted,
+          size: TamanhoIcone.medio,
+        ),
         title: Text(
           title,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: selecionado ? FontWeight.w600 : FontWeight.normal,
-            color: selecionado ? Colors.orange[800] : Colors.grey[800],
-          ),
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                fontWeight: selecionado ? FontWeight.w700 : FontWeight.w500,
+                color: selecionado ? c.primary : c.ink,
+              ),
         ),
         dense: true,
         onTap: () {

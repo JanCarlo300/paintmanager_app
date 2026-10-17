@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../dominio/entidades/usuario.dart';
 import '../../dominio/repositorios/repositorio_autenticacao.dart';
 import '../../dominio/validador_senha.dart';
-import '../../../../core/tema/paleta_sahara.dart';
+import '../../../../core/tema/cores_app.dart';
 
 /// Rota inicial de cada função, usada logo após o login e pelo AuthCheck
 /// ao reabrir o app com uma sessão já existente.
@@ -191,10 +191,12 @@ class AuthController extends ChangeNotifier {
   }
 
   void _mostrarMensagem(BuildContext context, String mensagem, {bool isErro = true}) {
+    final c = context.cores;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(mensagem),
-        backgroundColor: isErro ? Colors.red : PaletaSahara.onSurface,
+        // Erro em vermelho do tema; aviso comum usa o padrão (grafite).
+        content: Text(mensagem, style: isErro ? TextStyle(color: c.onError) : null),
+        backgroundColor: isErro ? c.error : null,
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 3),
       ),

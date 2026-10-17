@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../core/tema/paleta_sahara.dart';
+import 'package:material_symbols_icons/symbols.dart';
+import '../../core/tema/cores_app.dart';
+import '../../core/tema/medidas_app.dart';
 
 /// Campo de data padrão do app (etapa 3): caixa com rótulo pequeno em cima
 /// ("De", "Até", "Validade"...) e a data em dd/MM/aaaa + dia da semana.
-/// Ao tocar, abre o calendário do tema (português, cores Sahara).
+/// Ao tocar, abre o calendário do tema (português, cores da marca).
 class CampoData extends StatelessWidget {
   const CampoData({
     super.key,
@@ -14,7 +16,7 @@ class CampoData extends StatelessWidget {
     this.primeiraData,
     this.ultimaData,
     this.tituloCalendario,
-    this.icone = Icons.calendar_today_outlined,
+    this.icone = Symbols.calendar_today_rounded,
   });
 
   final String rotulo;
@@ -51,48 +53,41 @@ class CampoData extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.cores;
+    final texto = Theme.of(context).textTheme;
     final diaSemana = _formatoDiaSemana.format(data);
+    final legenda = texto.bodySmall?.copyWith(color: c.inkMuted, letterSpacing: 0);
 
+    // Mesmo visual dos campos de texto do tema: fundo surfaceSunken, raio 8.
     return Material(
-      color: Colors.grey[50],
-      borderRadius: BorderRadius.circular(10),
+      color: c.surfaceSunken,
+      borderRadius: BorderRadius.circular(Raio.campo),
       child: InkWell(
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(Raio.campo),
         onTap: () => _abrir(context),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: Colors.grey[200]!),
-          ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: Espaco.x3, vertical: 10),
           child: Row(
             children: [
-              Icon(icone, size: 20, color: PaletaSahara.primary),
+              Icon(icone, size: TamanhoIcone.pequeno, color: c.primary),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      rotulo,
-                      style: const TextStyle(fontSize: 11, color: PaletaSahara.onSurfaceMuted),
-                    ),
+                    Text(rotulo, style: legenda),
                     const SizedBox(height: 2),
                     FittedBox(
                       fit: BoxFit.scaleDown,
                       alignment: Alignment.centerLeft,
                       child: Text(
                         _formatoData.format(data),
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: PaletaSahara.onSurface,
-                        ),
+                        style: texto.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
                       ),
                     ),
                     Text(
                       diaSemana[0].toUpperCase() + diaSemana.substring(1),
-                      style: const TextStyle(fontSize: 11, color: PaletaSahara.onSurfaceMuted),
+                      style: legenda,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ],

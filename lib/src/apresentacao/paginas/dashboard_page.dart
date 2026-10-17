@@ -7,6 +7,7 @@ import '../controllers/dashboard_controller.dart';
 import '../controllers/notificacao_controller.dart';
 import '../widgets/drawer_comum.dart';
 import '../../core/tema/paleta_sahara.dart';
+import '../../core/tema/cores_app.dart';
 
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
@@ -741,7 +742,7 @@ class DashboardPage extends StatelessWidget {
                         itemBuilder: (context, i) {
                           final a = ctrl.alertas[i];
                           return ListTile(
-                            leading: Icon(a.icone, color: a.cor),
+                            leading: Icon(a.icone, color: a.urgente ? context.cores.error : context.cores.warning),
                             title: Text(a.titulo, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
                             subtitle: Text(a.subtitulo, style: const TextStyle(fontSize: 12)),
                             onTap: () {
