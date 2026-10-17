@@ -257,14 +257,17 @@ class _FinanceiroPageState extends State<FinanceiroPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const SizedBox(height: 2),
-                      Row(
+                      // Wrap: se categoria + status não couberem (valor grande à
+                      // direita, fonte grande), o status desce para a linha de baixo.
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 4,
                         children: [
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(4)),
                             child: Text(t.categoria, style: TextStyle(fontSize: 11, color: Colors.grey[700])),
                           ),
-                          const SizedBox(width: 6),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
