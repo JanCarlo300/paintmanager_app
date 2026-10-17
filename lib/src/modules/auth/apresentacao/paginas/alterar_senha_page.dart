@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:provider/provider.dart';
 import '../controllers/auth_controller.dart';
-import '../../../../core/tema/paleta_sahara.dart';
+import '../../../../core/tema/cores_app.dart';
+import '../../../../core/tema/medidas_app.dart';
 
 /// Troca de senha pelo próprio usuário logado (aberta pela tela Configurações).
 class AlterarSenhaPage extends StatefulWidget {
@@ -38,11 +40,7 @@ class _AlterarSenhaPageState extends State<AlterarSenhaPage> {
     if (!mounted || !ok) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Senha alterada com sucesso.'),
-        backgroundColor: PaletaSahara.onSurface,
-        behavior: SnackBarBehavior.floating,
-      ),
+      const SnackBar(content: Text('Senha alterada com sucesso.')),
     );
     Navigator.of(context).pop();
   }
@@ -58,10 +56,9 @@ class _AlterarSenhaPageState extends State<AlterarSenhaPage> {
       obscureText: oculto,
       decoration: InputDecoration(
         labelText: rotulo,
-        prefixIcon: const Icon(Icons.lock_outline),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        prefixIcon: const Icon(Symbols.lock_rounded),
         suffixIcon: IconButton(
-          icon: Icon(oculto ? Icons.visibility : Icons.visibility_off),
+          icon: Icon(oculto ? Symbols.visibility_rounded : Symbols.visibility_off_rounded),
           onPressed: alternar,
         ),
       ),
@@ -71,62 +68,50 @@ class _AlterarSenhaPageState extends State<AlterarSenhaPage> {
   @override
   Widget build(BuildContext context) {
     final authController = context.watch<AuthController>();
+    final c = context.cores;
 
     return Scaffold(
-      backgroundColor: PaletaSahara.background,
-      appBar: AppBar(
-        title: const Text('Alterar Senha', style: TextStyle(fontWeight: FontWeight.bold)),
-        centerTitle: false,
-        backgroundColor: PaletaSahara.cardSurface,
-        foregroundColor: PaletaSahara.onSurface,
-        elevation: 0.5,
-      ),
+      appBar: AppBar(title: const Text('Alterar Senha')),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(Espaco.x6),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
+            Text(
               'Mínimo de 8 caracteres, com letras e números, diferente do seu CPF.',
-              style: TextStyle(fontSize: 14, color: Colors.grey),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: c.inkMuted),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: Espaco.x6),
             _campoSenha(
               controller: _atualController,
               rotulo: 'Senha atual',
               oculto: _ocultarAtual,
               alternar: () => setState(() => _ocultarAtual = !_ocultarAtual),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: Espaco.x4),
             _campoSenha(
               controller: _novaController,
               rotulo: 'Nova senha',
               oculto: _ocultarNova,
               alternar: () => setState(() => _ocultarNova = !_ocultarNova),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: Espaco.x4),
             _campoSenha(
               controller: _confirmacaoController,
               rotulo: 'Confirmar nova senha',
               oculto: _ocultarConfirmacao,
               alternar: () => setState(() => _ocultarConfirmacao = !_ocultarConfirmacao),
             ),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                backgroundColor: PaletaSahara.primary,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
+            const SizedBox(height: Espaco.x6),
+            FilledButton(
               onPressed: authController.carregando ? null : () => _salvar(authController),
               child: authController.carregando
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                  ? SizedBox(
+                      height: TamanhoIcone.pequeno,
+                      width: TamanhoIcone.pequeno,
+                      child: CircularProgressIndicator(color: c.inkMuted, strokeWidth: 2),
                     )
-                  : const Text('Salvar nova senha', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  : const Text('Salvar nova senha'),
             ),
           ],
         ),

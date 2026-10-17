@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:provider/provider.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import '../controllers/auth_controller.dart';
-import '../../../../core/tema/paleta_sahara.dart';
+import '../../../../apresentacao/widgets/card_app.dart';
 import '../../../../apresentacao/widgets/logo_app.dart';
+import '../../../../core/tema/cores_app.dart';
+import '../../../../core/tema/medidas_app.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -30,11 +32,10 @@ class _LoginPageState extends State<LoginPage> {
     final authController = context.watch<AuthController>();
 
     return Scaffold(
-      backgroundColor: PaletaSahara.background,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 48),
+            padding: const EdgeInsets.symmetric(horizontal: Espaco.x6, vertical: 48),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -58,81 +59,52 @@ class _LoginPageState extends State<LoginPage> {
           fit: BoxFit.scaleDown,
           child: AssinaturaApp(tamanhoLogo: 64),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: Espaco.x3),
         Text(
           "Gestão de Serviços de Pintura",
-          style: GoogleFonts.manrope(
-            fontSize: 13,
-            color: PaletaSahara.onSurfaceMuted,
-            letterSpacing: 0.2,
-          ),
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: context.cores.inkMuted),
         ),
       ],
     );
   }
 
   Widget _buildCard(AuthController authController) {
-    return Container(
-      padding: const EdgeInsets.all(32),
-      decoration: BoxDecoration(
-        color: PaletaSahara.cardSurface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: PaletaSahara.border.withValues(alpha: 0.6),
-          width: 1,
-        ),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0A3A302A),
-            blurRadius: 16,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
+    final c = context.cores;
+    final texto = Theme.of(context).textTheme;
+
+    return CardApp(
+      padding: const EdgeInsets.all(Espaco.x6),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            "Entrar",
-            style: GoogleFonts.ebGaramond(
-              fontSize: 26,
-              fontWeight: FontWeight.w600,
-              color: PaletaSahara.onSurface,
-            ),
-          ),
-          const SizedBox(height: 4),
+          Text("Entrar", style: texto.headlineMedium),
+          const SizedBox(height: Espaco.x1),
           Text(
             "Use seu CPF para acessar o sistema",
-            style: GoogleFonts.manrope(
-              fontSize: 13,
-              color: PaletaSahara.onSurfaceMuted,
-            ),
+            style: texto.bodyMedium?.copyWith(color: c.inkMuted),
           ),
           const SizedBox(height: 28),
 
           _buildLabel("CPF"),
-          const SizedBox(height: 8),
+          const SizedBox(height: Espaco.x2),
           _buildTextField(
             controller: _cpfController,
             hint: "000.000.000-00",
             formatters: [cpfMask],
             keyboardType: TextInputType.number,
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: Espaco.x5),
 
           _buildLabel("Senha"),
-          const SizedBox(height: 8),
+          const SizedBox(height: Espaco.x2),
           _buildTextField(
             controller: _senhaController,
             hint: "Sua senha",
             obscureText: !_senhaVisivel,
             suffixIcon: IconButton(
               icon: Icon(
-                _senhaVisivel
-                    ? Icons.visibility_outlined
-                    : Icons.visibility_off_outlined,
-                size: 18,
-                color: PaletaSahara.onSurfaceMuted,
+                _senhaVisivel ? Symbols.visibility_rounded : Symbols.visibility_off_rounded,
+                size: TamanhoIcone.pequeno,
               ),
               onPressed: () => setState(() => _senhaVisivel = !_senhaVisivel),
             ),
@@ -140,7 +112,7 @@ class _LoginPageState extends State<LoginPage> {
           const SizedBox(height: 28),
 
           _buildPrimaryButton(authController),
-          const SizedBox(height: 20),
+          const SizedBox(height: Espaco.x4),
 
           _buildFooterLinks(),
         ],
@@ -151,15 +123,11 @@ class _LoginPageState extends State<LoginPage> {
   Widget _buildLabel(String text) {
     return Text(
       text,
-      style: GoogleFonts.manrope(
-        fontSize: 13,
-        fontWeight: FontWeight.w600,
-        color: PaletaSahara.onSurface,
-        letterSpacing: 0.1,
-      ),
+      style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
     );
   }
 
+  // Fundo, borda, foco e cores dos textos vêm do tema (InputDecorationTheme).
   Widget _buildTextField({
     required TextEditingController controller,
     required String hint,
@@ -173,32 +141,10 @@ class _LoginPageState extends State<LoginPage> {
       obscureText: obscureText,
       keyboardType: keyboardType,
       inputFormatters: formatters,
-      style: GoogleFonts.manrope(fontSize: 14, color: PaletaSahara.onSurface),
+      style: Theme.of(context).textTheme.bodyLarge,
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: GoogleFonts.manrope(
-          fontSize: 14,
-          color: PaletaSahara.onSurfaceMuted,
-        ),
-        filled: true,
-        fillColor: Colors.white,
         suffixIcon: suffixIcon,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 14,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: PaletaSahara.border, width: 1),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: PaletaSahara.primary, width: 1.5),
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: PaletaSahara.border, width: 1),
-        ),
       ),
     );
   }
@@ -206,8 +152,7 @@ class _LoginPageState extends State<LoginPage> {
   Widget _buildPrimaryButton(AuthController authController) {
     return SizedBox(
       width: double.infinity,
-      height: 50,
-      child: ElevatedButton(
+      child: FilledButton(
         onPressed: authController.carregando
             ? null
             : () => authController.realizarLogin(
@@ -215,35 +160,23 @@ class _LoginPageState extends State<LoginPage> {
                 cpfMask.getUnmaskedText(),
                 _senhaController.text,
               ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: PaletaSahara.primary,
-          foregroundColor: Colors.white,
-          disabledBackgroundColor: PaletaSahara.border,
-          elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        ),
         child: authController.carregando
-            ? const SizedBox(
-                height: 20,
-                width: 20,
-                child: CircularProgressIndicator(
-                  color: Colors.white,
-                  strokeWidth: 2,
-                ),
+            ? SizedBox(
+                height: TamanhoIcone.pequeno,
+                width: TamanhoIcone.pequeno,
+                child: CircularProgressIndicator(color: context.cores.inkMuted, strokeWidth: 2),
               )
-            : Text(
-                "Entrar",
-                style: GoogleFonts.manrope(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.2,
-                ),
-              ),
+            : const Text("Entrar"),
       ),
     );
   }
 
   Widget _buildFooterLinks() {
+    final c = context.cores;
+    final estilo = Theme.of(context).textTheme.bodyMedium?.copyWith(
+          decoration: TextDecoration.underline,
+        );
+
     // Wrap: lado a lado quando cabe; em tela estreita ou fonte grande do
     // celular, o segundo link desce para a linha de baixo (sem estourar).
     return SizedBox(
@@ -256,24 +189,17 @@ class _LoginPageState extends State<LoginPage> {
             onPressed: () => Navigator.pushNamed(context, '/recuperar-senha'),
             child: Text(
               "Esqueci minha senha",
-              style: GoogleFonts.manrope(
-                fontSize: 13,
-                color: PaletaSahara.onSurfaceMuted,
-                decoration: TextDecoration.underline,
-                decorationColor: PaletaSahara.onSurfaceMuted,
-              ),
+              style: estilo?.copyWith(color: c.inkMuted, decorationColor: c.inkMuted),
             ),
           ),
           TextButton(
             onPressed: () => _mostrarDicaPrimeiroAcesso(context),
             child: Text(
               "Primeiro Acesso?",
-              style: GoogleFonts.manrope(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: PaletaSahara.tertiary,
-                decoration: TextDecoration.underline,
-                decorationColor: PaletaSahara.tertiary,
+              style: estilo?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: c.secondary,
+                decorationColor: c.secondary,
               ),
             ),
           ),
@@ -283,83 +209,44 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void _mostrarDicaPrimeiroAcesso(BuildContext context) {
+    final c = context.cores;
+    final texto = Theme.of(context).textTheme;
+    final destaque = texto.bodyMedium?.copyWith(fontWeight: FontWeight.w700);
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: PaletaSahara.background,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
           children: [
-            Icon(
-              Icons.info_outline_rounded,
-              color: PaletaSahara.primary,
-              size: 22,
-            ),
+            Icon(Symbols.info_rounded, color: c.primary),
             const SizedBox(width: 10),
-            Flexible(
-              child: Text(
-                "Instruções de Acesso",
-                style: GoogleFonts.ebGaramond(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                  color: PaletaSahara.onSurface,
-                ),
-              ),
-            ),
+            const Flexible(child: Text("Instruções de Acesso")),
           ],
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              "Para realizar seu primeiro login:",
-              style: GoogleFonts.manrope(
-                fontWeight: FontWeight.w600,
-                fontSize: 13,
-                color: PaletaSahara.onSurface,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
+            Text("Para realizar seu primeiro login:", style: destaque),
+            const SizedBox(height: Espaco.x3),
+            const Text(
               "1. Digite seu CPF no campo indicado.\n2. No campo Senha, use inicialmente apenas os números do seu CPF.",
-              style: GoogleFonts.manrope(
-                fontSize: 13,
-                color: PaletaSahara.onSurface,
-              ),
             ),
-            const SizedBox(height: 16),
-            Divider(color: PaletaSahara.border, thickness: 1),
-            const SizedBox(height: 16),
-            Text(
-              "E a minha senha definitiva?",
-              style: GoogleFonts.manrope(
-                fontWeight: FontWeight.w600,
-                fontSize: 13,
-                color: PaletaSahara.onSurface,
-              ),
-            ),
-            const SizedBox(height: 8),
+            const SizedBox(height: Espaco.x4),
+            const Divider(),
+            const SizedBox(height: Espaco.x4),
+            Text("E a minha senha definitiva?", style: destaque),
+            const SizedBox(height: Espaco.x2),
             Text(
               "Ao entrar com o CPF, o sistema vai pedir automaticamente que você cadastre uma senha definitiva antes de continuar.",
-              style: GoogleFonts.manrope(
-                fontSize: 13,
-                color: PaletaSahara.onSurfaceMuted,
-              ),
+              style: texto.bodyMedium?.copyWith(color: c.inkMuted),
             ),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            style: TextButton.styleFrom(foregroundColor: PaletaSahara.primary),
-            child: Text(
-              "Entendi",
-              style: GoogleFonts.manrope(
-                fontWeight: FontWeight.w600,
-                fontSize: 14,
-              ),
-            ),
+            child: const Text("Entendi"),
           ),
         ],
       ),

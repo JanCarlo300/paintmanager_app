@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../dominio/entidades/usuario.dart';
 import '../controllers/usuario_controller.dart';
+import '../../../../apresentacao/widgets/card_app.dart';
+import '../../../../apresentacao/widgets/chips_filtro_status.dart';
 import '../../../../apresentacao/widgets/drawer_comum.dart';
-import '../../../../core/tema/paleta_sahara.dart';
+import '../../../../apresentacao/widgets/tela_vazia.dart';
+import '../../../../core/tema/cores_app.dart';
+import '../../../../core/tema/medidas_app.dart';
 import '../../../../core/validadores/validador_cpf.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 
@@ -53,28 +58,29 @@ class _UsuarioListPageState extends State<UsuarioListPage> {
     }
   }
 
+  PreferredSizeWidget _appBar() {
+    return AppBar(
+      leading: Builder(
+        builder: (ctx) => IconButton(
+          icon: const Icon(Symbols.menu_rounded),
+          onPressed: () => Scaffold.of(ctx).openDrawer(),
+        ),
+      ),
+      title: const Text("Usuários"),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final controller = context.watch<UsuarioController>();
+    final c = context.cores;
+    final texto = Theme.of(context).textTheme;
 
     if (controller.carregando) {
       return Scaffold(
-        backgroundColor: PaletaSahara.background,
         drawer: const DrawerComum(),
-        appBar: AppBar(
-          leading: Builder(
-            builder: (ctx) => IconButton(
-              icon: const Icon(Icons.menu),
-              onPressed: () => Scaffold.of(ctx).openDrawer(),
-            ),
-          ),
-          title: const Text("Usuários", style: TextStyle(fontWeight: FontWeight.bold)),
-          centerTitle: false,
-          backgroundColor: PaletaSahara.cardSurface,
-          foregroundColor: PaletaSahara.onSurface,
-          elevation: 0.5,
-        ),
-        body: const Center(child: CircularProgressIndicator(color: PaletaSahara.primary)),
+        appBar: _appBar(),
+        body: const Center(child: CircularProgressIndicator()),
       );
     }
 
@@ -83,64 +89,62 @@ class _UsuarioListPageState extends State<UsuarioListPage> {
     final usuariosFiltrados = _filtrarPorTexto(usuariosFiltradosPorStatus);
 
     return Scaffold(
-      backgroundColor: PaletaSahara.background,
       drawer: const DrawerComum(),
-      appBar: AppBar(
-        leading: Builder(
-          builder: (ctx) => IconButton(
-            icon: const Icon(Icons.menu),
-            onPressed: () => Scaffold.of(ctx).openDrawer(),
-          ),
-        ),
-        title: const Text("Usuários", style: TextStyle(fontWeight: FontWeight.bold)),
-        centerTitle: false,
-        backgroundColor: PaletaSahara.cardSurface,
-        foregroundColor: PaletaSahara.onSurface,
-        elevation: 0.5,
-      ),
+      appBar: _appBar(),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(Espaco.margemTela),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // --- HEADER ---
-            const Text("Gestão de Usuários", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 4),
-            const Text("Gerencie usuários e suas permissões no sistema.",
-                style: TextStyle(color: Colors.grey, fontSize: 13)),
-            const SizedBox(height: 16),
+            Text("Gestão de Usuários", style: texto.headlineMedium),
+            const SizedBox(height: Espaco.x1),
+            Text(
+              "Gerencie usuários e suas permissões no sistema.",
+              style: texto.bodyMedium?.copyWith(color: c.inkMuted),
+            ),
+            const SizedBox(height: Espaco.x4),
 
             // --- BOTÃO NOVO USUÁRIO ---
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton.icon(
+              child: FilledButton.icon(
                 onPressed: () => _exibirDialogoUsuario(context),
-                icon: const Icon(Icons.person_add_alt_1, size: 18),
+                icon: const Icon(Symbols.person_add_rounded, size: TamanhoIcone.pequeno),
                 label: const Text("Novo Usuário"),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: PaletaSahara.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                ),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: Espaco.x5),
 
             // --- FILTRO POR STATUS ---
-            _buildFiltroChips(todosUsuarios),
-            const SizedBox(height: 16),
+            ChipsFiltroStatus<FiltroUsuario>(
+              opcoes: [
+                OpcaoStatus("Todos Ativos", FiltroUsuario.todosAtivos,
+                    todosUsuarios.where((u) => u.status).length, c.success),
+                OpcaoStatus("Inativos", FiltroUsuario.inativos,
+                    todosUsuarios.where((u) => !u.status).length, c.inkMuted),
+              ],
+              selecionado: _filtroAtual,
+              aoSelecionar: (f) => setState(() => _filtroAtual = f),
+            ),
+            const SizedBox(height: Espaco.x4),
 
             // --- BARRA DE BUSCA ---
-            _buildBarraBusca(),
-            const SizedBox(height: 8),
+            TextField(
+              onChanged: (v) => setState(() => _termoBusca = v),
+              decoration: const InputDecoration(
+                hintText: "Buscar por nome, e-mail ou função...",
+                prefixIcon: Icon(Symbols.search_rounded, size: TamanhoIcone.pequeno),
+              ),
+            ),
+            const SizedBox(height: Espaco.x2),
 
             // --- CONTADOR ---
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
+              padding: const EdgeInsets.symmetric(vertical: Espaco.x2),
               child: Text(
                 "${usuariosFiltrados.length} usuário(s) encontrado(s)",
-                style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                style: texto.bodyMedium?.copyWith(color: c.inkMuted),
               ),
             ),
 
@@ -155,227 +159,124 @@ class _UsuarioListPageState extends State<UsuarioListPage> {
     );
   }
 
-  // === FILTRO CHIPS ===
-  Widget _buildFiltroChips(List<Usuario> todosUsuarios) {
-    final qtdAtivos = todosUsuarios.where((u) => u.status).length;
-    final qtdInativos = todosUsuarios.where((u) => !u.status).length;
-
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: [
-          _filtroChip("Todos Ativos", FiltroUsuario.todosAtivos, qtdAtivos, Colors.green),
-          const SizedBox(width: 8),
-          _filtroChip("Inativos", FiltroUsuario.inativos, qtdInativos, Colors.grey),
-        ],
-      ),
-    );
-  }
-
-  Widget _filtroChip(String label, FiltroUsuario filtro, int count, Color cor) {
-    final selecionado = _filtroAtual == filtro;
-    return FilterChip(
-      label: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(label, style: TextStyle(
-            fontSize: 12,
-            fontWeight: selecionado ? FontWeight.bold : FontWeight.normal,
-            color: selecionado ? Colors.white : Colors.grey[700],
-          )),
-          const SizedBox(width: 6),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
-              color: selecionado ? Colors.white.withValues(alpha: 0.3) : Colors.grey[300],
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Text(
-              count.toString(),
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold,
-                  color: selecionado ? Colors.white : Colors.grey[700]),
-            ),
-          ),
-        ],
-      ),
-      selected: selecionado,
-      selectedColor: cor,
-      backgroundColor: Colors.grey[100],
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      side: BorderSide.none,
-      showCheckmark: false,
-      onSelected: (_) => setState(() => _filtroAtual = filtro),
-    );
-  }
-
-  // === BARRA DE BUSCA ===
-  Widget _buildBarraBusca() {
-    return SizedBox(
-      height: 42,
-      child: TextField(
-        onChanged: (v) => setState(() => _termoBusca = v),
-        decoration: InputDecoration(
-          hintText: "Buscar por nome, e-mail ou função...",
-          hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
-          prefixIcon: Icon(Icons.search, color: Colors.grey[400], size: 20),
-          filled: true,
-          fillColor: Colors.white,
-          contentPadding: const EdgeInsets.symmetric(vertical: 0),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide(color: Colors.grey[200]!),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide(color: Colors.grey[200]!),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: const BorderSide(color: PaletaSahara.primary, width: 1.5),
-          ),
-        ),
-      ),
-    );
-  }
-
   // === CARD DO USUÁRIO ===
   Widget _buildUsuarioCard(Usuario usuario, UsuarioController controller) {
     final dataCriacao = DateFormat('dd/MM/yyyy').format(usuario.criadoEm);
+    final c = context.cores;
+    final texto = Theme.of(context).textTheme;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Material(
-        color: PaletaSahara.cardSurface,
-        borderRadius: BorderRadius.circular(12),
-        elevation: 0,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: () => _mostrarOpcoes(context, usuario, controller),
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey[200]!),
-              boxShadow: [
-                BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2)),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.only(bottom: Espaco.x3),
+      child: CardApp(
+        aoTocar: () => _mostrarOpcoes(context, usuario, controller),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Nome + Badges
+            Row(
               children: [
-                // Nome + Badges
-                Row(
-                  children: [
-                    // Avatar
-                    CircleAvatar(
-                      radius: 20,
-                      backgroundColor: usuario.status ? PaletaSahara.primary : Colors.grey[400],
-                      child: Text(
-                        usuario.nome.isNotEmpty ? usuario.nome[0].toUpperCase() : '?',
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                _avatar(usuario, raio: 20),
+                const SizedBox(width: Espaco.x3),
+                // Nome e data
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        usuario.nome,
+                        style: texto.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    // Nome e data
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            usuario.nome,
-                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            "Desde $dataCriacao",
-                            style: TextStyle(fontSize: 12, color: Colors.grey[500]),
-                          ),
-                        ],
+                      const SizedBox(height: 2),
+                      Text(
+                        "Desde $dataCriacao",
+                        style: texto.bodySmall?.copyWith(color: c.inkMuted, letterSpacing: 0),
                       ),
-                    ),
-                    // Badges
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        _buildFuncaoBadge(usuario.funcao),
-                        const SizedBox(height: 4),
-                        _badge(
-                          usuario.status ? "Ativo" : "Inativo",
-                          usuario.status ? Colors.green : Colors.grey,
-                        ),
-                      ],
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 12),
-                const Divider(height: 1),
-                const SizedBox(height: 12),
-                // Info de contato
-                Row(
+                // Badges
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Expanded(
-                      child: _infoItem(Icons.email_outlined, usuario.email.isNotEmpty ? usuario.email : '—'),
-                    ),
-                    Expanded(
-                      child: _infoItem(Icons.phone_outlined, usuario.telefone.isNotEmpty ? usuario.telefone : '—'),
-                    ),
+                    _buildFuncaoBadge(usuario.funcao),
+                    const SizedBox(height: Espaco.x1),
+                    usuario.status
+                        ? _badge("Ativo", c.success, c.successSoft)
+                        : _badge("Inativo", c.inkMuted, c.surfaceSunken),
                   ],
                 ),
               ],
             ),
-          ),
+            const SizedBox(height: Espaco.x3),
+            const Divider(height: 1),
+            const SizedBox(height: Espaco.x3),
+            // Info de contato
+            Row(
+              children: [
+                Expanded(
+                  child: _infoItem(Symbols.mail_rounded, usuario.email.isNotEmpty ? usuario.email : '—'),
+                ),
+                Expanded(
+                  child: _infoItem(Symbols.call_rounded, usuario.telefone.isNotEmpty ? usuario.telefone : '—'),
+                ),
+              ],
+            ),
+          ],
         ),
+      ),
+    );
+  }
+
+  /// Inicial do nome num círculo: terracota se ativo, apagado se inativo.
+  Widget _avatar(Usuario usuario, {required double raio}) {
+    final c = context.cores;
+    return CircleAvatar(
+      radius: raio,
+      backgroundColor: usuario.status ? c.primary : c.disabledBg,
+      child: Text(
+        usuario.nome.isNotEmpty ? usuario.nome[0].toUpperCase() : '?',
+        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              color: usuario.status ? c.onPrimary : c.disabledInk,
+              fontWeight: FontWeight.w700,
+            ),
       ),
     );
   }
 
   Widget _buildFuncaoBadge(String funcao) {
-    Color cor;
-    switch (funcao) {
-      case 'Administrador':
-        cor = const Color(0xFFC04651);
-      case 'Gerente':
-        cor = Colors.orange;
-      default:
-        cor = PaletaSahara.onSurface;
-    }
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: cor.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        funcao,
-        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: cor),
-      ),
-    );
+    final c = context.cores;
+    return switch (funcao) {
+      'Administrador' => _badge(funcao, c.secondary, c.errorSoft),
+      'Gerente' => _badge(funcao, c.primary, c.primarySoft),
+      _ => _badge(funcao, c.inkMuted, c.surfaceSunken),
+    };
   }
 
-  Widget _badge(String label, Color cor) {
+  Widget _badge(String label, Color cor, Color fundo) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: Espaco.x2, vertical: 3),
       decoration: BoxDecoration(
-        color: cor.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(6),
+        color: fundo,
+        borderRadius: BorderRadius.circular(Raio.pilula),
       ),
       child: Text(
         label,
-        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: cor),
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(color: cor, letterSpacing: 0),
       ),
     );
   }
 
   Widget _infoItem(IconData icon, String text) {
+    final c = context.cores;
     return Row(
       children: [
-        Icon(icon, size: 15, color: Colors.grey[500]),
+        Icon(icon, size: 16, color: c.inkMuted),
         const SizedBox(width: 6),
         Flexible(
           child: Text(
             text,
-            style: TextStyle(fontSize: 13, color: Colors.grey[700]),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: c.inkMuted),
             overflow: TextOverflow.ellipsis,
           ),
         ),
@@ -383,46 +284,49 @@ class _UsuarioListPageState extends State<UsuarioListPage> {
     );
   }
 
+  /// Ícone de ação num quadrado arredondado com fundo suave.
+  Widget _iconeAcao(IconData icone, Color cor, Color fundo) {
+    return Container(
+      padding: const EdgeInsets.all(Espaco.x2),
+      decoration: BoxDecoration(color: fundo, borderRadius: BorderRadius.circular(Raio.campo)),
+      child: Icon(icone, color: cor, size: TamanhoIcone.pequeno),
+    );
+  }
+
   // === BOTTOM SHEET COM OPÇÕES ===
   void _mostrarOpcoes(BuildContext context, Usuario usuario, UsuarioController controller) {
+    final c = context.cores;
+    final texto = Theme.of(context).textTheme;
+    final corStatus = usuario.status ? c.error : c.success;
+    final fundoStatus = usuario.status ? c.errorSoft : c.successSoft;
+
     showModalBottomSheet(
       context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
       builder: (ctx) => SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
+          padding: const EdgeInsets.symmetric(vertical: Espaco.x2),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               // Indicador
               Container(
                 width: 40, height: 4,
-                margin: const EdgeInsets.only(bottom: 12),
-                decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2)),
+                margin: const EdgeInsets.only(bottom: Espaco.x3),
+                decoration: BoxDecoration(color: c.border, borderRadius: BorderRadius.circular(2)),
               ),
               // Nome do usuário
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: Espaco.x5, vertical: Espaco.x2),
                 child: Row(
                   children: [
-                    CircleAvatar(
-                      radius: 18,
-                      backgroundColor: PaletaSahara.primary,
-                      child: Text(
-                        usuario.nome.isNotEmpty ? usuario.nome[0].toUpperCase() : '?',
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
+                    _avatar(usuario, raio: 18),
+                    const SizedBox(width: Espaco.x3),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(usuario.nome, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                              overflow: TextOverflow.ellipsis),
-                          Text(usuario.funcao, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                          Text(usuario.nome, style: texto.titleMedium, overflow: TextOverflow.ellipsis),
+                          Text(usuario.funcao, style: texto.bodySmall?.copyWith(color: c.inkMuted, letterSpacing: 0)),
                         ],
                       ),
                     ),
@@ -432,16 +336,9 @@ class _UsuarioListPageState extends State<UsuarioListPage> {
               const Divider(),
               // Editar
               ListTile(
-                leading: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.blue.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(Icons.edit_outlined, color: Colors.blue, size: 20),
-                ),
-                title: const Text("Editar", style: TextStyle(fontWeight: FontWeight.w500)),
-                subtitle: const Text("Alterar dados do usuário", style: TextStyle(fontSize: 12)),
+                leading: _iconeAcao(Symbols.edit_rounded, c.info, c.infoSoft),
+                title: const Text("Editar"),
+                subtitle: Text("Alterar dados do usuário", style: texto.bodySmall?.copyWith(color: c.inkMuted, letterSpacing: 0)),
                 onTap: () {
                   Navigator.pop(ctx);
                   _exibirDialogoUsuario(context, usuario: usuario);
@@ -449,25 +346,18 @@ class _UsuarioListPageState extends State<UsuarioListPage> {
               ),
               // Inativar / Ativar
               ListTile(
-                leading: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: (usuario.status ? Colors.red : Colors.green).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(
-                    usuario.status ? Icons.person_off_outlined : Icons.person_outlined,
-                    color: usuario.status ? Colors.red : Colors.green,
-                    size: 20,
-                  ),
+                leading: _iconeAcao(
+                  usuario.status ? Symbols.person_off_rounded : Symbols.person_rounded,
+                  corStatus,
+                  fundoStatus,
                 ),
                 title: Text(
                   usuario.status ? "Inativar" : "Ativar",
-                  style: TextStyle(fontWeight: FontWeight.w500, color: usuario.status ? Colors.red : Colors.green),
+                  style: TextStyle(color: corStatus),
                 ),
                 subtitle: Text(
                   usuario.status ? "O usuário perderá acesso ao sistema" : "Reativar acesso do usuário",
-                  style: const TextStyle(fontSize: 12),
+                  style: texto.bodySmall?.copyWith(color: c.inkMuted, letterSpacing: 0),
                 ),
                 onTap: () {
                   Navigator.pop(ctx);
@@ -483,6 +373,7 @@ class _UsuarioListPageState extends State<UsuarioListPage> {
 
   // === CONFIRMAÇÃO DE INATIVAÇÃO / ATIVAÇÃO ===
   void _confirmarAlteracaoStatus(BuildContext context, Usuario usuario, UsuarioController controller) {
+    final c = context.cores;
     final acao = usuario.status ? "Inativar" : "Ativar";
     final msg = usuario.status
         ? "O usuário ${usuario.nome} será inativado e perderá acesso ao sistema. Você pode reativá-lo pelo filtro 'Inativos'."
@@ -491,31 +382,29 @@ class _UsuarioListPageState extends State<UsuarioListPage> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         title: Text("$acao Usuário?"),
         content: Text(msg),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text("Cancelar", style: TextStyle(color: Colors.grey)),
+            style: TextButton.styleFrom(foregroundColor: c.inkMuted),
+            child: const Text("Cancelar"),
           ),
-          ElevatedButton(
+          FilledButton(
             onPressed: () {
               controller.alternarStatus(usuario);
               Navigator.pop(ctx);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text("Usuário ${usuario.status ? 'inativado' : 'ativado'} com sucesso!"),
-                  backgroundColor: usuario.status ? Colors.orange : Colors.green,
-                  behavior: SnackBarBehavior.floating,
                 ),
               );
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: usuario.status ? Colors.red : Colors.green,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            style: FilledButton.styleFrom(
+              backgroundColor: usuario.status ? c.error : c.success,
+              foregroundColor: usuario.status ? c.onError : c.onPrimary,
             ),
-            child: Text(acao, style: const TextStyle(color: Colors.white)),
+            child: Text(acao),
           ),
         ],
       ),
@@ -524,33 +413,11 @@ class _UsuarioListPageState extends State<UsuarioListPage> {
 
   // === VAZIO ===
   Widget _buildVazio() {
-    String mensagem;
-    IconData icone;
-    switch (_filtroAtual) {
-      case FiltroUsuario.todosAtivos:
-        mensagem = "Nenhum usuário ativo encontrado.";
-        icone = Icons.person_outline;
-      case FiltroUsuario.inativos:
-        mensagem = "Nenhum usuário inativo.";
-        icone = Icons.person_off_outlined;
-    }
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(40),
-      decoration: BoxDecoration(
-        color: PaletaSahara.cardSurface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
-      ),
-      child: Column(
-        children: [
-          Icon(icone, size: 48, color: Colors.grey[400]),
-          const SizedBox(height: 12),
-          Text(mensagem, style: TextStyle(color: Colors.grey[600], fontSize: 14), textAlign: TextAlign.center),
-        ],
-      ),
-    );
+    final (titulo, texto) = switch (_filtroAtual) {
+      FiltroUsuario.todosAtivos => ("Nenhum usuário ativo encontrado", "Confira a busca ou cadastre um novo usuário."),
+      FiltroUsuario.inativos => ("Nenhum usuário inativo", "Usuários inativados aparecem aqui."),
+    };
+    return TelaVazia(ilustracao: IlustracaoVazia.busca, titulo: titulo, texto: texto);
   }
 
   // === DIÁLOGO DE CRIAÇÃO / EDIÇÃO ===
@@ -583,11 +450,13 @@ class _UsuarioListPageState extends State<UsuarioListPage> {
                   controller: nomeController,
                   decoration: const InputDecoration(labelText: "Nome"),
                 ),
+                const SizedBox(height: Espaco.x3),
                 TextField(
                   controller: emailController,
                   decoration: const InputDecoration(labelText: "Email"),
                   keyboardType: TextInputType.emailAddress,
                 ),
+                const SizedBox(height: Espaco.x3),
                 TextField(
                   controller: cpfController,
                   decoration: InputDecoration(labelText: "CPF", errorText: erroCpf),
@@ -597,13 +466,14 @@ class _UsuarioListPageState extends State<UsuarioListPage> {
                     if (erroCpf != null) setDialogState(() => erroCpf = null);
                   },
                 ),
+                const SizedBox(height: Espaco.x3),
                 TextField(
                   controller: telefoneController,
                   decoration: const InputDecoration(labelText: "Telefone"),
                   keyboardType: TextInputType.phone,
                 ),
-                const SizedBox(height: 10),
-                
+                const SizedBox(height: Espaco.x3),
+
                 DropdownButtonFormField<String>(
                   initialValue: funcaoSelecionada,
                   items: ["Funcionário", "Gerente", "Administrador"]
@@ -614,8 +484,9 @@ class _UsuarioListPageState extends State<UsuarioListPage> {
                   },
                   decoration: const InputDecoration(labelText: "Função"),
                 ),
-                
+
                 SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
                   title: const Text("Status Ativo"),
                   value: statusAtivo,
                   onChanged: (val) {
@@ -624,8 +495,11 @@ class _UsuarioListPageState extends State<UsuarioListPage> {
                 ),
                 if (erroGeral != null)
                   Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: Text(erroGeral!, style: const TextStyle(color: Colors.red, fontSize: 13)),
+                    padding: const EdgeInsets.only(top: Espaco.x2),
+                    child: Text(
+                      erroGeral!,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: context.cores.error),
+                    ),
                   ),
               ],
             ),
@@ -635,7 +509,7 @@ class _UsuarioListPageState extends State<UsuarioListPage> {
               onPressed: () => Navigator.pop(context),
               child: const Text("Cancelar"),
             ),
-            ElevatedButton(
+            FilledButton(
               onPressed: salvando ? null : () async {
                 final erro = ValidadorCpf.mensagemErro(cpfController.text);
                 if (erro != null) {
@@ -666,11 +540,7 @@ class _UsuarioListPageState extends State<UsuarioListPage> {
                   });
                 }
               },
-              style: ElevatedButton.styleFrom(backgroundColor: PaletaSahara.primary),
-              child: Text(
-                salvando ? "Salvando..." : "Salvar",
-                style: const TextStyle(color: Colors.white),
-              ),
+              child: Text(salvando ? "Salvando..." : "Salvar"),
             ),
           ],
         ),

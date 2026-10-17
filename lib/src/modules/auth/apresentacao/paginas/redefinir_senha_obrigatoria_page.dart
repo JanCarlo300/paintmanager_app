@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:provider/provider.dart';
 import '../controllers/auth_controller.dart';
-import '../../../../core/tema/paleta_sahara.dart';
+import '../../../../core/tema/cores_app.dart';
+import '../../../../core/tema/medidas_app.dart';
 
 class RedefinirSenhaObrigatoriaPage extends StatefulWidget {
   const RedefinirSenhaObrigatoriaPage({super.key});
@@ -35,7 +37,6 @@ class _RedefinirSenhaObrigatoriaPageState extends State<RedefinirSenhaObrigatori
       context: context,
       barrierDismissible: false,
       builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         title: const Text('Senha alterada!'),
         content: const Text('Sua senha foi definida com sucesso. Faça login novamente com a nova senha.'),
         actions: [
@@ -53,86 +54,76 @@ class _RedefinirSenhaObrigatoriaPageState extends State<RedefinirSenhaObrigatori
   @override
   Widget build(BuildContext context) {
     final authController = context.watch<AuthController>();
+    final c = context.cores;
+    final texto = Theme.of(context).textTheme;
 
     return Scaffold(
-      backgroundColor: PaletaSahara.background,
       appBar: AppBar(
         title: const Text('Redefinir Senha'),
         centerTitle: true,
-        backgroundColor: PaletaSahara.cardSurface,
-        foregroundColor: PaletaSahara.onSurface,
-        elevation: 0,
       ),
       body: Center(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.all(Espaco.x6),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Icon(Icons.lock_reset, size: 80, color: PaletaSahara.primary),
-              const SizedBox(height: 24),
-              const Text(
+              Center(
+                child: CircleAvatar(
+                  radius: 44,
+                  backgroundColor: c.primarySoft,
+                  child: Icon(Symbols.lock_reset_rounded, size: 48, color: c.primary),
+                ),
+              ),
+              const SizedBox(height: Espaco.x6),
+              Text(
                 'Primeiro Acesso',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                style: texto.headlineMedium,
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 8),
-              const Text(
+              const SizedBox(height: Espaco.x2),
+              Text(
                 'Por segurança, cadastre uma nova senha para continuar.\nMínimo de 8 caracteres, com letras e números, diferente do seu CPF.',
-                style: TextStyle(fontSize: 14, color: Colors.grey),
+                style: texto.bodyMedium?.copyWith(color: c.inkMuted),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: Espaco.x8),
               TextField(
                 controller: _senhaController,
                 obscureText: _ocultarSenha,
                 decoration: InputDecoration(
                   labelText: 'Nova senha',
-                  prefixIcon: const Icon(Icons.lock_outline),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                  prefixIcon: const Icon(Symbols.lock_rounded),
                   suffixIcon: IconButton(
-                    icon: Icon(_ocultarSenha ? Icons.visibility : Icons.visibility_off),
+                    icon: Icon(_ocultarSenha ? Symbols.visibility_rounded : Symbols.visibility_off_rounded),
                     onPressed: () => setState(() => _ocultarSenha = !_ocultarSenha),
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: Espaco.x4),
               TextField(
                 controller: _confirmacaoController,
                 obscureText: _ocultarConfirmacao,
                 decoration: InputDecoration(
                   labelText: 'Confirmar nova senha',
-                  prefixIcon: const Icon(Icons.lock_outline),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                  prefixIcon: const Icon(Symbols.lock_rounded),
                   suffixIcon: IconButton(
-                    icon: Icon(_ocultarConfirmacao ? Icons.visibility : Icons.visibility_off),
+                    icon: Icon(_ocultarConfirmacao ? Symbols.visibility_rounded : Symbols.visibility_off_rounded),
                     onPressed: () => setState(() => _ocultarConfirmacao = !_ocultarConfirmacao),
                   ),
                 ),
               ),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  backgroundColor: PaletaSahara.primary,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
+              const SizedBox(height: Espaco.x6),
+              FilledButton(
                 onPressed: authController.carregando ? null : () => _salvar(authController),
                 child: authController.carregando
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                    ? SizedBox(
+                        height: TamanhoIcone.pequeno,
+                        width: TamanhoIcone.pequeno,
+                        child: CircularProgressIndicator(color: c.inkMuted, strokeWidth: 2),
                       )
-                    : const Text('Salvar e Continuar', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    : const Text('Salvar e Continuar'),
               ),
             ],
           ),
