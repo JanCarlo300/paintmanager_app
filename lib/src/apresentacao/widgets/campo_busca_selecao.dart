@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import '../../core/tema/paleta_sahara.dart';
+import 'package:material_symbols_icons/symbols.dart';
+import '../../core/tema/cores_app.dart';
+import '../../core/tema/medidas_app.dart';
 
 /// Campo de busca com seleção (etapa 2). Substitui as caixas seletoras que
 /// listam todos os registros: digita-se, a busca roda no banco (aguardando
@@ -17,7 +19,7 @@ class CampoBuscaSelecao<T> extends StatefulWidget {
     required this.aoSelecionar,
     this.aoLimpar,
     this.subtituloDe,
-    this.icone = Icons.search,
+    this.icone = Symbols.search_rounded,
     this.iconeItem,
     this.textoInicial,
     this.mensagemObrigatorio,
@@ -181,7 +183,7 @@ class _CampoBuscaSelecaoState<T> extends State<CampoBuscaSelecao<T>>
       builder: (campo) {
         _campo = campo;
         final erro = campo.hasError;
-        final corBorda = erro ? Colors.red : Colors.grey[200]!;
+        final c = context.cores;
 
         return PopScope(
           canPop: !_aberta,
@@ -198,43 +200,39 @@ class _CampoBuscaSelecaoState<T> extends State<CampoBuscaSelecao<T>>
                 onChanged: _aoDigitar,
                 onTapOutside: (_) => _focus.unfocus(),
                 textInputAction: TextInputAction.search,
+                // Fundo, cantos e foco vêm do tema; só a borda de erro é local,
+                // porque o erro é do FormField de fora, não do TextField.
                 decoration: InputDecoration(
                   labelText: widget.rotulo,
                   hintText: widget.dica,
-                  hintStyle: TextStyle(color: Colors.grey[400]),
-                  prefixIcon: Icon(widget.icone, size: 20, color: Colors.grey[600]),
+                  prefixIcon: Icon(widget.icone, size: TamanhoIcone.pequeno),
                   suffixIcon: _controller.text.isNotEmpty
                       ? IconButton(
-                          icon: Icon(Icons.clear, size: 18, color: Colors.grey[500]),
+                          icon: const Icon(Symbols.close_rounded, size: TamanhoIcone.pequeno),
                           onPressed: _limpar,
                         )
                       : null,
-                  filled: true,
-                  fillColor: Colors.grey[50],
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: corBorda),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: corBorda),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(
-                      color: erro ? Colors.red : PaletaSahara.primary,
-                      width: 1.5,
-                    ),
-                  ),
+                  enabledBorder: erro
+                      ? OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(Raio.campo),
+                          borderSide: BorderSide(color: c.error),
+                        )
+                      : null,
+                  focusedBorder: erro
+                      ? OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(Raio.campo),
+                          borderSide: BorderSide(color: c.error, width: 1.5),
+                        )
+                      : null,
                 ),
               ),
               if (_aberta) _buildLista(),
               if (erro)
                 Padding(
-                  padding: const EdgeInsets.only(left: 12, top: 6),
+                  padding: const EdgeInsets.only(left: Espaco.x3, top: 6),
                   child: Text(
                     campo.errorText!,
-                    style: TextStyle(color: Colors.red[700], fontSize: 12),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: c.error, letterSpacing: 0),
                   ),
                 ),
             ],
@@ -247,14 +245,15 @@ class _CampoBuscaSelecaoState<T> extends State<CampoBuscaSelecao<T>>
   // TextFieldTapRegion: tocar na lista não conta como "fora do campo" — senão
   // o foco cairia (e a lista sumiria) antes do toque no item ser registrado.
   Widget _buildLista() {
+    final c = context.cores;
     return TextFieldTapRegion(
       child: Container(
         margin: const EdgeInsets.only(top: 6),
         constraints: const BoxConstraints(maxHeight: 240),
         decoration: BoxDecoration(
-          color: PaletaSahara.cardSurface,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.grey[300]!),
+          color: c.surfaceRaised,
+          borderRadius: BorderRadius.circular(Raio.campo),
+          border: Border.all(color: c.border),
         ),
         clipBehavior: Clip.antiAlias,
         child: Column(
@@ -263,7 +262,6 @@ class _CampoBuscaSelecaoState<T> extends State<CampoBuscaSelecao<T>>
             if (_carregando)
               const LinearProgressIndicator(
                 minHeight: 2,
-                color: PaletaSahara.primary,
                 backgroundColor: Colors.transparent,
               ),
             Flexible(child: _conteudoLista()),
@@ -274,8 +272,10 @@ class _CampoBuscaSelecaoState<T> extends State<CampoBuscaSelecao<T>>
   }
 
   Widget _conteudoLista() {
+    final c = context.cores;
+    final texto = Theme.of(context).textTheme;
     if (_erroBusca != null) {
-      return _mensagem(_erroBusca!, cor: Colors.red[700]);
+      return _mensagem(_erroBusca!, cor: c.error);
     }
     if (_resultados.isEmpty) {
       return _buscou && !_carregando
@@ -286,7 +286,7 @@ class _CampoBuscaSelecaoState<T> extends State<CampoBuscaSelecao<T>>
       shrinkWrap: true,
       padding: EdgeInsets.zero,
       itemCount: _resultados.length,
-      separatorBuilder: (_, __) => Divider(height: 1, color: Colors.grey[200]),
+      separatorBuilder: (_, __) => const Divider(height: 1),
       itemBuilder: (context, i) {
         final item = _resultados[i];
         final titulo = widget.tituloDe(item);
@@ -295,21 +295,17 @@ class _CampoBuscaSelecaoState<T> extends State<CampoBuscaSelecao<T>>
           dense: true,
           leading: CircleAvatar(
             radius: 16,
-            backgroundColor: Colors.grey[200],
+            backgroundColor: c.primarySoft,
             child: widget.iconeItem != null
-                ? Icon(widget.iconeItem, size: 14, color: Colors.grey[700])
+                ? Icon(widget.iconeItem, size: 16, color: c.primary)
                 : Text(
                     titulo.isNotEmpty ? titulo[0].toUpperCase() : '?',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey[700],
-                    ),
+                    style: texto.labelSmall?.copyWith(color: c.primary, fontWeight: FontWeight.w700),
                   ),
           ),
-          title: Text(titulo, style: TextStyle(color: Colors.grey[800])),
+          title: Text(titulo, style: texto.bodyMedium?.copyWith(color: c.ink)),
           subtitle: subtitulo != null && subtitulo.isNotEmpty
-              ? Text(subtitulo, style: TextStyle(fontSize: 12, color: Colors.grey[500]))
+              ? Text(subtitulo, style: texto.bodySmall?.copyWith(color: c.inkMuted, letterSpacing: 0))
               : null,
           onTap: () => _selecionar(item),
         );
@@ -318,11 +314,11 @@ class _CampoBuscaSelecaoState<T> extends State<CampoBuscaSelecao<T>>
   }
 
   Widget _mensagem(String texto, {Color? cor}) => Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(Espaco.x4),
         child: Text(
           texto,
           textAlign: TextAlign.center,
-          style: TextStyle(color: cor ?? Colors.grey[600], fontSize: 13),
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: cor ?? context.cores.inkMuted),
         ),
       );
 }

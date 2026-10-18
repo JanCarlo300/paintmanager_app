@@ -1,6 +1,6 @@
 # PaintManager — Relatório de Status do Projeto
 
-**TFC II — UniRV** · Autor: Jan Carlo · **Data de referência: 16/10/2026** (criado em 12/10, atualizado a cada etapa)
+**TFC II — UniRV** · Autor: Jan Carlo · **Data de referência: 18/10/2026** (criado em 12/10, atualizado a cada etapa)
 Base: código atual da branch `main`, scripts em `db/`, testes em `test/` e o relatório anterior de 01/10/2026.
 
 ---
@@ -12,11 +12,12 @@ Base: código atual da branch `main`, scripts em `db/`, testes em `test/` e o re
 | Requisitos funcionais (RF001–RF013) | **13 completos · 0 parciais · 0 não implementados** (atualizado em 15/10) |
 | Backlog de 02/10 (itens 1.x, 2.x, 3.x) | **Concluído** — 1.1 e 2.2 encerrados sem alteração por decisão do Jan; 1.2, 2.1, 2.3, 3.1 e 3.2 entregues e aprovados |
 | Plano de ajustes de outubro (Etapas 1 a 8.1) | **Todas entregues e aprovadas em 15/10** |
-| Testes automatizados | **42 testes passando** (7 arquivos): modelos, validador de CPF, filtros das listas, item de material, PDFs e regras dos relatórios. Ainda sem testes de repositórios e controllers |
+| Testes automatizados | **114 testes passando**: modelos, validador de CPF, filtros das listas, item de material, PDFs, regras dos relatórios e, desde a identidade visual, contraste WCAG dos dois temas, status, `StatusChip`, `TemaController` e cores dos gráficos. Ainda sem testes de repositórios e controllers |
+| Identidade visual | **Nova identidade do manual da marca concluída em 18/10** (Fases 0–6), com modo escuro; zero cores/fontes fixas fora de `core/tema` |
 | Backend | Supabase (PostgreSQL + Auth + RLS + Edge Function + Realtime) |
 | Segurança no banco | **Matriz de funções aplicada por RLS em todas as tabelas** e login sem leitura anônima (16/10) |
 | Build Android | APK debug gerando e instalando no Samsung A55 (se o adb não achar o celular, desligar a Ancoragem USB) |
-| Cronograma | A Semana 10 (28/09–03/10, "V&V finalizada") passou com cobertura de testes baixa; desde então subiu de 4 para 42 testes |
+| Cronograma | A Semana 10 (28/09–03/10, "V&V finalizada") passou com cobertura de testes baixa; desde então subiu de 4 para 114 testes |
 
 **Desde o relatório de 01/10:** todo o backlog do brief e todas as etapas do plano de ajustes foram entregues e aprovados por você.
 
@@ -110,16 +111,29 @@ O menu lateral e os atalhos trocavam de tela substituindo a anterior, então o v
 - **Edge Function `criar-usuario`:** confirmar que está implantada no Supabase (o cadastro de usuário depende dela).
 
 ### 4.3 Testes (V&V)
-- **42 testes unitários passando**, em 7 arquivos: modelos de Usuário e Cliente, `ValidadorCpf`, `FiltroLista`, `ItemMaterial`, PDF da Lista de Materiais e regras/PDFs dos relatórios.
+- **114 testes unitários passando**: modelos de Usuário e Cliente, `ValidadorCpf`, `FiltroLista`, `ItemMaterial`, PDF da Lista de Materiais, regras/PDFs dos relatórios e os testes do tema (contraste WCAG ≥ 4,5:1 nos temas claro e escuro, `status_visual`, `StatusChip`, `TemaController`, cores dos gráficos).
 - **Ainda sem testes** de repositórios (Supabase), controllers e telas, nem de `ValidadorSenha` e `GeocodificacaoService`.
 - Os testes manuais de cada etapa foram feitos por você no Samsung A55 e estão registrados nas tabelas acima.
 
 ### 4.4 Documentação e repositório
-- `README.md` e `ARCHITECTURE.md` desatualizados: não mencionam `equipe_obra`, `GuardaRota`, `NotificacaoController`, `PaletaSahara`, chat, mapa, PDFs, filtros nem a Edge Function.
+- `README.md` e `ARCHITECTURE.md`: atualizados em 18/10 com a identidade visual (pastas, tema, componentes, dependências, testes). Ainda falta descrever por módulo `equipe_obra`, `GuardaRota`, chat, mapa, PDFs e a Edge Function.
 - Falta um `.env.example` (o README o menciona).
 - **Figura 19 (DER) do relatório do TFC:** precisa ser refeita com as tabelas reais (`usuario`, `cliente`, `obra`, `orcamento`, `transacao`, `equipe_obra`, `obra_mensagem`, `chat_leitura`).
 - ✅ Tela de **Configurações** (16/10, testada pelo Jan): dados da conta do usuário logado, **Alterar senha** (confere a senha atual; mesma regra de senha do primeiro acesso) e versão do app. Substituiu o placeholder "Em construção".
 - Redação da monografia: não tenho como ver isso pelo código; você precisa confirmar o andamento.
+
+### 4.5 Nova identidade visual ✅ (branch `feat/identidade-visual`, pronta para juntar na `main`)
+Troca da paleta "Sahara" pelo manual da marca aprovado em 15/10, seguindo `kit_identidade_visual/PLANO_IDENTIDADE_VISUAL.md` e o `PASSO_A_PASSO.md`. Só visual: nenhuma regra, permissão ou consulta ao banco muda. Placar da auditoria em `docs/identidade_visual/PROGRESSO.md`.
+
+| Fase | Situação | Observação |
+|---|---|---|
+| 0 — Preparação | ✅ 16/10 | Branch, imagens da marca, dependências `flutter_svg`, `material_symbols_icons`, `shared_preferences` e `flutter_launcher_icons`. Linha de base: 1.359 valores fixos em 29 arquivos |
+| 1 — Fundação do tema | ✅ 16/10 | `lib/src/core/tema/` (cores claro/escuro, tipografia, medidas, status, tema); `PaletaSahara` virou ponte temporária com as cores novas; 102 testes (60 novos de contraste WCAG e status) |
+| 2 — Componentes | ✅ 16/10 | `StatusChip`, `CardApp`, `CardDestaque`, `IconeModulo`, `TelaVazia`, `LogoApp`/`AssinaturaApp` em `lib/src/apresentacao/widgets/` (ainda sem uso nas telas); 104 testes |
+| 3 — Marca (ícone, login, menu, PDF) | ✅ 16/10 · testado pelo Jan | Ícone do app (pincel sobre grafite, adaptativo e temático), tela de abertura grafite `#3A302A` (Android 12+ e anteriores), assinatura da marca no login e no menu lateral, PDFs com as cores do manual e o símbolo no cabeçalho. Corrigido o estouro da linha de links do login com fonte grande |
+| 4 — Telas (lotes A–H) | ✅ 18/10 | **A · Estrutura ✅ 16/10**: menu (Usuários em 7º, por decisão do Jan), busca, data, filtros, chips, acesso restrito, avisos, Configurações; alerta do sino passou a guardar `urgente` em vez de cor. **B · Acesso ✅ 16/10**: login, recuperar senha, primeiro acesso, alterar senha e Usuários (sem `GoogleFonts` fora do tema). **C · Resumo Geral ✅ 16/10**: cabeçalho claro, indicadores com `IconeModulo`, saldo no `CardDestaque`, `StatusChip` nas obras, alertas e telas vazias com ilustração. **D · Clientes ✅ 16/10**: lista (chips compartilhados, `CardApp`, `TelaVazia` com atalho para todos os ativos) e formulário. **E · Obras ✅ 16/10**: lista, detalhes, chat, formulário e PDF da lista de materiais; cores de status unificadas pelo `status_visual` (Em Andamento azul, Concluída verde). **F · Orçamentos ✅ 16/10**: lista e formulário com `StatusChip`, seletor de status pelo `status_visual`, WhatsApp no verde do tema. **G · Financeiro ✅ 18/10**: saldo no `CardDestaque` (pendente na legenda), receitas/despesas em `success`/`error`, formulário com valor no estilo do manual. **H · Relatórios ✅ 18/10**: lucro no `CardDestaque`, gráficos nas cores do tema e paleta fixa por categoria (`core/tema/cores_graficos.dart`, aprovada pelo Jan), nome/%/valor por categoria. **Fase 4 concluída: zero valores fixos fora de `core/tema` e dos PDFs** |
+| 5 — Modo escuro + Configurações | ✅ 18/10 · testado pelo Jan | `TemaController` (segue o celular por padrão, escolha salva com `shared_preferences`), seção Aparência em Configurações (Automático/Claro/Escuro), `PaletaSahara` apagada; 114 testes |
+| 6 — Testes e documentação | ✅ 18/10 | README, ARCHITECTURE e histórico atualizados; plano e passo a passo em `docs/identidade_visual/`; auditoria permanente em `tool/identidade_visual/verificar.dart`; pasta do kit removida. Falta o Jan juntar a branch na `main` e tirar os prints para o TFC |
 
 ---
 
@@ -138,7 +152,7 @@ O menu lateral e os atalhos trocavam de tela substituindo a anterior, então o v
 
 1. **Ampliar os testes:** `ValidadorSenha`, repositórios com `mocktail`, controllers de Obra e de alertas.
 2. **APK de release** assinado (chave fora do git).
-3. **Documentação:** README, ARCHITECTURE e `.env.example`.
+3. **Documentação:** detalhar no README os módulos novos (equipe, chat, mapa, PDFs, Edge Function) e criar o `.env.example`.
 4. **Melhorias opcionais:** aceitar e validar CNPJ no cliente; paginação das listas.
 
 ---

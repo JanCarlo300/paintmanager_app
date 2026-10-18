@@ -1,99 +1,86 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../modules/auth/dominio/entidades/usuario.dart';
 import '../../modules/auth/apresentacao/controllers/auth_controller.dart';
 import '../controllers/dashboard_controller.dart';
 import '../controllers/notificacao_controller.dart';
+import '../widgets/card_app.dart';
+import '../widgets/card_destaque.dart';
 import '../widgets/drawer_comum.dart';
-import '../../core/tema/paleta_sahara.dart';
+import '../widgets/icone_modulo.dart';
+import '../widgets/status_chip.dart';
+import '../widgets/tela_vazia.dart';
+import '../../core/tema/cores_app.dart';
+import '../../core/tema/medidas_app.dart';
 
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
-
-  // ─── Paleta PaintManager ───
-  static const Color _corPrimaria = PaletaSahara.primary;
-  static const Color _corAccent = Color(0xFFFF9800); // Laranja
-  static const Color _corAccentClaro = Color(0xFFFFF3E0);
-  static const Color _corFundo = PaletaSahara.background;
-  static const Color _corCard = PaletaSahara.cardSurface;
-  static const Color _corVerdeReceita = Color(0xFF43A047);
-  static const Color _corVermelhoDespesa = Color(0xFFE53935);
 
   @override
   Widget build(BuildContext context) {
     final notificacaoController = context.watch<NotificacaoController>();
     final qtdAlertas = notificacaoController.alertas.length;
+    final c = context.cores;
+    final texto = Theme.of(context).textTheme;
 
     return Scaffold(
-      backgroundColor: _corFundo,
       drawer: const DrawerComum(),
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
-          // ─── AppBar com gradiente ───
+          // ─── Cabeçalho: saudação + data ───
           SliverAppBar(
-            expandedHeight: 160,
+            expandedHeight: 140,
             floating: false,
             pinned: true,
             leading: Builder(
               builder: (ctx) => IconButton(
-                icon: const Icon(Icons.menu_rounded, color: Colors.white),
+                icon: const Icon(Symbols.menu_rounded),
                 onPressed: () => Scaffold.of(ctx).openDrawer(),
               ),
             ),
             actions: [
               IconButton(
+                tooltip: 'Alertas',
                 icon: Badge(
                   label: Text('$qtdAlertas'),
                   isLabelVisible: qtdAlertas > 0,
-                  backgroundColor: Colors.red,
-                  child: const Icon(Icons.notifications_none_rounded, color: Colors.white),
+                  backgroundColor: c.secondary,
+                  textColor: c.onSecondary,
+                  child: const Icon(Symbols.notifications_rounded),
                 ),
                 onPressed: () => _mostrarAlertas(context, notificacaoController),
               ),
             ],
             flexibleSpace: FlexibleSpaceBar(
-              background: Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [PaletaSahara.primary, PaletaSahara.tertiary],
-                  ),
-                ),
-                child: SafeArea(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 50, 20, 20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        StreamBuilder<Usuario?>(
-                          stream: context.read<AuthController>().usuarioAtual,
-                          builder: (context, snapshot) {
-                            final nome = snapshot.data?.nome ?? 'Usuário';
-                            final primeiroNome = nome.split(' ').first;
-                            return Text(
-                              'Olá, $primeiroNome! 👋',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          DateFormat("EEEE, dd 'de' MMMM", 'pt_BR').format(DateTime.now()),
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.8),
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
-                    ),
+              background: SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(Espaco.x5, 50, Espaco.x5, Espaco.x4),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      StreamBuilder<Usuario?>(
+                        stream: context.read<AuthController>().usuarioAtual,
+                        builder: (context, snapshot) {
+                          final nome = snapshot.data?.nome ?? 'Usuário';
+                          final primeiroNome = nome.split(' ').first;
+                          return Text(
+                            'Olá, $primeiroNome! 👋',
+                            style: texto.headlineMedium,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          );
+                        },
+                      ),
+                      const SizedBox(height: Espaco.x1),
+                      Text(
+                        _capitalizar(DateFormat("EEEE, dd 'de' MMMM", 'pt_BR').format(DateTime.now())),
+                        style: texto.bodyMedium?.copyWith(color: c.inkMuted),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -103,33 +90,33 @@ class DashboardPage extends StatelessWidget {
           // ─── Conteúdo ───
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(Espaco.margemTela),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // ─── 4 Cards de Resumo ───
-                  _buildSectionTitle('Resumo Geral'),
-                  const SizedBox(height: 12),
+                  _buildSectionTitle(context, 'Resumo Geral'),
+                  const SizedBox(height: Espaco.x3),
                   _buildResumoCards(context),
                   const SizedBox(height: 28),
 
                   // ─── Resumo Financeiro ───
-                  _buildSectionTitle('Financeiro do Mês'),
-                  const SizedBox(height: 12),
+                  _buildSectionTitle(context, 'Financeiro do Mês'),
+                  const SizedBox(height: Espaco.x3),
                   _buildResumoFinanceiro(context),
                   const SizedBox(height: 28),
 
                   // ─── Obras Recentes ───
-                  _buildSectionTitle('Obras Recentes'),
-                  const SizedBox(height: 12),
+                  _buildSectionTitle(context, 'Obras Recentes'),
+                  const SizedBox(height: Espaco.x3),
                   _buildObrasRecentes(context),
                   const SizedBox(height: 28),
 
                   // ─── Atalhos Rápidos ───
-                  _buildSectionTitle('Acesso Rápido'),
-                  const SizedBox(height: 12),
+                  _buildSectionTitle(context, 'Acesso Rápido'),
+                  const SizedBox(height: Espaco.x3),
                   _buildAtalhosRapidos(context),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: Espaco.x6),
                 ],
               ),
             ),
@@ -142,16 +129,8 @@ class DashboardPage extends StatelessWidget {
   // ═══════════════════════════════════════════
   // SECTION TITLE
   // ═══════════════════════════════════════════
-  Widget _buildSectionTitle(String titulo) {
-    return Text(
-      titulo,
-      style: const TextStyle(
-        fontSize: 18,
-        fontWeight: FontWeight.w700,
-        color: PaletaSahara.onSurface,
-        letterSpacing: 0.3,
-      ),
-    );
+  Widget _buildSectionTitle(BuildContext context, String titulo) {
+    return Text(titulo, style: Theme.of(context).textTheme.titleLarge);
   }
 
   // ═══════════════════════════════════════════
@@ -167,43 +146,33 @@ class DashboardPage extends StatelessWidget {
           crossAxisCount: crossAxisCount,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          mainAxisSpacing: 12,
-          crossAxisSpacing: 12,
+          mainAxisSpacing: Espaco.x3,
+          crossAxisSpacing: Espaco.x3,
           childAspectRatio: 1.2,
           children: [
-            // Card Obras em Andamento
             _buildResumoCard(
-              icon: Icons.construction_rounded,
+              context,
+              icon: Symbols.construction_rounded,
               label: 'Obras Ativas',
               valor: dashboardCtrl.carregando ? '...' : dashboardCtrl.obrasAtivas.toString(),
-              corIcone: _corAccent,
-              corFundoIcone: _corAccentClaro,
             ),
-            // Card Receita do Mês
             _buildResumoCard(
-              icon: Icons.trending_up_rounded,
+              context,
+              icon: Symbols.trending_up_rounded,
               label: 'Receita Mês',
               valor: dashboardCtrl.carregando ? '...' : _formatarMoeda(dashboardCtrl.receitaMes),
-              corIcone: _corVerdeReceita,
-              corFundoIcone: const Color(0xFFE8F5E9),
-              fontSizeValor: dashboardCtrl.receitaMes > 99999 ? 16 : null,
             ),
-            // Card Despesa do Mês
             _buildResumoCard(
-              icon: Icons.trending_down_rounded,
+              context,
+              icon: Symbols.trending_down_rounded,
               label: 'Despesa Mês',
               valor: dashboardCtrl.carregando ? '...' : _formatarMoeda(dashboardCtrl.despesaMes),
-              corIcone: _corVermelhoDespesa,
-              corFundoIcone: const Color(0xFFFFEBEE),
-              fontSizeValor: dashboardCtrl.despesaMes > 99999 ? 16 : null,
             ),
-            // Card Orçamentos Pendentes
             _buildResumoCard(
-              icon: Icons.request_quote_rounded,
+              context,
+              icon: Symbols.request_quote_rounded,
               label: 'Orç. Pendentes',
               valor: dashboardCtrl.carregando ? '...' : dashboardCtrl.orcamentosPendentes.toString(),
-              corIcone: const Color(0xFF8E24AA),
-              corFundoIcone: const Color(0xFFF3E5F5),
             ),
           ],
         );
@@ -211,58 +180,33 @@ class DashboardPage extends StatelessWidget {
     );
   }
 
-  Widget _buildResumoCard({
+  Widget _buildResumoCard(
+    BuildContext context, {
     required IconData icon,
     required String label,
     required String valor,
-    required Color corIcone,
-    required Color corFundoIcone,
-    double? fontSizeValor,
   }) {
-    return Container(
+    final c = context.cores;
+    final texto = Theme.of(context).textTheme;
+
+    return CardApp(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: _corCard,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Container(
-            padding: const EdgeInsets.all(7),
-            decoration: BoxDecoration(
-              color: corFundoIcone,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, color: corIcone, size: 20),
-          ),
+          IconeModulo(icon),
           const Spacer(),
-          Text(
-            valor,
-            style: TextStyle(
-              fontSize: fontSizeValor ?? 22,
-              fontWeight: FontWeight.w800,
-              color: _corPrimaria,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+          // Valores grandes (R$ 100.000,00) diminuem para caber, sem cortar.
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(valor, style: texto.displayMedium?.copyWith(color: c.ink), maxLines: 1),
           ),
           const SizedBox(height: 2),
           Text(
             label,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey[600],
-              fontWeight: FontWeight.w500,
-            ),
+            style: texto.bodySmall?.copyWith(color: c.inkMuted, letterSpacing: 0),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -276,10 +220,11 @@ class DashboardPage extends StatelessWidget {
   // ═══════════════════════════════════════════
   Widget _buildResumoFinanceiro(BuildContext context) {
     final dashboardCtrl = context.watch<DashboardController>();
+    final c = context.cores;
     if (dashboardCtrl.carregando) {
       return const Padding(
-        padding: EdgeInsets.all(32.0),
-        child: Center(child: CircularProgressIndicator(color: PaletaSahara.primary)),
+        padding: EdgeInsets.all(Espaco.x8),
+        child: Center(child: CircularProgressIndicator()),
       );
     }
 
@@ -290,129 +235,73 @@ class DashboardPage extends StatelessWidget {
     final fracReceita = maxValor > 0 ? receitas / maxValor : 0.0;
     final fracDespesa = maxValor > 0 ? despesas / maxValor : 0.0;
 
-    return Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: _corCard,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.06),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
+    return Column(
+      children: [
+        // Saldo: o card destaque da tela (um só, como pede o manual).
+        CardDestaque(
+          rotulo: 'Saldo do Mês',
+          valor: '${saldo < 0 ? '− ' : ''}${_formatarMoeda(saldo.abs())}',
+          legenda: saldo >= 0 ? 'Receitas maiores que despesas' : 'Despesas maiores que receitas',
+        ),
+        const SizedBox(height: Espaco.x3),
+        CardApp(
+          padding: const EdgeInsets.all(Espaco.x5),
           child: Column(
             children: [
-              // Saldo destaque
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: saldo >= 0
-                        ? [const Color(0xFF2E7D32), const Color(0xFF43A047)]
-                        : [const Color(0xFFC62828), const Color(0xFFE53935)],
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  children: [
-                    Text(
-                      'Saldo do Mês',
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.9),
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          saldo >= 0 ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
-                          color: Colors.white,
-                          size: 22,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          _formatarMoeda(saldo.abs()),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 26,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // Barras Receitas e Despesas
               _buildBarraFinanceira(
+                context,
                 label: 'Receitas',
                 valor: receitas,
                 frac: fracReceita,
-                cor: _corVerdeReceita,
-                icon: Icons.arrow_circle_up_rounded,
+                cor: c.success,
+                icon: Symbols.arrow_circle_up_rounded,
               ),
               const SizedBox(height: 14),
               _buildBarraFinanceira(
+                context,
                 label: 'Despesas',
                 valor: despesas,
                 frac: fracDespesa,
-                cor: _corVermelhoDespesa,
-                icon: Icons.arrow_circle_down_rounded,
+                cor: c.error,
+                icon: Symbols.arrow_circle_down_rounded,
               ),
             ],
           ),
-        );
+        ),
+      ],
+    );
   }
 
-  Widget _buildBarraFinanceira({
+  Widget _buildBarraFinanceira(
+    BuildContext context, {
     required String label,
     required double valor,
     required double frac,
     required Color cor,
     required IconData icon,
   }) {
+    final c = context.cores;
+    final texto = Theme.of(context).textTheme;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            Icon(icon, color: cor, size: 18),
+            Icon(icon, color: cor, size: TamanhoIcone.pequeno),
             const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: Colors.grey[700],
-              ),
-            ),
+            Text(label, style: texto.bodyMedium?.copyWith(fontWeight: FontWeight.w700, color: c.inkMuted)),
             const Spacer(),
-            Text(
-              _formatarMoeda(valor),
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: cor,
-              ),
-            ),
+            Text(_formatarMoeda(valor), style: texto.bodyMedium?.copyWith(fontWeight: FontWeight.w700, color: cor)),
           ],
         ),
         const SizedBox(height: 6),
         ClipRRect(
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(Raio.pilula),
           child: LinearProgressIndicator(
             value: frac,
             minHeight: 8,
-            backgroundColor: cor.withValues(alpha: 0.12),
+            backgroundColor: c.surfaceSunken,
             valueColor: AlwaysStoppedAnimation<Color>(cor),
           ),
         ),
@@ -425,147 +314,83 @@ class DashboardPage extends StatelessWidget {
   // ═══════════════════════════════════════════
   Widget _buildObrasRecentes(BuildContext context) {
     final dashboardCtrl = context.watch<DashboardController>();
+    final c = context.cores;
+    final texto = Theme.of(context).textTheme;
     if (dashboardCtrl.carregando) {
       return const Padding(
-        padding: EdgeInsets.all(32.0),
-        child: Center(child: CircularProgressIndicator(color: PaletaSahara.primary)),
+        padding: EdgeInsets.all(Espaco.x8),
+        child: Center(child: CircularProgressIndicator()),
       );
     }
-    
+
     final obrasRecentes = dashboardCtrl.obrasRecentes;
     if (obrasRecentes.isEmpty) {
-      return _buildEmptyState(
-        icon: Icons.construction_outlined,
-        mensagem: 'Nenhuma obra cadastrada',
+      return const TelaVazia(
+        ilustracao: IlustracaoVazia.obras,
+        titulo: 'Nenhuma obra cadastrada',
+        texto: 'As obras mais recentes aparecem aqui.',
       );
     }
 
     return Column(
-          children: obrasRecentes.map((obra) {
-            return Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: _corCard,
-                borderRadius: BorderRadius.circular(14),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              obra.tituloDaObra,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w700,
-                                fontSize: 15,
-                                color: PaletaSahara.onSurface,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 3),
-                            Text(
-                              obra.clienteNome,
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Colors.grey[600],
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      _buildStatusBadge(obra.status),
-                    ],
-                  ),
-                  const SizedBox(height: 14),
-                  // Barra de progresso
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(6),
-                          child: LinearProgressIndicator(
-                            value: obra.progresso / 100,
-                            minHeight: 8,
-                            backgroundColor: _corAccent.withValues(alpha: 0.12),
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              obra.progresso >= 100
-                                  ? _corVerdeReceita
-                                  : _corAccent,
-                            ),
+      children: obrasRecentes.map((obra) {
+        return Padding(
+          padding: const EdgeInsets.only(bottom: Espaco.x3),
+          child: CardApp(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            obra.tituloDaObra,
+                            style: texto.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
+                          const SizedBox(height: 3),
+                          Text(
+                            obra.clienteNome,
+                            style: texto.bodyMedium?.copyWith(color: c.inkMuted),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: Espaco.x2),
+                    StatusChip(obra.status),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                // Barra de progresso: trilho surfaceSunken, preenchimento brand.
+                Row(
+                  children: [
+                    Expanded(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(Raio.pilula),
+                        child: LinearProgressIndicator(
+                          value: obra.progresso / 100,
+                          minHeight: 8,
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      Text(
-                        '${obra.progresso.toStringAsFixed(0)}%',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: obra.progresso >= 100
-                              ? _corVerdeReceita
-                              : _corAccent,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            );
-          }).toList(),
+                    ),
+                    const SizedBox(width: Espaco.x3),
+                    Text(
+                      '${obra.progresso.toStringAsFixed(0)}%',
+                      style: texto.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
         );
-  }
-
-  Widget _buildStatusBadge(String status) {
-    Color corBadge;
-    Color corTexto;
-    switch (status) {
-      case 'Em Andamento':
-        corBadge = const Color(0xFFFFF3E0);
-        corTexto = _corAccent;
-        break;
-      case 'Concluída':
-        corBadge = const Color(0xFFE8F5E9);
-        corTexto = _corVerdeReceita;
-        break;
-      case 'Pausada':
-        corBadge = const Color(0xFFFFEBEE);
-        corTexto = _corVermelhoDespesa;
-        break;
-      default: // Não Iniciada
-        corBadge = const Color(0xFFECEFF1);
-        corTexto = Colors.grey[700]!;
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: corBadge,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        status,
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-          color: corTexto,
-        ),
-      ),
+      }).toList(),
     );
   }
 
@@ -574,12 +399,12 @@ class DashboardPage extends StatelessWidget {
   // ═══════════════════════════════════════════
   Widget _buildAtalhosRapidos(BuildContext context) {
     final atalhos = [
-      _AtalhoItem(icon: Icons.person_add_rounded, label: 'Novo\nCliente', rota: '/cliente-formulario'),
-      _AtalhoItem(icon: Icons.request_quote_rounded, label: 'Novo\nOrçamento', rota: '/orcamento-formulario'),
-      _AtalhoItem(icon: Icons.add_business_rounded, label: 'Nova\nObra', rota: '/obra-formulario'),
-      _AtalhoItem(icon: Icons.people_rounded, label: 'Clientes', rota: '/clientes'),
-      _AtalhoItem(icon: Icons.bar_chart_rounded, label: 'Relatórios', rota: '/relatorios'),
-      _AtalhoItem(icon: Icons.attach_money_rounded, label: 'Financeiro', rota: '/financeiro'),
+      _AtalhoItem(icon: Symbols.person_add_rounded, label: 'Novo\nCliente', rota: '/cliente-formulario'),
+      _AtalhoItem(icon: Symbols.request_quote_rounded, label: 'Novo\nOrçamento', rota: '/orcamento-formulario'),
+      _AtalhoItem(icon: Symbols.add_business_rounded, label: 'Nova\nObra', rota: '/obra-formulario'),
+      _AtalhoItem(icon: Symbols.group_rounded, label: 'Clientes', rota: '/clientes'),
+      _AtalhoItem(icon: Symbols.bar_chart_rounded, label: 'Relatórios', rota: '/relatorios'),
+      _AtalhoItem(icon: Symbols.account_balance_wallet_rounded, label: 'Financeiro', rota: '/financeiro'),
     ];
 
     return LayoutBuilder(
@@ -590,55 +415,29 @@ class DashboardPage extends StatelessWidget {
           physics: const NeverScrollableScrollPhysics(),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: crossAxisCount,
-            mainAxisSpacing: 12,
-            crossAxisSpacing: 12,
+            mainAxisSpacing: Espaco.x3,
+            crossAxisSpacing: Espaco.x3,
             childAspectRatio: 1.0,
           ),
           itemCount: atalhos.length,
           itemBuilder: (context, index) {
             final atalho = atalhos[index];
-            return Material(
-              color: _corCard,
-              borderRadius: BorderRadius.circular(14),
-              elevation: 0,
-              child: InkWell(
-                borderRadius: BorderRadius.circular(14),
-                splashColor: _corAccent.withValues(alpha: 0.12),
-                highlightColor: _corAccent.withValues(alpha: 0.06),
-                onTap: () => Navigator.pushNamed(context, atalho.rota),
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: Colors.grey.withValues(alpha: 0.12),
-                      width: 1,
+            return CardApp(
+              padding: const EdgeInsets.all(Espaco.x2),
+              aoTocar: () => Navigator.pushNamed(context, atalho.rota),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconeModulo(atalho.icon, diametro: 44),
+                  const SizedBox(height: Espaco.x2),
+                  Flexible(
+                    child: Text(
+                      atalho.label,
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(letterSpacing: 0, height: 1.2),
                     ),
                   ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: _corAccentClaro,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(atalho.icon, color: _corAccent, size: 24),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        atalho.label,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.grey[800],
-                          height: 1.2,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                ],
               ),
             );
           },
@@ -650,42 +449,13 @@ class DashboardPage extends StatelessWidget {
   // ═══════════════════════════════════════════
   // HELPERS
   // ═══════════════════════════════════════════
-  Widget _buildEmptyState({required IconData icon, required String mensagem}) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 32),
-      decoration: BoxDecoration(
-        color: _corCard,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Icon(icon, size: 40, color: Colors.grey[400]),
-          const SizedBox(height: 8),
-          Text(
-            mensagem,
-            style: TextStyle(
-              color: Colors.grey[500],
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   String _formatarMoeda(double valor) {
     return NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$', decimalDigits: 2)
         .format(valor);
   }
+
+  String _capitalizar(String texto) =>
+      texto.isEmpty ? texto : texto[0].toUpperCase() + texto.substring(1);
 
   // ═══════════════════════════════════════════
   // ALERTAS (RF013 simplificado)
@@ -694,12 +464,13 @@ class DashboardPage extends StatelessWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
       builder: (ctx) => SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(Espaco.x5),
           child: Consumer<NotificacaoController>(
             builder: (context, ctrl, _) {
+              final c = context.cores;
+              final texto = Theme.of(context).textTheme;
               return Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -707,9 +478,9 @@ class DashboardPage extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text("Alertas", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                      Text("Alertas", style: texto.titleMedium),
                       IconButton(
-                        icon: const Icon(Icons.refresh, size: 20),
+                        icon: const Icon(Symbols.refresh_rounded, size: TamanhoIcone.pequeno),
                         tooltip: "Atualizar",
                         onPressed: () => ctrl.carregarAlertas(),
                       ),
@@ -717,19 +488,14 @@ class DashboardPage extends StatelessWidget {
                   ),
                   if (ctrl.carregando)
                     const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 24),
-                      child: Center(child: CircularProgressIndicator(color: _corPrimaria)),
+                      padding: EdgeInsets.symmetric(vertical: Espaco.x6),
+                      child: Center(child: CircularProgressIndicator()),
                     )
                   else if (ctrl.alertas.isEmpty)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 24),
-                      child: Column(
-                        children: [
-                          Icon(Icons.check_circle_outline, size: 40, color: Colors.grey[400]),
-                          const SizedBox(height: 8),
-                          Text("Tudo em dia, sem pendências.", style: TextStyle(color: Colors.grey[600])),
-                        ],
-                      ),
+                    const TelaVazia(
+                      ilustracao: IlustracaoVazia.notificacoes,
+                      titulo: 'Tudo em dia',
+                      texto: 'Sem pendências no momento.',
                     )
                   else
                     ConstrainedBox(
@@ -740,10 +506,18 @@ class DashboardPage extends StatelessWidget {
                         separatorBuilder: (_, __) => const Divider(height: 1),
                         itemBuilder: (context, i) {
                           final a = ctrl.alertas[i];
+                          final cor = a.urgente ? c.error : c.warning;
                           return ListTile(
-                            leading: Icon(a.icone, color: a.cor),
-                            title: Text(a.titulo, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                            subtitle: Text(a.subtitulo, style: const TextStyle(fontSize: 12)),
+                            leading: CircleAvatar(
+                              radius: 20,
+                              backgroundColor: a.urgente ? c.errorSoft : c.warningSoft,
+                              child: Icon(a.icone, color: cor, size: TamanhoIcone.pequeno),
+                            ),
+                            title: Text(a.titulo, style: texto.bodyMedium?.copyWith(fontWeight: FontWeight.w700)),
+                            subtitle: Text(
+                              a.subtitulo,
+                              style: texto.bodySmall?.copyWith(color: c.inkMuted, letterSpacing: 0),
+                            ),
                             onTap: () {
                               Navigator.pop(ctx);
                               Navigator.pushNamed(context, a.rota);

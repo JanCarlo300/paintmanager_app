@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -10,7 +11,10 @@ import '../../../obras/dominio/entidades/obra.dart';
 import '../controllers/orcamento_controller.dart';
 import '../../../obras/apresentacao/controllers/obra_controller.dart';
 import '../../../clientes/apresentacao/controllers/cliente_controller.dart';
-import '../../../../core/tema/paleta_sahara.dart';
+import '../../../../apresentacao/widgets/card_app.dart';
+import '../../../../core/tema/cores_app.dart';
+import '../../../../core/tema/medidas_app.dart';
+import '../../../../core/tema/status_visual.dart';
 import '../../../../apresentacao/widgets/campo_busca_selecao.dart';
 import '../../../../apresentacao/widgets/campo_data.dart';
 
@@ -167,27 +171,24 @@ class _OrcamentoFormPageState extends State<OrcamentoFormPage> {
     return totalItens + materiais + maoDeObra - desconto;
   }
 
+  void _avisarErro(String mensagem) {
+    final c = context.cores;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(mensagem, style: TextStyle(color: c.onError)), backgroundColor: c.error),
+    );
+  }
+
   void _salvar() async {
     if (!_formKey.currentState!.validate()) return;
 
     final obraId = _obraSelecionada?.id ?? widget.orcamentoParaEdicao?.idObra;
     if (obraId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text("Selecione uma obra para vincular o orçamento."),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating),
-      );
+      _avisarErro("Selecione uma obra para vincular o orçamento.");
       return;
     }
 
     if (_itensForm.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text("Adicione pelo menos um item de serviço."),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating),
-      );
+      _avisarErro("Adicione pelo menos um item de serviço.");
       return;
     }
 
@@ -236,20 +237,12 @@ class _OrcamentoFormPageState extends State<OrcamentoFormPage> {
         setState(() => _status = 'Pendente');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-              content: Text("Orçamento recusado foi editado: status voltou para Pendente."),
-              behavior: SnackBarBehavior.floating),
+              content: Text("Orçamento recusado foi editado: status voltou para Pendente.")),
         );
       }
       _mostrarDialogEnvio(orcamento);
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text("Erro ao salvar: $e"),
-              backgroundColor: Colors.red,
-              behavior: SnackBarBehavior.floating),
-        );
-      }
+      if (mounted) _avisarErro("Erro ao salvar: $e");
     }
   }
 
@@ -292,14 +285,7 @@ _Orçamento gerado pelo PaintManager_
     final cliente = clientes.where((c) => c.nome == orc.clienteNome).firstOrNull;
 
     if (cliente == null || cliente.telefone.isEmpty) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text("Cliente sem telefone cadastrado."),
-              backgroundColor: Colors.red,
-              behavior: SnackBarBehavior.floating),
-        );
-      }
+      if (mounted) _avisarErro("Cliente sem telefone cadastrado.");
       return;
     }
 
@@ -311,14 +297,7 @@ _Orçamento gerado pelo PaintManager_
     try {
       await launchUrl(url, mode: LaunchMode.externalApplication);
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text("Erro ao abrir WhatsApp: $e"),
-              backgroundColor: Colors.red,
-              behavior: SnackBarBehavior.floating),
-        );
-      }
+      if (mounted) _avisarErro("Erro ao abrir WhatsApp: $e");
     }
   }
 
@@ -327,14 +306,7 @@ _Orçamento gerado pelo PaintManager_
     final cliente = clientes.where((c) => c.nome == orc.clienteNome).firstOrNull;
 
     if (cliente == null || cliente.email.isEmpty) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text("Cliente sem e-mail cadastrado."),
-              backgroundColor: Colors.red,
-              behavior: SnackBarBehavior.floating),
-        );
-      }
+      if (mounted) _avisarErro("Cliente sem e-mail cadastrado.");
       return;
     }
 
@@ -349,83 +321,60 @@ _Orçamento gerado pelo PaintManager_
     try {
       await launchUrl(url);
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text("Erro ao abrir e-mail: $e"),
-              backgroundColor: Colors.red,
-              behavior: SnackBarBehavior.floating),
-        );
-      }
+      if (mounted) _avisarErro("Erro ao abrir e-mail: $e");
     }
   }
 
   void _mostrarDialogEnvio(Orcamento orc) {
+    final c = context.cores;
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
           children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                  color: Colors.green.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(10)),
-              child: const Icon(Icons.check_circle, color: Colors.green, size: 28),
+            CircleAvatar(
+              radius: 22,
+              backgroundColor: c.successSoft,
+              child: Icon(Symbols.check_circle_rounded, fill: 1, color: c.success, size: 28),
             ),
-            const SizedBox(width: 12),
-            const Expanded(
-                child: Text("Orçamento Salvo!",
-                    style: TextStyle(fontWeight: FontWeight.bold))),
+            const SizedBox(width: Espaco.x3),
+            const Expanded(child: Text("Orçamento Salvo!")),
           ],
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("Envie o orçamento para ${orc.clienteNome} aprovar ou recusar:",
-                style: TextStyle(color: Colors.grey[600], fontSize: 14)),
-            const SizedBox(height: 20),
+            Text(
+              "Envie o orçamento para ${orc.clienteNome} aprovar ou recusar:",
+              style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(color: c.inkMuted),
+            ),
+            const SizedBox(height: Espaco.x5),
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton.icon(
+              child: FilledButton.icon(
                 onPressed: () {
                   Navigator.pop(ctx);
                   _enviarWhatsApp(orc);
                   Navigator.pop(context);
                 },
-                icon: const Icon(Icons.chat, size: 20),
-                label: const Text("Enviar por WhatsApp",
-                    style: TextStyle(fontWeight: FontWeight.bold)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF25D366),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
+                icon: const Icon(Symbols.chat_rounded, size: TamanhoIcone.pequeno),
+                label: const Text("Enviar por WhatsApp"),
+                style: FilledButton.styleFrom(backgroundColor: c.success, foregroundColor: c.onPrimary),
               ),
             ),
             const SizedBox(height: 10),
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton.icon(
+              child: OutlinedButton.icon(
                 onPressed: () {
                   Navigator.pop(ctx);
                   _enviarEmail(orc);
                   Navigator.pop(context);
                 },
-                icon: const Icon(Icons.email_outlined, size: 20),
-                label: const Text("Enviar por E-mail",
-                    style: TextStyle(fontWeight: FontWeight.bold)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
+                icon: const Icon(Symbols.mail_rounded, size: TamanhoIcone.pequeno),
+                label: const Text("Enviar por E-mail"),
               ),
             ),
             const SizedBox(height: 10),
@@ -437,13 +386,11 @@ _Orçamento gerado pelo PaintManager_
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                        content: Text(
-                            "Orçamento salvo! Você pode enviá-lo depois pela listagem."),
-                        backgroundColor: Colors.green,
-                        behavior: SnackBarBehavior.floating),
+                        content: Text("Orçamento salvo! Você pode enviá-lo depois pela listagem.")),
                   );
                 },
-                child: Text("Enviar depois", style: TextStyle(color: Colors.grey[600])),
+                style: TextButton.styleFrom(foregroundColor: c.inkMuted),
+                child: const Text("Enviar depois"),
               ),
             ),
           ],
@@ -456,21 +403,16 @@ _Orçamento gerado pelo PaintManager_
   Widget build(BuildContext context) {
     final carregando = context.watch<OrcamentoController>().carregando;
     final isEdicao = widget.orcamentoParaEdicao != null;
+    final c = context.cores;
+    final texto = Theme.of(context).textTheme;
 
     return Scaffold(
-      backgroundColor: PaletaSahara.background,
-      appBar: AppBar(
-        title: Text(isEdicao ? "Editar Orçamento" : "Novo Orçamento",
-            style: const TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: PaletaSahara.cardSurface,
-        foregroundColor: PaletaSahara.onSurface,
-        elevation: 0.5,
-      ),
+      appBar: AppBar(title: Text(isEdicao ? "Editar Orçamento" : "Novo Orçamento")),
       body: Column(
         children: [
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(Espaco.margemTela),
               child: Form(
                 key: _formKey,
                 child: Column(
@@ -478,80 +420,79 @@ _Orçamento gerado pelo PaintManager_
                   children: [
                     // === SEÇÃO 0: STATUS (só edição) ===
                     if (isEdicao) ...[
-                      _buildSectionTitle("Status do Orçamento", Icons.flag_outlined),
-                      const SizedBox(height: 12),
+                      _buildSectionTitle("Status do Orçamento", Symbols.flag_rounded),
+                      const SizedBox(height: Espaco.x3),
                       _buildStatusEditor(),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: Espaco.x6),
                     ],
 
                     // === SEÇÃO 1: OBRA VINCULADA ===
-                    _buildSectionTitle("Obra Vinculada", Icons.construction),
-                    const SizedBox(height: 12),
+                    _buildSectionTitle("Obra Vinculada", Symbols.construction_rounded),
+                    const SizedBox(height: Espaco.x3),
                     _buildSectionCard(
                       child: isEdicao ? _buildObraReadOnly() : _buildObraSearch(),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: Espaco.x6),
 
                     // === SEÇÃO 2: DETALHES DO ORÇAMENTO ===
-                    _buildSectionTitle("Detalhes do Orçamento", Icons.description_outlined),
-                    const SizedBox(height: 12),
+                    _buildSectionTitle("Detalhes do Orçamento", Symbols.description_rounded),
+                    const SizedBox(height: Espaco.x3),
                     _buildSectionCard(
                       child: Column(
                         children: [
                           _buildTextField(
                               "Descrição do Serviço",
                               _descricaoController,
-                              Icons.construction,
+                              Symbols.construction_rounded,
                               "Ex: Pintura residencial completa"),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: Espaco.x4),
                           _buildDataPicker(),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: Espaco.x4),
                           _buildDropdownPagamento(),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: Espaco.x6),
 
                     // === SEÇÃO 3: ITENS DE SERVIÇO ===
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        _buildSectionTitle("Itens de Serviço", Icons.format_list_numbered),
+                        Flexible(child: _buildSectionTitle("Itens de Serviço", Symbols.format_list_numbered_rounded)),
                         TextButton.icon(
                           onPressed: _adicionarItem,
-                          icon: const Icon(Icons.add_circle_outline, size: 18),
+                          icon: const Icon(Symbols.add_circle_rounded, size: TamanhoIcone.pequeno),
                           label: const Text("Adicionar Item"),
-                          style: TextButton.styleFrom(foregroundColor: PaletaSahara.primary),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: Espaco.x3),
                     ...List.generate(_itensForm.length, (i) => _buildItemServicoCard(i)),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: Espaco.x6),
 
                     // === SEÇÃO 4: CUSTOS ===
-                    _buildSectionTitle("Custos", Icons.attach_money),
-                    const SizedBox(height: 12),
+                    _buildSectionTitle("Custos", Symbols.payments_rounded),
+                    const SizedBox(height: Espaco.x3),
                     _buildSectionCard(
                       child: Column(
                         children: [
                           SwitchListTile(
                             contentPadding: EdgeInsets.zero,
-                            title: const Text("Materiais inclusos no orçamento?",
-                                style: TextStyle(fontWeight: FontWeight.w500)),
-                            subtitle: const Text("Marque se o pintor fornecerá o material",
-                                style: TextStyle(fontSize: 12)),
+                            title: const Text("Materiais inclusos no orçamento?"),
+                            subtitle: Text(
+                              "Marque se o pintor fornecerá o material",
+                              style: texto.bodySmall?.copyWith(color: c.inkMuted, letterSpacing: 0),
+                            ),
                             value: _materiaisInclusos,
-                            activeThumbColor: PaletaSahara.primary,
                             onChanged: (val) => setState(() => _materiaisInclusos = val),
                           ),
                           if (_materiaisInclusos) ...[
-                            const SizedBox(height: 12),
+                            const SizedBox(height: Espaco.x3),
                             _buildMoneyField("Valor dos Materiais", _valorMateriaisController),
                           ],
-                          const SizedBox(height: 12),
+                          const SizedBox(height: Espaco.x3),
                           _buildMoneyField("Valor da Mão de Obra", _valorMaoDeObraController),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: Espaco.x3),
                           _buildMoneyField("Desconto", _descontoController,
                               obrigatorio: false),
                         ],
@@ -564,56 +505,49 @@ _Orçamento gerado pelo PaintManager_
             ),
           ),
 
-          // === RODAPÉ FIXO ===
+          // === RODAPÉ FIXO (sem sombra: só uma borda separa do conteúdo) ===
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: Espaco.x4, vertical: Espaco.x3),
             decoration: BoxDecoration(
-              color: PaletaSahara.cardSurface,
-              boxShadow: [
-                BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, -2))
-              ],
+              color: c.surfaceCard,
+              border: Border(top: BorderSide(color: c.border)),
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text("Valor Total", style: TextStyle(color: Colors.grey[600], fontSize: 13)),
-                    Text(
-                      _formatoMoeda.format(_calcularValorTotal()),
-                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: ElevatedButton.icon(
-                    onPressed: carregando ? null : _salvar,
-                    icon: carregando
-                        ? const SizedBox(
-                            height: 18,
-                            width: 18,
-                            child: CircularProgressIndicator(
-                                color: Colors.white, strokeWidth: 2))
-                        : const Icon(Icons.save_outlined, size: 20),
-                    label: Text(carregando ? "Salvando..." : "Salvar Orçamento",
-                        style:
-                            const TextStyle(fontWeight: FontWeight.bold)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: PaletaSahara.primary,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8)),
+            child: SafeArea(
+              top: false,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text("Valor Total", style: texto.bodyMedium?.copyWith(color: c.inkMuted)),
+                      Flexible(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            _formatoMoeda.format(_calcularValorTotal()),
+                            style: texto.displayMedium,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      onPressed: carregando ? null : _salvar,
+                      icon: carregando
+                          ? SizedBox(
+                              height: 18,
+                              width: 18,
+                              child: CircularProgressIndicator(color: c.inkMuted, strokeWidth: 2))
+                          : const Icon(Symbols.save_rounded, size: TamanhoIcone.pequeno),
+                      label: Text(carregando ? "Salvando..." : "Salvar Orçamento"),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ],
@@ -625,32 +559,24 @@ _Orçamento gerado pelo PaintManager_
 
   Widget _buildSectionTitle(String title, IconData icon) {
     return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 20, color: Colors.grey[700]),
-        const SizedBox(width: 8),
-        Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        Icon(icon, size: TamanhoIcone.pequeno, color: context.cores.primary),
+        const SizedBox(width: Espaco.x2),
+        Flexible(child: Text(title, style: Theme.of(context).textTheme.titleMedium)),
       ],
     );
   }
 
   Widget _buildSectionCard({required Widget child}) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: PaletaSahara.cardSurface,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)
-        ],
-      ),
-      child: child,
-    );
+    return SizedBox(width: double.infinity, child: CardApp(child: child));
   }
 
   /// Busca de obra no banco — filtra por título e nome do cliente
   Widget _buildObraSearch() {
     final obraController = context.read<ObraController>();
+    final c = context.cores;
+    final texto = Theme.of(context).textTheme;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -658,8 +584,8 @@ _Orçamento gerado pelo PaintManager_
         CampoBuscaSelecao<Obra>(
           rotulo: "Pesquisar Obra",
           dica: "Digite o título ou nome do cliente...",
-          icone: Icons.search,
-          iconeItem: Icons.construction,
+          icone: Symbols.search_rounded,
+          iconeItem: Symbols.construction_rounded,
           mensagemObrigatorio: "Selecione uma obra",
           buscar: obraController.buscarObras,
           tituloDe: (o) => o.tituloDaObra,
@@ -670,24 +596,22 @@ _Orçamento gerado pelo PaintManager_
         // Chip do cliente preenchido automaticamente
         if (_obraSelecionada != null)
           Padding(
-            padding: const EdgeInsets.only(top: 12),
+            padding: const EdgeInsets.only(top: Espaco.x3),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: Espaco.x3, vertical: 10),
               decoration: BoxDecoration(
-                color: Colors.grey[100],
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.grey[300]!),
+                color: c.primarySoft,
+                borderRadius: BorderRadius.circular(Raio.campo),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.person_outline, size: 16, color: Colors.grey[600]),
-                  const SizedBox(width: 8),
-                  Text("Cliente: ",
-                      style: TextStyle(fontSize: 13, color: Colors.grey[600])),
+                  Icon(Symbols.person_rounded, size: 16, color: c.primary),
+                  const SizedBox(width: Espaco.x2),
+                  Text("Cliente: ", style: texto.bodyMedium?.copyWith(color: c.inkMuted)),
                   Expanded(
                     child: Text(
                       _obraSelecionada!.clienteNome,
-                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                      style: texto.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
                     ),
                   ),
                 ],
@@ -706,24 +630,22 @@ _Orçamento gerado pelo PaintManager_
         '';
     return Column(
       children: [
-        _buildInfoTile("Obra", obraTitle, Icons.construction),
-        const SizedBox(height: 12),
-        _buildInfoTile("Cliente", clienteNome, Icons.person_outline),
+        _buildInfoTile("Obra", obraTitle, Symbols.construction_rounded),
+        const SizedBox(height: Espaco.x3),
+        _buildInfoTile("Cliente", clienteNome, Symbols.person_rounded),
       ],
     );
   }
 
-  Widget _buildInfoTile(String label, String value, [IconData icon = Icons.info_outline]) {
+  // Campos: fundo, borda, foco e erro vêm do tema (InputDecorationTheme).
+  Widget _buildInfoTile(String label, String value, [IconData icon = Symbols.info_rounded]) {
     return TextFormField(
       initialValue: value,
       readOnly: true,
       decoration: InputDecoration(
         labelText: label,
-        prefixIcon: Icon(icon, size: 20, color: Colors.grey[600]),
-        filled: true,
-        fillColor: Colors.grey[100],
-        border:
-            OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+        prefixIcon: Icon(icon, size: TamanhoIcone.pequeno),
+        fillColor: context.cores.disabledBg,
       ),
     );
   }
@@ -735,19 +657,7 @@ _Orçamento gerado pelo PaintManager_
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
-        hintStyle: TextStyle(color: Colors.grey[400]),
-        prefixIcon: Icon(icon, size: 20, color: Colors.grey[600]),
-        filled: true,
-        fillColor: Colors.grey[50],
-        border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide(color: Colors.grey[200]!)),
-        enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide(color: Colors.grey[200]!)),
-        focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: PaletaSahara.primary, width: 1.5)),
+        prefixIcon: Icon(icon, size: TamanhoIcone.pequeno),
       ),
       validator: (val) => val == null || val.isEmpty ? "Campo obrigatório" : null,
     );
@@ -758,7 +668,7 @@ _Orçamento gerado pelo PaintManager_
       rotulo: "Validade do orçamento",
       data: _dataValidade,
       tituloCalendario: "Validade do orçamento",
-      icone: Icons.event_outlined,
+      icone: Symbols.event_rounded,
       primeiraData: DateUtils.dateOnly(DateTime.now()),
       ultimaData: DateTime.now().add(const Duration(days: 365)),
       aoMudar: (d) => setState(() => _dataValidade = d),
@@ -768,17 +678,9 @@ _Orçamento gerado pelo PaintManager_
   Widget _buildDropdownPagamento() {
     return DropdownButtonFormField<String>(
       value: _formaPagamento,
-      decoration: InputDecoration(
+      decoration: const InputDecoration(
         labelText: "Forma de Pagamento",
-        prefixIcon: Icon(Icons.payment, size: 20, color: Colors.grey[600]),
-        filled: true,
-        fillColor: Colors.grey[50],
-        border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide(color: Colors.grey[200]!)),
-        enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide(color: Colors.grey[200]!)),
+        prefixIcon: Icon(Symbols.credit_card_rounded, size: TamanhoIcone.pequeno),
       ),
       items: ['PIX', 'Cartão', 'Dinheiro', 'Transferência', 'Boleto']
           .map((f) => DropdownMenuItem(value: f, child: Text(f)))
@@ -787,50 +689,49 @@ _Orçamento gerado pelo PaintManager_
     );
   }
 
+  // Os 3 status do DERS, com cor e ícone de core/tema/status_visual.dart.
   Widget _buildStatusEditor() {
-    const statusOptions = [
-      _StatusOption('Pendente',  Colors.orange, Icons.hourglass_empty),
-      _StatusOption('Aprovado',  Colors.green,  Icons.check_circle_outline),
-      _StatusOption('Recusado',  Colors.red,    Icons.cancel_outlined),
-    ];
+    const statusOptions = ['Pendente', 'Aprovado', 'Recusado'];
+    final c = context.cores;
+    final texto = Theme.of(context).textTheme;
 
     return _buildSectionCard(
       child: Row(
-        children: statusOptions.map((opt) {
-          final isSelected = _status == opt.valor;
+        children: statusOptions.map((valor) {
+          final visual = visualDoStatus(valor, c);
+          final isSelected = _status == valor;
           return Expanded(
             child: GestureDetector(
-              onTap: () => setState(() => _status = opt.valor),
+              onTap: () => setState(() => _status = valor),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 180),
-                margin: const EdgeInsets.symmetric(horizontal: 4),
-                padding: const EdgeInsets.symmetric(vertical: 12),
+                margin: const EdgeInsets.symmetric(horizontal: Espaco.x1),
+                padding: const EdgeInsets.symmetric(vertical: Espaco.x3),
                 decoration: BoxDecoration(
-                  color: isSelected
-                      ? opt.cor.withValues(alpha: 0.12)
-                      : Colors.grey[100],
-                  borderRadius: BorderRadius.circular(10),
+                  color: isSelected ? visual.fundo : c.surfaceSunken,
+                  borderRadius: BorderRadius.circular(Raio.botao),
                   border: Border.all(
-                    color: isSelected ? opt.cor : Colors.grey[300]!,
+                    color: isSelected ? visual.cor : c.border,
                     width: isSelected ? 1.8 : 1,
                   ),
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(opt.icone,
-                        size: 22,
-                        color: isSelected ? opt.cor : Colors.grey[400]),
+                    Icon(
+                      visual.icone,
+                      size: 22,
+                      fill: isSelected ? 1 : 0,
+                      color: isSelected ? visual.cor : c.inkMuted,
+                    ),
                     const SizedBox(height: 5),
                     Text(
-                      opt.valor,
+                      valor,
                       textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: isSelected
-                            ? FontWeight.bold
-                            : FontWeight.normal,
-                        color: isSelected ? opt.cor : Colors.grey[500],
+                      style: texto.labelSmall?.copyWith(
+                        letterSpacing: 0,
+                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                        color: isSelected ? visual.cor : c.inkMuted,
                       ),
                     ),
                   ],
@@ -844,83 +745,77 @@ _Orçamento gerado pelo PaintManager_
   }
 
   Widget _buildItemServicoCard(int index) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: PaletaSahara.cardSurface,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)
-        ],
-        border: Border.all(color: Colors.grey[200]!),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text("Item ${index + 1}",
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold, color: Colors.grey[700])),
-              if (_itensForm.length > 1)
-                IconButton(
-                  icon: Icon(Icons.close, size: 18, color: Colors.red[400]),
-                  onPressed: () => _removerItem(index),
-                  tooltip: "Remover item",
-                ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          TextFormField(
-            controller: _itensForm[index].descricao,
-            decoration: _inputDeco("Descrição do ambiente/serviço", Icons.room_outlined),
-            validator: (val) => val == null || val.isEmpty ? "Obrigatório" : null,
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: TextFormField(
-                  controller: _itensForm[index].metragem,
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'[\d.,]'))
-                  ],
-                  decoration: _inputDeco("Metragem (m²)", Icons.square_foot),
-                  onChanged: (_) => setState(() {}),
-                  validator: (val) =>
-                      val == null || val.isEmpty ? "Obrigatório" : null,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: TextFormField(
-                  controller: _itensForm[index].valorUnitario,
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'[\d.,]'))
-                  ],
-                  decoration: _inputDeco("Valor/m² (R\$)", Icons.attach_money),
-                  onChanged: (_) => setState(() {}),
-                  validator: (val) =>
-                      val == null || val.isEmpty ? "Obrigatório" : null,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Align(
-            alignment: Alignment.centerRight,
-            child: Text(
-              "Subtotal: ${_formatoMoeda.format(_calcularSubtotalItem(index))}",
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+    final c = context.cores;
+    final texto = Theme.of(context).textTheme;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: Espaco.x3),
+      child: CardApp(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text("Item ${index + 1}", style: texto.bodyMedium?.copyWith(fontWeight: FontWeight.w700, color: c.inkMuted)),
+                if (_itensForm.length > 1)
+                  IconButton(
+                    icon: Icon(Symbols.close_rounded, size: 18, color: c.error),
+                    onPressed: () => _removerItem(index),
+                    tooltip: "Remover item",
+                  ),
+              ],
             ),
-          ),
-        ],
+            const SizedBox(height: Espaco.x2),
+            TextFormField(
+              controller: _itensForm[index].descricao,
+              decoration: _inputDeco("Descrição do ambiente/serviço", Symbols.meeting_room_rounded),
+              validator: (val) => val == null || val.isEmpty ? "Obrigatório" : null,
+            ),
+            const SizedBox(height: Espaco.x3),
+            Row(
+              children: [
+                Expanded(
+                  child: TextFormField(
+                    controller: _itensForm[index].metragem,
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[\d.,]'))
+                    ],
+                    decoration: _inputDeco("Metragem (m²)", Symbols.square_foot_rounded),
+                    onChanged: (_) => setState(() {}),
+                    validator: (val) =>
+                        val == null || val.isEmpty ? "Obrigatório" : null,
+                  ),
+                ),
+                const SizedBox(width: Espaco.x3),
+                Expanded(
+                  child: TextFormField(
+                    controller: _itensForm[index].valorUnitario,
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[\d.,]'))
+                    ],
+                    decoration: _inputDeco("Valor/m² (R\$)", Symbols.payments_rounded),
+                    onChanged: (_) => setState(() {}),
+                    validator: (val) =>
+                        val == null || val.isEmpty ? "Obrigatório" : null,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: Espaco.x2),
+            Align(
+              alignment: Alignment.centerRight,
+              child: Text(
+                "Subtotal: ${_formatoMoeda.format(_calcularSubtotalItem(index))}",
+                style: texto.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -933,19 +828,8 @@ _Orçamento gerado pelo PaintManager_
       inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[\d.,]'))],
       decoration: InputDecoration(
         labelText: label,
-        prefixIcon: Icon(Icons.attach_money, size: 20, color: Colors.grey[600]),
+        prefixIcon: const Icon(Symbols.payments_rounded, size: TamanhoIcone.pequeno),
         prefixText: "R\$ ",
-        filled: true,
-        fillColor: Colors.grey[50],
-        border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide(color: Colors.grey[200]!)),
-        enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide(color: Colors.grey[200]!)),
-        focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: PaletaSahara.primary, width: 1.5)),
       ),
       onChanged: (_) => setState(() {}),
       validator: obrigatorio
@@ -957,27 +841,9 @@ _Orçamento gerado pelo PaintManager_
   InputDecoration _inputDeco(String label, IconData icon) {
     return InputDecoration(
       labelText: label,
-      prefixIcon: Icon(icon, size: 20, color: Colors.grey[600]),
-      filled: true,
-      fillColor: Colors.grey[50],
-      border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: Colors.grey[200]!)),
-      enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: Colors.grey[200]!)),
-      focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: PaletaSahara.primary, width: 1.5)),
+      prefixIcon: Icon(icon, size: TamanhoIcone.pequeno),
     );
   }
-}
-
-class _StatusOption {
-  final String valor;
-  final Color cor;
-  final IconData icone;
-  const _StatusOption(this.valor, this.cor, this.icone);
 }
 
 class _ItemServicoForm {

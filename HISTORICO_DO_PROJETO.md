@@ -17,6 +17,7 @@
 6. [Fase 3 — Migração para Supabase e Clean Architecture (abr/2026)](#6-fase-3--migração-para-supabase-e-clean-architecture-abr2026)
 7. [Fase 4 — Reformulação dos Formulários e Reorganização (jun/2026)](#7-fase-4--reformulação-dos-formulários-e-reorganização-jun2026)
 8. [Fase 5 — Segurança, Controle de Acesso e Novos Requisitos (set/2026)](#8-fase-5--segurança-controle-de-acesso-e-novos-requisitos-set2026)
+8A. [Fase 6 — Ajustes de Outubro, Segurança no Banco e Nova Identidade Visual (out/2026)](#8a-fase-6--ajustes-de-outubro-segurança-no-banco-e-nova-identidade-visual-out2026)
 9. [Estado Atual do Sistema](#9-estado-atual-do-sistema)
 10. [Requisitos Funcionais — Situação](#10-requisitos-funcionais--situação)
 11. [Banco de Dados (Supabase)](#11-banco-de-dados-supabase)
@@ -308,6 +309,35 @@ Antes, a função do usuário era só um rótulo visual. Agora:
 
 ### `34581b5` — 25/09/2026 — *AGP e Kotlin atualizados*
 O Flutter 3.47.3 exige Android Gradle Plugin ≥ 8.11.1 e Kotlin ≥ 2.2.20 (o projeto declarava 8.9.1 e 2.1.0). Após a atualização, o **primeiro APK completo** do projeto foi gerado.
+
+---
+
+## 8A. Fase 6 — Ajustes de Outubro, Segurança no Banco e Nova Identidade Visual (out/2026)
+
+> Adendo de 18/10/2026. As seções 9 a 14 abaixo descrevem o sistema em 28/09; o estado atual completo está em `RELATORIO_STATUS_PROJETO.md`.
+
+### Backlog e plano de ajustes (02 a 15/10)
+Itens do backlog de 02/10 e Etapas 1 a 8.1 do plano de outubro, todos testados pelo Jan no Samsung A55: Funcionário só acessa obras alocadas, inclusive no banco (`961d18e`, `1c7b326`); localização da obra por OpenStreetMap (`0699a76`); chat da obra em tempo real (`b8216e3`); validação de CPF pelo Módulo 11 (`1d5b663`); status do orçamento com 3 opções e obra só inicia com orçamento aprovado (`d075ded`); busca com filtro (`c862dfb`); calendário em português (`51d9fb3`); filtros e ordenação (`b84c1b9`); obra concluída travada (`b617267`); lista de materiais e PDF (`b010139`, `c121e37`); aviso de mensagens do chat (`9ec919c`); receita/despesa ligada à obra, RF011 (`4c7ee01`); relatórios em PDF, RF012 (`546446e`); limpeza das tabelas antigas do TFC I (`4417d40`).
+
+### Segurança (16/10)
+- `19c5f31` — o login deixa de ler a tabela `usuario` sem sessão (RF002 fase B); dados reais do administrador retirados dos scripts do repositório público.
+- `5619247` — permissões por função aplicadas no banco por RLS em todas as tabelas; fecha a brecha em que um usuário podia mudar a própria função para Administrador.
+- `42e6ffa` — tela Configurações com "Minha conta" e troca de senha (substitui o placeholder).
+
+### Nova identidade visual (16 a 18/10)
+Troca da paleta "Sahara" pelo manual da marca (*PaintManager Design System*, aprovado em 15/10), em branch própria (`feat/identidade-visual`), uma fase por vez, cada uma auditada (`analyze` + testes + busca de valores fixos) e testada no celular antes do commit. Plano, passo a passo e o placar da auditoria em `docs/identidade_visual/`.
+
+| Commit | Fase | O que entrou |
+|---|---|---|
+| `2f2b5c0` | 0 | Kit, imagens da marca, `flutter_svg`, `material_symbols_icons`, `shared_preferences`, `flutter_launcher_icons`. Linha de base: 1.359 valores fixos em 29 arquivos |
+| `03d9b99` | 1 | `lib/src/core/tema/`: `CoresApp` (claro/escuro), tipografia EB Garamond + Manrope, medidas, `status_visual`, `temaClaro()`/`temaEscuro()`; testes de contraste WCAG |
+| `86b59f4` | 2 | Componentes `CardApp`, `CardDestaque`, `StatusChip`, `IconeModulo`, `TelaVazia`, `LogoApp` |
+| `195c1f0` | 3 | Ícone do app, tela de abertura grafite, logo no login e no menu, PDFs com as cores e o símbolo da marca |
+| `b6f0e48` … `c4829a4` | 4 | Lotes A–H: todas as telas migradas para o tema (menu com Usuários em 7º, cores de status unificadas, saldo/lucro no card destaque, paleta fixa por categoria nos gráficos). Fim: **zero valores fixos** fora de `core/tema` e dos PDFs |
+| `2c5f78a` | 5 | Modo escuro: `TemaController` segue o celular por padrão; seção Aparência em Configurações; `PaletaSahara` apagada |
+| (este) | 6 | README e ARCHITECTURE atualizados; plano e passo a passo em `docs/identidade_visual/`; auditoria em `tool/identidade_visual/`; kit removido. **114 testes** |
+
+Decisões do Jan nesta fase: dependências novas aprovadas; tela de abertura grafite `#3A302A`; Usuários em 7º no menu (ordem do manual); paleta do manual para as categorias dos gráficos.
 
 ---
 

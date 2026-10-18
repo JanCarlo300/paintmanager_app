@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../dominio/entidades/transacao.dart';
 import '../controllers/financeiro_controller.dart';
+import '../../../../apresentacao/widgets/card_app.dart';
+import '../../../../apresentacao/widgets/card_destaque.dart';
 import '../../../../apresentacao/widgets/drawer_comum.dart';
-import '../../../../core/tema/paleta_sahara.dart';
+import '../../../../apresentacao/widgets/tela_vazia.dart';
+import '../../../../core/tema/cores_app.dart';
+import '../../../../core/tema/medidas_app.dart';
 import '../../../auth/apresentacao/controllers/auth_controller.dart';
 
 class FinanceiroPage extends StatefulWidget {
@@ -25,17 +30,20 @@ class _FinanceiroPageState extends State<FinanceiroPage> {
     Future.microtask(() => controller.carregarTransacoes());
   }
 
-  Color _corStatus(String status) {
+  /// Cor do texto e do fundo de cada status de lançamento.
+  (Color, Color) _coresStatus(String status) {
+    final c = context.cores;
     switch (status) {
-      case 'Efetivado': return Colors.green;
-      case 'Pendente': return Colors.orange;
-      case 'Atrasado': return Colors.red;
-      default: return Colors.grey;
+      case 'Efetivado': return (c.success, c.successSoft);
+      case 'Pendente': return (c.warning, c.warningSoft);
+      case 'Atrasado': return (c.error, c.errorSoft);
+      default: return (c.inkMuted, c.surfaceSunken);
     }
   }
 
-  IconData _iconeTipo(String tipo) => tipo == 'Receita' ? Icons.arrow_upward : Icons.arrow_downward;
-  Color _corTipo(String tipo) => tipo == 'Receita' ? Colors.green : Colors.red;
+  IconData _iconeTipo(String tipo) => tipo == 'Receita' ? Symbols.arrow_upward_rounded : Symbols.arrow_downward_rounded;
+  Color _corTipo(String tipo) => tipo == 'Receita' ? context.cores.success : context.cores.error;
+  Color _fundoTipo(String tipo) => tipo == 'Receita' ? context.cores.successSoft : context.cores.errorSoft;
 
   @override
   Widget build(BuildContext context) {
@@ -46,20 +54,15 @@ class _FinanceiroPageState extends State<FinanceiroPage> {
     final podeExcluir = context.watch<AuthController>().usuarioLogado?.funcao == 'Administrador';
 
     return Scaffold(
-      backgroundColor: PaletaSahara.background,
       drawer: const DrawerComum(),
       appBar: AppBar(
         leading: Builder(
-          builder: (ctx) => IconButton(icon: const Icon(Icons.menu), onPressed: () => Scaffold.of(ctx).openDrawer()),
+          builder: (ctx) => IconButton(icon: const Icon(Symbols.menu_rounded), onPressed: () => Scaffold.of(ctx).openDrawer()),
         ),
-        title: const Text("Financeiro", style: TextStyle(fontWeight: FontWeight.bold)),
-        centerTitle: false,
-        backgroundColor: PaletaSahara.cardSurface,
-        foregroundColor: PaletaSahara.onSurface,
-        elevation: 0.5,
+        title: const Text("Financeiro"),
       ),
       body: controller.carregando
-          ? const Center(child: CircularProgressIndicator(color: PaletaSahara.primary))
+          ? const Center(child: CircularProgressIndicator())
           : _buildConteudo(controller, formatoMoeda, formatoData, podeExcluir),
     );
   }
@@ -71,43 +74,39 @@ class _FinanceiroPageState extends State<FinanceiroPage> {
     final despesas = controller.calcularDespesas(doMes);
     final saldo = controller.calcularSaldo(doMes);
     final pendentes = controller.calcularPendentes(doMes);
+    final c = context.cores;
+    final texto = Theme.of(context).textTheme;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(Espaco.margemTela),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // --- HEADER ---
-          const Text("Gestão Financeira", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 4),
-          const Text("Controle receitas, despesas e fluxo de caixa.", style: TextStyle(color: Colors.grey)),
-          const SizedBox(height: 16),
+          Text("Gestão Financeira", style: texto.headlineMedium),
+          const SizedBox(height: Espaco.x1),
+          Text("Controle receitas, despesas e fluxo de caixa.", style: texto.bodyMedium?.copyWith(color: c.inkMuted)),
+          const SizedBox(height: Espaco.x4),
 
           // No topo (como "Nova Obra"/"Novo Orçamento"): o botão flutuante
           // ficava por cima do lápis e da lixeira da última transação.
           SizedBox(
             width: double.infinity,
-            child: ElevatedButton.icon(
+            child: FilledButton.icon(
               onPressed: () => _mostrarOpcoesNovaTransacao(context),
-              icon: const Icon(Icons.add, size: 18),
+              icon: const Icon(Symbols.add_rounded, size: TamanhoIcone.pequeno),
               label: const Text("Nova Transação"),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: PaletaSahara.primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: Espaco.x6),
 
           // --- SELETOR DE MÊS ---
           _buildSeletorMes(controller),
-          const SizedBox(height: 24),
+          const SizedBox(height: Espaco.x6),
 
           // --- CARDS DE RESUMO ---
           _buildCardsResumo(formatoMoeda, receitas, despesas, saldo, pendentes),
-          const SizedBox(height: 24),
+          const SizedBox(height: Espaco.x6),
 
           // --- LISTA DE TRANSAÇÕES ---
           _buildListaTransacoes(context, doMes, formatoMoeda, formatoData, controller, podeExcluir),
@@ -118,28 +117,25 @@ class _FinanceiroPageState extends State<FinanceiroPage> {
 
   // --- SELETOR DE MÊS ---
   Widget _buildSeletorMes(FinanceiroController controller) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: PaletaSahara.cardSurface,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)],
-      ),
+    return CardApp(
+      padding: const EdgeInsets.symmetric(horizontal: Espaco.x4, vertical: Espaco.x2),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           IconButton(
-            icon: const Icon(Icons.chevron_left),
+            tooltip: "Mês anterior",
+            icon: const Icon(Symbols.chevron_left_rounded),
             onPressed: controller.mesAnterior,
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: Espaco.x2),
           Text(
             "${_meses[controller.mesSelecionado - 1]} ${controller.anoSelecionado}",
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            style: Theme.of(context).textTheme.titleLarge,
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: Espaco.x2),
           IconButton(
-            icon: const Icon(Icons.chevron_right),
+            tooltip: "Próximo mês",
+            icon: const Icon(Symbols.chevron_right_rounded),
             onPressed: controller.mesProximo,
           ),
         ],
@@ -148,22 +144,22 @@ class _FinanceiroPageState extends State<FinanceiroPage> {
   }
 
   // --- CARDS DE RESUMO ---
+  // O saldo é o valor principal da tela: vai no card destaque (um só por tela).
   Widget _buildCardsResumo(NumberFormat fmt, double receitas, double despesas, double saldo, double pendentes) {
+    final c = context.cores;
     return Column(
       children: [
-        Row(
-          children: [
-            Expanded(child: _buildCard("Receitas", fmt.format(receitas), Colors.green, Icons.trending_up)),
-            const SizedBox(width: 12),
-            Expanded(child: _buildCard("Despesas", fmt.format(despesas), Colors.red, Icons.trending_down)),
-          ],
+        CardDestaque(
+          rotulo: "Saldo do Mês",
+          valor: "${saldo < 0 ? '− ' : ''}${fmt.format(saldo.abs())}",
+          legenda: "Pendente: ${fmt.format(pendentes)}",
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: Espaco.x3),
         Row(
           children: [
-            Expanded(child: _buildCard("Saldo Atual", fmt.format(saldo), saldo >= 0 ? Colors.blue : Colors.red, Icons.account_balance_wallet)),
-            const SizedBox(width: 12),
-            Expanded(child: _buildCard("Pendente", fmt.format(pendentes), Colors.orange, Icons.schedule)),
+            Expanded(child: _buildCard("Receitas", fmt.format(receitas), c.success, Symbols.trending_up_rounded)),
+            const SizedBox(width: Espaco.x3),
+            Expanded(child: _buildCard("Despesas", fmt.format(despesas), c.error, Symbols.trending_down_rounded)),
           ],
         ),
       ],
@@ -171,26 +167,25 @@ class _FinanceiroPageState extends State<FinanceiroPage> {
   }
 
   Widget _buildCard(String titulo, String valor, Color cor, IconData icone) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: PaletaSahara.cardSurface,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)],
-        border: Border(top: BorderSide(color: cor, width: 3)),
-      ),
+    final c = context.cores;
+    final texto = Theme.of(context).textTheme;
+    return CardApp(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(titulo, style: TextStyle(color: Colors.grey[600], fontSize: 13)),
-              Icon(icone, color: cor.withValues(alpha: 0.5), size: 20),
+              Flexible(child: Text(titulo, style: texto.bodyMedium?.copyWith(color: c.inkMuted))),
+              Icon(icone, color: cor, size: TamanhoIcone.pequeno),
             ],
           ),
-          const SizedBox(height: 8),
-          Text(valor, style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: cor)),
+          const SizedBox(height: Espaco.x2),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(valor, style: texto.titleMedium?.copyWith(color: cor, fontWeight: FontWeight.w800)),
+          ),
         ],
       ),
     );
@@ -198,148 +193,160 @@ class _FinanceiroPageState extends State<FinanceiroPage> {
 
   // --- LISTA DE TRANSAÇÕES ---
   Widget _buildListaTransacoes(BuildContext context, List<Transacao> transacoes, NumberFormat fmt, DateFormat fmtData, FinanceiroController controller, bool podeExcluir) {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: PaletaSahara.cardSurface,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text("Transações do Mês", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                Text("${transacoes.length} registro(s)", style: TextStyle(color: Colors.grey[600], fontSize: 13)),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-          const Divider(height: 1),
+    final c = context.cores;
+    final texto = Theme.of(context).textTheme;
+    final legenda = texto.bodySmall?.copyWith(color: c.inkMuted, letterSpacing: 0);
 
-          if (transacoes.isEmpty)
-            const Padding(
-              padding: EdgeInsets.all(40),
-              child: Center(
-                child: Column(
-                  children: [
-                    Icon(Icons.receipt_long_outlined, size: 48, color: Colors.grey),
-                    SizedBox(height: 12),
-                    Text("Nenhuma transação neste mês.", style: TextStyle(color: Colors.grey)),
-                  ],
-                ),
+    Widget selo(String rotulo, Color cor, Color fundo) => Container(
+          padding: const EdgeInsets.symmetric(horizontal: Espaco.x2, vertical: 2),
+          decoration: BoxDecoration(color: fundo, borderRadius: BorderRadius.circular(Raio.pilula)),
+          child: Text(rotulo, style: texto.labelSmall?.copyWith(color: cor, letterSpacing: 0)),
+        );
+
+    return SizedBox(
+      width: double.infinity,
+      child: CardApp(
+        padding: EdgeInsets.zero,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(Espaco.x5, Espaco.x5, Espaco.x5, 0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Flexible(child: Text("Transações do Mês", style: texto.titleMedium)),
+                  Text("${transacoes.length} registro(s)", style: texto.bodyMedium?.copyWith(color: c.inkMuted)),
+                ],
               ),
-            )
-          else
-            ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: transacoes.length,
-              separatorBuilder: (_, __) => const Divider(height: 1),
-              itemBuilder: (context, i) {
-                final t = transacoes[i];
-                return ListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                  leading: Container(
-                    width: 40, height: 40,
-                    decoration: BoxDecoration(
-                      color: _corTipo(t.tipo).withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Icon(_iconeTipo(t.tipo), color: _corTipo(t.tipo), size: 20),
-                  ),
-                  title: Text(t.descricao, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 2),
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(4)),
-                            child: Text(t.categoria, style: TextStyle(fontSize: 11, color: Colors.grey[700])),
-                          ),
-                          const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: _corStatus(t.status).withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(t.status, style: TextStyle(fontSize: 11, color: _corStatus(t.status), fontWeight: FontWeight.w600)),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 2),
-                      Text("${fmtData.format(t.dataTransacao)} • ${t.formaPagamento}", style: TextStyle(fontSize: 11, color: Colors.grey[500])),
-                      if (t.obraTitulo != null && t.obraTitulo!.isNotEmpty)
-                        Text("🏗 ${t.obraTitulo}", style: TextStyle(fontSize: 11, color: Colors.grey[500])),
-                    ],
-                  ),
-                  trailing: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        "${t.tipo == 'Receita' ? '+' : '-'} ${fmt.format(t.valor)}",
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: _corTipo(t.tipo)),
-                      ),
-                      const SizedBox(height: 4),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          InkWell(
-                            onTap: () async {
-                              final ctrl = context.read<FinanceiroController>();
-                              await Navigator.pushNamed(context, '/transacao-formulario', arguments: t);
-                              if (mounted) ctrl.carregarTransacoes();
-                            },
-                            child: Icon(Icons.edit_outlined, size: 16, color: Colors.grey[500]),
-                          ),
-                          if (podeExcluir) ...[
-                            const SizedBox(width: 8),
-                            InkWell(
-                              onTap: () => _confirmarExclusao(context, t, controller),
-                              child: Icon(Icons.delete_outline, size: 16, color: Colors.red[300]),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ],
-                  ),
-                );
-              },
             ),
-        ],
+            const SizedBox(height: Espaco.x3),
+            const Divider(height: 1),
+
+            if (transacoes.isEmpty)
+              const TelaVazia(
+                ilustracao: IlustracaoVazia.busca,
+                titulo: "Nenhuma transação neste mês",
+                texto: "Troque o mês acima ou registre uma nova transação.",
+              )
+            else
+              ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: transacoes.length,
+                separatorBuilder: (_, __) => const Divider(height: 1),
+                itemBuilder: (context, i) {
+                  final t = transacoes[i];
+                  final (corStatus, fundoStatus) = _coresStatus(t.status);
+                  return ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: Espaco.x5, vertical: Espaco.x2),
+                    leading: Container(
+                      width: 40, height: 40,
+                      decoration: BoxDecoration(
+                        color: _fundoTipo(t.tipo),
+                        borderRadius: BorderRadius.circular(Raio.botao),
+                      ),
+                      child: Icon(_iconeTipo(t.tipo), color: _corTipo(t.tipo), size: TamanhoIcone.pequeno),
+                    ),
+                    title: Text(t.descricao, style: texto.bodyMedium?.copyWith(fontWeight: FontWeight.w700)),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: Espaco.x1),
+                        // Wrap: se categoria + status não couberem (valor grande à
+                        // direita, fonte grande), o status desce para a linha de baixo.
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: Espaco.x1,
+                          children: [
+                            selo(t.categoria, c.inkMuted, c.surfaceSunken),
+                            selo(t.status, corStatus, fundoStatus),
+                          ],
+                        ),
+                        const SizedBox(height: Espaco.x1),
+                        Text("${fmtData.format(t.dataTransacao)} • ${t.formaPagamento}", style: legenda),
+                        if (t.obraTitulo != null && t.obraTitulo!.isNotEmpty)
+                          Row(
+                            children: [
+                              Icon(Symbols.construction_rounded, size: 14, color: c.inkMuted),
+                              const SizedBox(width: Espaco.x1),
+                              Flexible(child: Text(t.obraTitulo!, style: legenda, overflow: TextOverflow.ellipsis)),
+                            ],
+                          ),
+                      ],
+                    ),
+                    trailing: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          "${t.tipo == 'Receita' ? '+' : '-'} ${fmt.format(t.valor)}",
+                          style: texto.bodyMedium?.copyWith(fontWeight: FontWeight.w700, color: _corTipo(t.tipo)),
+                        ),
+                        const SizedBox(height: Espaco.x1),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            InkWell(
+                              borderRadius: BorderRadius.circular(Raio.pilula),
+                              onTap: () async {
+                                final ctrl = context.read<FinanceiroController>();
+                                await Navigator.pushNamed(context, '/transacao-formulario', arguments: t);
+                                if (mounted) ctrl.carregarTransacoes();
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.all(Espaco.x1),
+                                child: Icon(Symbols.edit_rounded, size: 18, color: c.inkMuted),
+                              ),
+                            ),
+                            if (podeExcluir) ...[
+                              const SizedBox(width: Espaco.x1),
+                              InkWell(
+                                borderRadius: BorderRadius.circular(Raio.pilula),
+                                onTap: () => _confirmarExclusao(context, t, controller),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(Espaco.x1),
+                                  child: Icon(Symbols.delete_rounded, size: 18, color: c.error),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+          ],
+        ),
       ),
     );
   }
 
   void _mostrarOpcoesNovaTransacao(BuildContext context) {
+    final c = context.cores;
+    final texto = Theme.of(context).textTheme;
+
+    Widget icone(IconData i, Color cor, Color fundo) => Container(
+          width: 44, height: 44,
+          decoration: BoxDecoration(color: fundo, borderRadius: BorderRadius.circular(Raio.botao)),
+          child: Icon(i, color: cor),
+        );
+
     showModalBottomSheet(
       context: context,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
       builder: (ctx) => SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(Espaco.x6),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text("Nova Transação", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 20),
+              Text("Nova Transação", style: texto.titleMedium),
+              const SizedBox(height: Espaco.x5),
               ListTile(
-                leading: Container(
-                  width: 44, height: 44,
-                  decoration: BoxDecoration(color: Colors.green.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
-                  child: const Icon(Icons.arrow_upward, color: Colors.green),
-                ),
-                title: const Text("Nova Receita", style: TextStyle(fontWeight: FontWeight.w600)),
+                leading: icone(Symbols.arrow_upward_rounded, c.success, c.successSoft),
+                title: Text("Nova Receita", style: texto.bodyLarge?.copyWith(fontWeight: FontWeight.w700)),
                 subtitle: const Text("Pagamento de cliente, adiantamento..."),
                 onTap: () async {
                   final ctrl = context.read<FinanceiroController>();
@@ -348,14 +355,10 @@ class _FinanceiroPageState extends State<FinanceiroPage> {
                   if (mounted) ctrl.carregarTransacoes();
                 },
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: Espaco.x2),
               ListTile(
-                leading: Container(
-                  width: 44, height: 44,
-                  decoration: BoxDecoration(color: Colors.red.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
-                  child: const Icon(Icons.arrow_downward, color: Colors.red),
-                ),
-                title: const Text("Nova Despesa", style: TextStyle(fontWeight: FontWeight.w600)),
+                leading: icone(Symbols.arrow_downward_rounded, c.error, c.errorSoft),
+                title: Text("Nova Despesa", style: texto.bodyLarge?.copyWith(fontWeight: FontWeight.w700)),
                 subtitle: const Text("Material, transporte, alimentação..."),
                 onTap: () async {
                   final ctrl = context.read<FinanceiroController>();
@@ -372,21 +375,21 @@ class _FinanceiroPageState extends State<FinanceiroPage> {
   }
 
   void _confirmarExclusao(BuildContext context, Transacao t, FinanceiroController controller) {
+    final c = context.cores;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         title: const Text("Excluir Transação?"),
         content: Text("Tem certeza que deseja remover \"${t.descricao}\"?"),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Cancelar")),
-          ElevatedButton(
+          FilledButton(
             onPressed: () {
               controller.excluir(t.id!);
               Navigator.pop(ctx);
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text("Excluir", style: TextStyle(color: Colors.white)),
+            style: FilledButton.styleFrom(backgroundColor: c.error, foregroundColor: c.onError),
+            child: const Text("Excluir"),
           ),
         ],
       ),

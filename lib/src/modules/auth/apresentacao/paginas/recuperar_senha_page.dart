@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:provider/provider.dart';
 import '../controllers/auth_controller.dart';
-import '../../../../core/tema/paleta_sahara.dart';
+import '../../../../core/tema/cores_app.dart';
+import '../../../../core/tema/medidas_app.dart';
 
 /// RF002 - Recuperar Senha, em 3 passos dentro da mesma tela:
 /// 1) CPF ou e-mail  2) código recebido por e-mail  3) nova senha
@@ -39,8 +41,6 @@ class _RecuperarSenhaPageState extends State<RecuperarSenhaPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text("Se o CPF ou e-mail estiver cadastrado, um código foi enviado."),
-        backgroundColor: PaletaSahara.onSurface,
-        behavior: SnackBarBehavior.floating,
         duration: Duration(seconds: 4),
       ),
     );
@@ -65,7 +65,6 @@ class _RecuperarSenhaPageState extends State<RecuperarSenhaPage> {
       context: context,
       barrierDismissible: false,
       builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         title: const Text("Senha alterada!"),
         content: const Text("Sua senha foi definida com sucesso. Faça login novamente com a nova senha."),
         actions: [
@@ -85,14 +84,9 @@ class _RecuperarSenhaPageState extends State<RecuperarSenhaPage> {
     final authController = context.watch<AuthController>();
 
     return Scaffold(
-      backgroundColor: PaletaSahara.background,
-      appBar: AppBar(
-        backgroundColor: PaletaSahara.cardSurface,
-        elevation: 0,
-        foregroundColor: PaletaSahara.onSurface,
-      ),
+      appBar: AppBar(),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 20),
+        padding: const EdgeInsets.symmetric(horizontal: Espaco.x8, vertical: Espaco.x5),
         child: switch (_etapa) {
           _EtapaRecuperacao.identificacao => _buildEtapaIdentificacao(authController),
           _EtapaRecuperacao.codigo => _buildEtapaCodigo(authController),
@@ -107,13 +101,10 @@ class _RecuperarSenhaPageState extends State<RecuperarSenhaPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Icon(Icons.lock_reset_outlined, color: PaletaSahara.primary, size: 40),
-        const SizedBox(height: 24),
-        const Text("Recuperar Senha", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 12),
-        const Text(
+        ..._cabecalho(
+          Symbols.lock_reset_rounded,
+          "Recuperar Senha",
           "Informe seu CPF ou e-mail cadastrado. Enviaremos um código de verificação por e-mail.",
-          style: TextStyle(color: Colors.grey, fontSize: 16),
         ),
         const SizedBox(height: 40),
         TextField(controller: _loginController, decoration: _decoracao("CPF ou e-mail")),
@@ -132,13 +123,10 @@ class _RecuperarSenhaPageState extends State<RecuperarSenhaPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Icon(Icons.mark_email_read_outlined, color: PaletaSahara.primary, size: 40),
-        const SizedBox(height: 24),
-        const Text("Digite o código", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 12),
-        const Text(
+        ..._cabecalho(
+          Symbols.mark_email_read_rounded,
+          "Digite o código",
           "Verifique seu e-mail e digite o código que enviamos.",
-          style: TextStyle(color: Colors.grey, fontSize: 16),
         ),
         const SizedBox(height: 40),
         TextField(
@@ -157,7 +145,8 @@ class _RecuperarSenhaPageState extends State<RecuperarSenhaPage> {
         Center(
           child: TextButton(
             onPressed: c.carregando ? null : () => setState(() => _etapa = _EtapaRecuperacao.identificacao),
-            child: const Text("Voltar", style: TextStyle(color: Colors.grey)),
+            style: TextButton.styleFrom(foregroundColor: context.cores.inkMuted),
+            child: const Text("Voltar"),
           ),
         ),
       ],
@@ -169,13 +158,10 @@ class _RecuperarSenhaPageState extends State<RecuperarSenhaPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Icon(Icons.password_outlined, color: PaletaSahara.primary, size: 40),
-        const SizedBox(height: 24),
-        const Text("Nova senha", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 12),
-        const Text(
+        ..._cabecalho(
+          Symbols.password_rounded,
+          "Nova senha",
           "Mínimo de 8 caracteres, com letras e números, diferente do seu CPF.",
-          style: TextStyle(color: Colors.grey, fontSize: 16),
         ),
         const SizedBox(height: 40),
         TextField(
@@ -183,7 +169,7 @@ class _RecuperarSenhaPageState extends State<RecuperarSenhaPage> {
           obscureText: _ocultarSenha,
           decoration: _decoracao("Nova senha").copyWith(
             suffixIcon: IconButton(
-              icon: Icon(_ocultarSenha ? Icons.visibility_outlined : Icons.visibility_off_outlined),
+              icon: Icon(_ocultarSenha ? Symbols.visibility_rounded : Symbols.visibility_off_rounded),
               onPressed: () => setState(() => _ocultarSenha = !_ocultarSenha),
             ),
           ),
@@ -194,7 +180,7 @@ class _RecuperarSenhaPageState extends State<RecuperarSenhaPage> {
           obscureText: _ocultarConfirmacao,
           decoration: _decoracao("Confirmar nova senha").copyWith(
             suffixIcon: IconButton(
-              icon: Icon(_ocultarConfirmacao ? Icons.visibility_outlined : Icons.visibility_off_outlined),
+              icon: Icon(_ocultarConfirmacao ? Symbols.visibility_rounded : Symbols.visibility_off_rounded),
               onPressed: () => setState(() => _ocultarConfirmacao = !_ocultarConfirmacao),
             ),
           ),
@@ -209,31 +195,41 @@ class _RecuperarSenhaPageState extends State<RecuperarSenhaPage> {
     );
   }
 
+  /// Ícone num círculo pêssego + título + explicação, igual nos 3 passos.
+  List<Widget> _cabecalho(IconData icone, String titulo, String explicacao) {
+    final c = context.cores;
+    final texto = Theme.of(context).textTheme;
+    return [
+      CircleAvatar(
+        radius: 28,
+        backgroundColor: c.primarySoft,
+        child: Icon(icone, color: c.primary, size: TamanhoIcone.grande),
+      ),
+      const SizedBox(height: Espaco.x6),
+      Text(titulo, style: texto.headlineMedium),
+      const SizedBox(height: Espaco.x3),
+      Text(explicacao, style: texto.bodyLarge?.copyWith(color: c.inkMuted)),
+    ];
+  }
+
+  // Fundo, cantos e foco vêm do tema (InputDecorationTheme).
   InputDecoration _decoracao(String hint) => InputDecoration(
         hintText: hint,
-        filled: true,
-        fillColor: Colors.grey[100],
         counterText: "",
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
       );
 
   Widget _botaoPrimario({required String texto, required bool carregando, required VoidCallback onPressed}) {
     return SizedBox(
       width: double.infinity,
-      height: 55,
-      child: ElevatedButton(
+      child: FilledButton(
         onPressed: carregando ? null : onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: PaletaSahara.primary,
-          foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ),
         child: carregando
-            ? const CircularProgressIndicator(color: Colors.white)
-            : Text(texto, style: const TextStyle(fontSize: 16)),
+            ? SizedBox(
+                height: TamanhoIcone.pequeno,
+                width: TamanhoIcone.pequeno,
+                child: CircularProgressIndicator(color: context.cores.inkMuted, strokeWidth: 2),
+              )
+            : Text(texto),
       ),
     );
   }

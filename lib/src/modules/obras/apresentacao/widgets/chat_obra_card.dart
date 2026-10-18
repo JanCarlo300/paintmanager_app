@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:provider/provider.dart';
 import '../../dominio/entidades/mensagem_obra.dart';
 import '../controllers/obra_controller.dart';
-import '../../../../core/tema/paleta_sahara.dart';
+import '../../../../apresentacao/widgets/card_app.dart';
+import '../../../../core/tema/cores_app.dart';
+import '../../../../core/tema/medidas_app.dart';
 import '../../../auth/apresentacao/controllers/auth_controller.dart';
 
 /// Item 2.3 — chat da obra em tempo real (substitui o antigo campo "Anotações").
@@ -72,97 +75,101 @@ class _ChatObraCardState extends State<ChatObraCard> {
 
   void _avisar(String msg) {
     if (!mounted) return;
+    final c = context.cores;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg), backgroundColor: Colors.red, behavior: SnackBarBehavior.floating),
+      SnackBar(content: Text(msg, style: TextStyle(color: c.onError)), backgroundColor: c.error),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final meuId = context.watch<AuthController>().usuarioLogado?.id;
+    final c = context.cores;
+    final texto = Theme.of(context).textTheme;
 
-    return Container(
+    return SizedBox(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: PaletaSahara.cardSurface,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)],
-      ),
-      child: Column(
-        children: [
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxHeight: 360),
-            child: StreamBuilder<List<MensagemObra>>(
-              stream: _mensagens,
-              builder: (context, snapshot) {
-                if (snapshot.hasError) {
-                  return const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 24),
-                    child: Text('Não foi possível carregar o chat.', style: TextStyle(color: Colors.red)),
+      child: CardApp(
+        child: Column(
+          children: [
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 360),
+              child: StreamBuilder<List<MensagemObra>>(
+                stream: _mensagens,
+                builder: (context, snapshot) {
+                  if (snapshot.hasError) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: Espaco.x6),
+                      child: Text('Não foi possível carregar o chat.', style: texto.bodyMedium?.copyWith(color: c.error)),
+                    );
+                  }
+                  if (!snapshot.hasData) {
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(vertical: Espaco.x6),
+                      child: Center(child: CircularProgressIndicator()),
+                    );
+                  }
+                  final mensagens = snapshot.data!;
+                  if (mensagens.isEmpty) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: Espaco.x6),
+                      child: Text(
+                        'Nenhuma mensagem ainda. Comece a conversa!',
+                        style: texto.bodyMedium?.copyWith(color: c.inkMuted),
+                      ),
+                    );
+                  }
+                  // reverse: true mantém a lista "grudada" na mensagem mais recente.
+                  return ListView.builder(
+                    shrinkWrap: true,
+                    reverse: true,
+                    itemCount: mensagens.length,
+                    itemBuilder: (context, i) {
+                      final m = mensagens[mensagens.length - 1 - i];
+                      return _BalaoMensagem(mensagem: m, minha: m.usuarioId != null && m.usuarioId == meuId);
+                    },
                   );
-                }
-                if (!snapshot.hasData) {
-                  return const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 24),
-                    child: Center(child: CircularProgressIndicator(color: PaletaSahara.primary)),
-                  );
-                }
-                final mensagens = snapshot.data!;
-                if (mensagens.isEmpty) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 24),
-                    child: Text('Nenhuma mensagem ainda. Comece a conversa!',
-                        style: TextStyle(color: Colors.grey[500], fontSize: 13)),
-                  );
-                }
-                // reverse: true mantém a lista "grudada" na mensagem mais recente.
-                return ListView.builder(
-                  shrinkWrap: true,
-                  reverse: true,
-                  itemCount: mensagens.length,
-                  itemBuilder: (context, i) {
-                    final m = mensagens[mensagens.length - 1 - i];
-                    return _BalaoMensagem(mensagem: m, minha: m.usuarioId != null && m.usuarioId == meuId);
-                  },
-                );
-              },
+                },
+              ),
             ),
-          ),
-          const Divider(height: 24),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _textoController,
-                  minLines: 1,
-                  maxLines: 4,
-                  textCapitalization: TextCapitalization.sentences,
-                  decoration: InputDecoration(
-                    hintText: 'Escreva uma mensagem...',
-                    hintStyle: TextStyle(color: Colors.grey[400]),
-                    isDense: true,
-                    filled: true,
-                    fillColor: Colors.grey[50],
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide(color: Colors.grey[200]!)),
-                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide(color: Colors.grey[200]!)),
-                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: const BorderSide(color: PaletaSahara.primary, width: 1.5)),
+            const Divider(height: Espaco.x6),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _textoController,
+                    minLines: 1,
+                    maxLines: 4,
+                    textCapitalization: TextCapitalization.sentences,
+                    decoration: InputDecoration(
+                      hintText: 'Escreva uma mensagem...',
+                      isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: Espaco.x4, vertical: Espaco.x3),
+                      // Campo de chat em pílula; o fundo segue o tema.
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(Raio.pilula),
+                        borderSide: BorderSide.none,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(Raio.pilula),
+                        borderSide: BorderSide(color: c.primary, width: 1.5),
+                      ),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              IconButton.filled(
-                onPressed: _enviando ? null : _enviar,
-                style: IconButton.styleFrom(backgroundColor: PaletaSahara.primary, foregroundColor: Colors.white),
-                icon: _enviando
-                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                    : const Icon(Icons.send, size: 20),
-              ),
-            ],
-          ),
-        ],
+                const SizedBox(width: Espaco.x2),
+                IconButton.filled(
+                  tooltip: 'Enviar',
+                  onPressed: _enviando ? null : _enviar,
+                  icon: _enviando
+                      ? SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: c.inkMuted, strokeWidth: 2))
+                      : const Icon(Symbols.send_rounded, size: TamanhoIcone.pequeno),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -182,27 +189,34 @@ class _BalaoMensagem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.cores;
+    final texto = Theme.of(context).textTheme;
+    final legenda = texto.bodySmall?.copyWith(color: c.inkMuted, letterSpacing: 0);
+
     if (mensagem.importada) {
       return Container(
         width: double.infinity,
         margin: const EdgeInsets.symmetric(vertical: 6),
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(Espaco.x3),
         decoration: BoxDecoration(
-          color: Colors.amber[50],
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: Colors.amber[200]!),
+          color: c.warningSoft,
+          borderRadius: BorderRadius.circular(Raio.botao),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(children: [
-              Icon(Icons.history, size: 14, color: Colors.amber[800]),
-              const SizedBox(width: 4),
-              Text('Observação importada das antigas Anotações',
-                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.amber[900])),
+              Icon(Symbols.history_rounded, size: 16, color: c.warning),
+              const SizedBox(width: Espaco.x1),
+              Expanded(
+                child: Text(
+                  'Observação importada das antigas Anotações',
+                  style: texto.labelSmall?.copyWith(color: c.warning, letterSpacing: 0),
+                ),
+              ),
             ]),
             const SizedBox(height: 6),
-            Text(mensagem.texto, style: const TextStyle(fontSize: 14)),
+            Text(mensagem.texto, style: texto.bodyMedium),
           ],
         ),
       );
@@ -213,15 +227,15 @@ class _BalaoMensagem extends StatelessWidget {
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.7),
         child: Container(
-          margin: const EdgeInsets.symmetric(vertical: 4),
-          padding: const EdgeInsets.fromLTRB(12, 8, 12, 6),
+          margin: const EdgeInsets.symmetric(vertical: Espaco.x1),
+          padding: const EdgeInsets.fromLTRB(Espaco.x3, Espaco.x2, Espaco.x3, 6),
           decoration: BoxDecoration(
-            color: minha ? PaletaSahara.primary.withValues(alpha: 0.12) : Colors.grey[100],
+            color: minha ? c.primarySoft : c.surfaceSunken,
             borderRadius: BorderRadius.only(
-              topLeft: const Radius.circular(12),
-              topRight: const Radius.circular(12),
-              bottomLeft: Radius.circular(minha ? 12 : 2),
-              bottomRight: Radius.circular(minha ? 2 : 12),
+              topLeft: const Radius.circular(Raio.botao),
+              topRight: const Radius.circular(Raio.botao),
+              bottomLeft: Radius.circular(minha ? Raio.botao : 2),
+              bottomRight: Radius.circular(minha ? 2 : Raio.botao),
             ),
           ),
           child: Column(
@@ -231,21 +245,17 @@ class _BalaoMensagem extends StatelessWidget {
                 TextSpan(children: [
                   TextSpan(
                     text: minha ? 'Você' : mensagem.autorNome,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: PaletaSahara.tertiary),
+                    style: texto.labelSmall?.copyWith(color: c.secondary, fontWeight: FontWeight.w700, letterSpacing: 0),
                   ),
-                  TextSpan(
-                    text: '  ·  ${mensagem.autorFuncao}',
-                    style: const TextStyle(fontSize: 11, color: PaletaSahara.onSurfaceMuted),
-                  ),
+                  TextSpan(text: '  ·  ${mensagem.autorFuncao}', style: legenda),
                 ]),
               ),
               const SizedBox(height: 2),
-              Text(mensagem.texto, style: const TextStyle(fontSize: 14, color: PaletaSahara.onSurface)),
+              Text(mensagem.texto, style: texto.bodyMedium),
               const SizedBox(height: 2),
               Align(
                 alignment: Alignment.bottomRight,
-                child: Text(_horario(mensagem.criadoEm),
-                    style: const TextStyle(fontSize: 10, color: PaletaSahara.onSurfaceMuted)),
+                child: Text(_horario(mensagem.criadoEm), style: legenda),
               ),
             ],
           ),

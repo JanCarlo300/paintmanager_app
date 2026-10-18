@@ -7,11 +7,12 @@ import 'package:printing/printing.dart';
 
 /// Serviço de PDF do app (etapa 6b / RF012). Gera o documento no próprio
 /// celular — sem internet, sem API, sem custo — com cabeçalho e rodapé
-/// padrão nas cores Sahara. Os relatórios do RF012 reaproveitam este serviço.
+/// padrão nas cores do manual da marca. Os relatórios do RF012 reaproveitam
+/// este serviço. O PDF é sempre claro (documento para o cliente).
 class PdfService {
-  static final corPrimaria = PdfColor.fromInt(0xFFC2652A);
+  static final corPrimaria = PdfColor.fromInt(0xFFA5521F);
   static final corTexto = PdfColor.fromInt(0xFF3A302A);
-  static final corSecundaria = PdfColor.fromInt(0xFF9A8E85);
+  static final corSecundaria = PdfColor.fromInt(0xFF6B5E55);
   static final corBorda = PdfColor.fromInt(0xFFD8D0C8);
   static final corFundoClaro = PdfColor.fromInt(0xFFFAF5EE);
 
@@ -26,14 +27,34 @@ class PdfService {
     );
   }
 
-  /// Monta o PDF: cabeçalho (PaintManager + [titulo] + data de geração),
-  /// o [conteudo] e rodapé com número da página.
+  // Símbolo da marca (pincel sem fundo) do cabeçalho. Se o arquivo não
+  // carregar, o cabeçalho sai só com o texto — o PDF nunca deixa de ser gerado.
+  static String? _simbolo;
+  static bool _simboloLido = false;
+
+  static Future<String?> _carregarSimbolo() async {
+    if (!_simboloLido) {
+      _simboloLido = true;
+      try {
+        _simbolo = await rootBundle.loadString('assets/marca/simbolo.svg');
+      } catch (_) {
+        _simbolo = null;
+      }
+    }
+    return _simbolo;
+  }
+
+  /// Monta o PDF: cabeçalho (símbolo + PaintManager + [titulo] + data de
+  /// geração), o [conteudo] e rodapé com número da página. [simboloSvg]
+  /// substitui o símbolo padrão (útil em testes).
   static Future<Uint8List> gerar({
     required String titulo,
     required List<pw.Widget> conteudo,
     DateTime? geradoEm,
+    String? simboloSvg,
   }) async {
     final data = DateFormat("dd/MM/yyyy 'às' HH:mm", 'pt_BR').format(geradoEm ?? DateTime.now());
+    final simbolo = simboloSvg ?? await _carregarSimbolo();
     final doc = pw.Document(title: titulo, author: 'PaintManager', theme: await _carregarTema());
 
     doc.addPage(
@@ -50,14 +71,23 @@ class PdfService {
             mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
             crossAxisAlignment: pw.CrossAxisAlignment.end,
             children: [
-              pw.Column(
-                crossAxisAlignment: pw.CrossAxisAlignment.start,
+              pw.Row(
+                crossAxisAlignment: pw.CrossAxisAlignment.center,
                 children: [
-                  pw.Text('PaintManager',
-                      style: pw.TextStyle(fontSize: 11, color: corPrimaria, fontWeight: pw.FontWeight.bold)),
-                  pw.SizedBox(height: 2),
-                  pw.Text(titulo,
-                      style: pw.TextStyle(fontSize: 18, color: corTexto, fontWeight: pw.FontWeight.bold)),
+                  if (simbolo != null) ...[
+                    pw.SvgImage(svg: simbolo, width: 34, height: 34),
+                    pw.SizedBox(width: 8),
+                  ],
+                  pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Text('PaintManager',
+                          style: pw.TextStyle(fontSize: 11, color: corPrimaria, fontWeight: pw.FontWeight.bold)),
+                      pw.SizedBox(height: 2),
+                      pw.Text(titulo,
+                          style: pw.TextStyle(fontSize: 18, color: corTexto, fontWeight: pw.FontWeight.bold)),
+                    ],
+                  ),
                 ],
               ),
               pw.Text('Gerado em $data', style: pw.TextStyle(fontSize: 9, color: corSecundaria)),

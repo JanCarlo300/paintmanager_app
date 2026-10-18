@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import '../../core/filtros/filtro_lista.dart';
-import '../../core/tema/paleta_sahara.dart';
+import '../../core/tema/cores_app.dart';
+import '../../core/tema/medidas_app.dart';
 
 /// Etapa 4 — botão de filtro que fica ao lado da busca. Mostra quantos
 /// filtros estão ativos e abre o painel de ordenação e filtros.
@@ -25,10 +27,6 @@ class BotaoFiltroLista extends StatelessWidget {
     final resultado = await showModalBottomSheet<FiltroLista>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: PaletaSahara.cardSurface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
       builder: (_) => _PainelFiltro(
         inicial: filtro,
         rotuloAtrasados: rotuloAtrasados,
@@ -41,6 +39,7 @@ class BotaoFiltroLista extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ativos = filtro.quantidadeAtivos;
+    final c = context.cores;
 
     return SizedBox(
       height: 42,
@@ -48,22 +47,23 @@ class BotaoFiltroLista extends StatelessWidget {
       child: Badge(
         isLabelVisible: ativos > 0,
         label: Text('$ativos'),
-        backgroundColor: PaletaSahara.tertiary,
+        backgroundColor: c.secondary,
+        textColor: c.onSecondary,
         child: Material(
-          color: ativos > 0 ? PaletaSahara.primary : Colors.white,
-          borderRadius: BorderRadius.circular(10),
+          color: ativos > 0 ? c.primary : c.surfaceCard,
+          borderRadius: BorderRadius.circular(Raio.campo),
           child: InkWell(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(Raio.campo),
             onTap: () => _abrir(context),
             child: Container(
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: ativos > 0 ? PaletaSahara.primary : Colors.grey[200]!),
+                borderRadius: BorderRadius.circular(Raio.campo),
+                border: Border.all(color: ativos > 0 ? c.primary : c.border),
               ),
               child: Icon(
-                Icons.tune,
-                size: 20,
-                color: ativos > 0 ? Colors.white : Colors.grey[600],
+                Symbols.tune_rounded,
+                size: TamanhoIcone.pequeno,
+                color: ativos > 0 ? c.onPrimary : c.inkMuted,
               ),
             ),
           ),
@@ -123,9 +123,10 @@ class _PainelFiltroState extends State<_PainelFiltro> {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.cores;
     return SafeArea(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+        padding: const EdgeInsets.fromLTRB(Espaco.x5, Espaco.x3, Espaco.x5, Espaco.x5),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -135,13 +136,13 @@ class _PainelFiltroState extends State<_PainelFiltro> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.grey[300],
+                  color: c.border,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
             ),
-            const SizedBox(height: 16),
-            const Text('Ordenar e filtrar', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: Espaco.x4),
+            Text('Ordenar e filtrar', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 20),
 
             _titulo('Ordenar por'),
@@ -168,7 +169,7 @@ class _PainelFiltroState extends State<_PainelFiltro> {
                 _rotuloPersonalizado,
                 _filtro.periodo == PeriodoCriacao.personalizado,
                 _escolherPeriodo,
-                icone: Icons.date_range,
+                icone: Symbols.date_range_rounded,
               ),
             ]),
             const SizedBox(height: 20),
@@ -189,26 +190,14 @@ class _PainelFiltroState extends State<_PainelFiltro> {
                 Expanded(
                   child: OutlinedButton(
                     onPressed: () => Navigator.pop(context, const FiltroLista()),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: PaletaSahara.onSurface,
-                      side: BorderSide(color: Colors.grey[300]!),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
                     child: const Text('Limpar'),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: Espaco.x3),
                 Expanded(
-                  child: ElevatedButton(
+                  child: FilledButton(
                     onPressed: () => Navigator.pop(context, _filtro),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: PaletaSahara.primary,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
-                    child: const Text('Aplicar', style: TextStyle(fontWeight: FontWeight.bold)),
+                    child: const Text('Aplicar'),
                   ),
                 ),
               ],
@@ -220,33 +209,34 @@ class _PainelFiltroState extends State<_PainelFiltro> {
   }
 
   Widget _titulo(String texto) => Padding(
-        padding: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.only(bottom: Espaco.x2),
         child: Text(
-          texto,
-          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: PaletaSahara.onSurfaceMuted),
+          texto.toUpperCase(),
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(color: context.cores.inkMuted),
         ),
       );
 
   Widget _opcoes(List<Widget> chips) => Wrap(spacing: 8, runSpacing: 8, children: chips);
 
+  // Selecionado: fundo primarySoft com texto primary (chip ativo do manual).
   Widget _opcao(String rotulo, bool selecionado, VoidCallback aoTocar, {IconData? icone}) {
+    final c = context.cores;
     return ChoiceChip(
       avatar: icone != null
-          ? Icon(icone, size: 16, color: selecionado ? Colors.white : Colors.grey[700])
+          ? Icon(icone, size: 16, color: selecionado ? c.primary : c.inkMuted)
           : null,
       label: Text(rotulo),
       selected: selecionado,
       onSelected: (_) => aoTocar(),
       showCheckmark: false,
-      selectedColor: PaletaSahara.primary,
-      backgroundColor: Colors.grey[100],
-      side: BorderSide.none,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      labelStyle: TextStyle(
-        fontSize: 13,
-        color: selecionado ? Colors.white : Colors.grey[800],
-        fontWeight: selecionado ? FontWeight.bold : FontWeight.normal,
-      ),
+      selectedColor: c.primarySoft,
+      backgroundColor: c.surfaceSunken,
+      side: BorderSide(color: selecionado ? c.primary : Colors.transparent),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Raio.campo)),
+      labelStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: selecionado ? c.primary : c.ink,
+            fontWeight: selecionado ? FontWeight.w700 : FontWeight.w500,
+          ),
     );
   }
 }

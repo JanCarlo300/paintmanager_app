@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:provider/provider.dart';
 import '../../dominio/entidades/obra.dart';
 import '../../dominio/pdf_lista_materiais.dart';
 import '../../../clientes/apresentacao/controllers/cliente_controller.dart';
 import '../../../../core/pdf/pdf_service.dart';
-import '../../../../core/tema/paleta_sahara.dart';
+import '../../../../core/tema/cores_app.dart';
+import '../../../../core/tema/medidas_app.dart';
 
 /// Etapa 6b — pergunta a observação (opcional), gera o PDF da Lista de
 /// Materiais e abre o "compartilhar" do celular. Usado nos detalhes da obra
@@ -23,6 +25,7 @@ Future<bool> gerarECompartilharPdfListaMateriais(
   if (observacao == null || !context.mounted) return false;
 
   final mensageiro = ScaffoldMessenger.of(context);
+  final cores = context.cores;
   try {
     final cliente = obra.idCliente > 0
         ? await context.read<ClienteController>().buscarPorId(obra.idCliente)
@@ -40,9 +43,8 @@ Future<bool> gerarECompartilharPdfListaMateriais(
   } catch (e) {
     mensageiro.showSnackBar(
       SnackBar(
-        content: Text('Não foi possível gerar o PDF: $e'),
-        backgroundColor: Colors.red,
-        behavior: SnackBarBehavior.floating,
+        content: Text('Não foi possível gerar o PDF: $e', style: TextStyle(color: cores.onError)),
+        backgroundColor: cores.error,
       ),
     );
     return false;
@@ -76,14 +78,9 @@ class _DialogoObservacaoState extends State<_DialogoObservacao> {
         minLines: 2,
         maxLines: 4,
         textCapitalization: TextCapitalization.sentences,
-        decoration: InputDecoration(
+        decoration: const InputDecoration(
           labelText: 'Observação (opcional)',
           hintText: 'Ex.: entregar até sexta',
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: PaletaSahara.primary, width: 1.5),
-          ),
         ),
       ),
       actions: [
@@ -91,14 +88,10 @@ class _DialogoObservacaoState extends State<_DialogoObservacao> {
           onPressed: () => Navigator.pop(context),
           child: Text(widget.rotuloCancelar),
         ),
-        ElevatedButton.icon(
+        FilledButton.icon(
           onPressed: () => Navigator.pop(context, _controller.text),
-          icon: const Icon(Icons.picture_as_pdf_outlined, size: 18),
+          icon: const Icon(Symbols.picture_as_pdf_rounded, size: TamanhoIcone.pequeno),
           label: const Text('Gerar PDF'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: PaletaSahara.primary,
-            foregroundColor: Colors.white,
-          ),
         ),
       ],
     );
