@@ -1,21 +1,10 @@
-// Funções compartilhadas pelos scripts do kit de identidade visual.
+// Funções da auditoria da identidade visual. Vieram do kit_identidade_visual
+// (Fases 0 a 6), removido ao fim da implantação.
 // Rodar sempre a partir da pasta raiz do paintmanager_app.
 import 'dart:io';
 
-const String nomePastaKit = 'kit_identidade_visual';
-const String branchTrabalho = 'feat/identidade-visual';
+const String comandoVerificar = 'dart run tool/identidade_visual/verificar.dart';
 const String arquivoProgresso = 'docs/identidade_visual/PROGRESSO.md';
-
-/// Pasta do kit, descoberta pelo caminho do script (ou pelo nome padrão).
-final Directory raizKit = () {
-  try {
-    final pasta = File.fromUri(Platform.script).parent.parent;
-    if (Directory('${pasta.path}/modelos').existsSync()) return pasta;
-  } catch (_) {
-    // Platform.script nem sempre é um arquivo (ex.: snapshot); usa o padrão.
-  }
-  return Directory(nomePastaKit);
-}();
 
 // ---------------------------------------------------------------------------
 // Saída no terminal
@@ -42,9 +31,6 @@ void exigirRaizProjeto() {
   if (!pubspec.existsSync() || !nomeCerto.hasMatch(pubspec.readAsStringSync())) {
     falhar('Rode este script na pasta raiz do paintmanager_app (onde fica o pubspec.yaml).');
   }
-  if (!Directory(nomePastaKit).existsSync()) {
-    falhar('Não achei a pasta $nomePastaKit/ na raiz do projeto. Extraia o kit lá.');
-  }
 }
 
 class ResultadoComando {
@@ -65,53 +51,6 @@ Future<ResultadoComando> rodar(String executavel, List<String> argumentos, {bool
     }
   }
   return ResultadoComando(r.exitCode, saida);
-}
-
-/// Copia os arquivos de [origem] para [destino], mantendo as subpastas.
-/// Não sobrescreve arquivo existente, a não ser com [sobrescrever].
-List<String> copiarPasta(Directory origem, Directory destino, {bool sobrescrever = false}) {
-  final copiados = <String>[];
-  for (final entidade in origem.listSync(recursive: true)) {
-    if (entidade is! File) continue;
-    final relativo = entidade.path.substring(origem.path.length + 1);
-    final alvo = File('${destino.path}${Platform.pathSeparator}$relativo');
-    if (alvo.existsSync() && !sobrescrever) {
-      aviso('já existe, mantido: ${alvo.path}');
-      continue;
-    }
-    alvo.parent.createSync(recursive: true);
-    entidade.copySync(alvo.path);
-    copiados.add(alvo.path);
-  }
-  return copiados;
-}
-
-/// Copia um arquivo dos modelos do kit para o mesmo caminho no projeto.
-bool copiarModelo(String caminhoRelativo, {bool sobrescrever = false}) {
-  final origem = File('${raizKit.path}/modelos/$caminhoRelativo');
-  final destino = File(caminhoRelativo);
-  if (!origem.existsSync()) falhar('Modelo não encontrado no kit: $caminhoRelativo');
-  if (destino.existsSync() && !sobrescrever) {
-    aviso('já existe, mantido (use --forcar para substituir): $caminhoRelativo');
-    return false;
-  }
-  destino.parent.createSync(recursive: true);
-  origem.copySync(destino.path);
-  ok('criado: $caminhoRelativo');
-  return true;
-}
-
-/// Insere [novasLinhas] logo depois da primeira linha que casa com [ancora],
-/// pulando as que já existem no arquivo. Devolve quantas foram inseridas.
-int inserirDepoisDe(File arquivo, RegExp ancora, List<String> novasLinhas) {
-  final linhas = arquivo.readAsLinesSync();
-  final indice = linhas.indexWhere(ancora.hasMatch);
-  if (indice < 0) return -1;
-  final faltando = novasLinhas.where((l) => !linhas.any((x) => x.trim() == l.trim())).toList();
-  if (faltando.isEmpty) return 0;
-  linhas.insertAll(indice + 1, faltando);
-  arquivo.writeAsStringSync('${linhas.join('\n')}\n');
-  return faltando.length;
 }
 
 // ---------------------------------------------------------------------------
@@ -358,7 +297,7 @@ void registrarProgresso(String etapa, ResultadoVerificacao r) {
     arquivo.parent.createSync(recursive: true);
     arquivo.writeAsStringSync(
       '# Identidade visual — progresso\n\n'
-      'Gerado por `dart run $nomePastaKit/ferramentas/verificar.dart`.\n'
+      'Gerado por `$comandoVerificar`.\n'
       '"Valores fixos" = cores, tamanhos de fonte, ícones antigos, sombras e GoogleFonts fora de `lib/src/core/tema/`.\n\n'
       '| Data | Etapa | Análise (erros/avisos) | Testes (ok/falhas) | Valores fixos restantes | Arquivos | Resultado |\n'
       '|---|---|---|---|---|---|---|\n',

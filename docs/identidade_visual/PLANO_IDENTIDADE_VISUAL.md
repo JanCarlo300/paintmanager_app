@@ -1,5 +1,7 @@
 # PaintManager — Plano de implementação da nova identidade visual
 
+> **Concluído em 18/10/2026.** Este documento guiou a implantação e foi mantido como registro. A pasta `kit_identidade_visual/` citada abaixo foi removida na Fase 6: o código dos modelos está em `lib/src/core/tema/` e `lib/src/apresentacao/widgets/`, e a auditoria continua disponível com `dart run tool/identidade_visual/verificar.dart --final`. Placar em `PROGRESSO.md`.
+
 > **Para o agente:** este arquivo organiza a troca da identidade visual "Sahara" pela identidade aprovada pelo Jan em 15/10/2026 (manual: *PaintManager Design System*). Leia tudo antes de começar. Execute **uma fase por vez, na ordem**, e só avance depois que o Jan testar e aprovar. Base: `main` em `19c5f31`.
 
 > **Como executar:** siga o `PASSO_A_PASSO.md`. Ele usa os scripts de `ferramentas/` (preparar, aplicar, verificar) e o código pronto de `modelos/` (tema, componentes e testes), que já seguem os tokens deste plano.

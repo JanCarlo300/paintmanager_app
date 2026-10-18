@@ -3,10 +3,10 @@
 // em docs/identidade_visual/PROGRESSO.md.
 //
 // Uso (na raiz do paintmanager_app):
-//   dart run kit_identidade_visual/ferramentas/verificar.dart                 só relatório
-//   dart run kit_identidade_visual/ferramentas/verificar.dart --lote E        exige o lote E limpo
-//   dart run kit_identidade_visual/ferramentas/verificar.dart --final         exige o app inteiro limpo
-//   dart run kit_identidade_visual/ferramentas/verificar.dart --etapa "Fase 1"   nome no registro
+//   dart run tool/identidade_visual/verificar.dart                 só relatório
+//   dart run tool/identidade_visual/verificar.dart --lote E        exige o lote E limpo
+//   dart run tool/identidade_visual/verificar.dart --final         exige o app inteiro limpo
+//   dart run tool/identidade_visual/verificar.dart --etapa "Fase 1"   nome no registro
 //
 // Sai com código 1 se houver erro de análise, teste falhando ou (com --lote/--final)
 // valor fixo restante nos arquivos exigidos.
@@ -48,6 +48,6 @@ Future<void> main(List<String> args) async {
     if (r.pendenciasEstritas.isNotEmpty) aviso('remover os valores fixos listados acima');
     exit(1);
   }
-  ok('pode pedir o teste do Jan no celular e, aprovado, fazer o commit');
+  ok('nenhum valor fixo pendente nos arquivos verificados');
   exit(0);
 }

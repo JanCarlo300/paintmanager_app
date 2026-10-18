@@ -15,6 +15,7 @@ Aplicativo multiplataforma desenvolvido em **Flutter/Dart** para gestão complet
 - [Variáveis de Ambiente](#-variáveis-de-ambiente)
 - [Arquitetura](#-arquitetura)
 - [Estrutura de Pastas](#-estrutura-de-pastas)
+- [Identidade Visual](#-identidade-visual)
 - [Módulos](#-módulos)
 - [Banco de Dados](#-banco-de-dados)
 - [Roteamento](#-roteamento)
@@ -49,6 +50,8 @@ O PaintManager resolve os principais desafios da gestão de serviços de pintura
 | **Gerenciamento de Estado** | Provider / ChangeNotifier | `provider` ^6.1.5 |
 | **Gráficos** | FL Chart | `fl_chart` ^0.70.2 |
 | **Tipografia** | Google Fonts (EB Garamond + Manrope) | `google_fonts` ^6.2.1 |
+| **Ícones** | Material Symbols Rounded | `material_symbols_icons` ^4.2960.0 |
+| **Tema** | Claro/escuro do manual da marca (`core/tema`) | `shared_preferences` ^2.5.6 |
 | **Variáveis de Ambiente** | flutter_dotenv | ^5.2.1 |
 
 ---
@@ -169,18 +172,19 @@ paintmanager_app/
 │   ├── main.dart                          # Ponto de entrada, MultiProvider e rotas
 │   └── src/
 │       ├── core/                          # Infraestrutura transversal
-│       │   └── config/
-│       │       └── supabase_config.dart   # Configuração e acesso ao cliente Supabase
+│       │   ├── config/                    # Cliente Supabase
+│       │   ├── tema/                      # Identidade visual: cores, fontes, medidas, temas
+│       │   ├── pdf/                       # PdfService (PDFs gerados no celular)
+│       │   ├── filtros/                   # FiltroLista (ordenação, período, prazo)
+│       │   ├── servicos/                  # Geocodificação (OpenStreetMap)
+│       │   └── validadores/               # ValidadorCpf
 │       │
 │       ├── apresentacao/                  # UI compartilhada entre módulos
-│       │   ├── controllers/
-│       │   │   └── dashboard_controller.dart
+│       │   ├── controllers/               # Dashboard e alertas (sino)
 │       │   ├── paginas/
-│       │   │   ├── dashboard_page.dart
-│       │   │   └── em_construcao_page.dart
-│       │   └── widgets/
-│       │       ├── drawer_comum.dart
-│       │       └── menu_lateral.dart
+│       │   │   └── dashboard_page.dart    # Resumo Geral
+│       │   └── widgets/                   # Menu lateral, GuardaRota, CardApp, StatusChip,
+│       │                                  # TelaVazia, LogoApp, busca, data, filtros...
 │       │
 │       └── modules/                       # Módulos de funcionalidade
 │           ├── auth/                      # Autenticação e Usuários
@@ -210,6 +214,9 @@ paintmanager_app/
 │           └── dados/modelos/
 │               └── cliente_modelo_test.dart
 │
+├── assets/                                # Ícone do app, logo, ilustrações e fontes do PDF
+├── docs/identidade_visual/                # Plano, passo a passo e progresso da identidade visual
+├── tool/identidade_visual/                # Auditoria de valores fixos (verificar.dart)
 ├── pubspec.yaml                           # Dependências e configuração do projeto
 ├── analysis_options.yaml                  # Regras de linting
 ├── ARCHITECTURE.md                        # Documentação detalhada da arquitetura
@@ -231,6 +238,34 @@ paintmanager_app/
 └── apresentacao/     # Interface do usuário
     ├── controllers/  # ChangeNotifiers: orquestram estado e lógica de UI
     └── paginas/      # Widgets (telas e formulários)
+```
+
+---
+
+## 🎨 Identidade Visual
+
+Toda a aparência do app vem de `lib/src/core/tema/`, seguindo o manual da marca (PaintManager Design System, aprovado em 15/10/2026). Plano e passo a passo da implantação: `docs/identidade_visual/`.
+
+**Regra do projeto: nenhuma cor, tamanho de fonte ou sombra fixos fora de `core/tema`.** As telas usam `Theme.of(context)` e a extensão `context.cores`. A auditoria abaixo confere isso.
+
+| Arquivo | Conteúdo |
+|---|---|
+| `cores_app.dart` | `CoresApp` (`ThemeExtension`) com os tokens nos temas claro e escuro: `primary`, `brand`, `ink`, `inkMuted`, `surface`, `surfaceCard`, `success`/`error`/`warning`/`info` e versões `Soft`, `inverseSurface`... Acesso: `context.cores` |
+| `tipografia_app.dart` | `TextTheme` com EB Garamond (títulos) e Manrope (texto e valores em R$) |
+| `medidas_app.dart` | `Espaco`, `Raio`, `TamanhoIcone` e `alturaToque` (48) |
+| `status_visual.dart` | Mapa único status → rótulo, ícone e cores (orçamentos e obras) |
+| `cores_graficos.dart` | Cor fixa por categoria de despesa nos gráficos |
+| `tema_app.dart` | `temaClaro()` e `temaEscuro()`: botões, cards sem sombra, campos, diálogos, calendário |
+| `tema_controller.dart` | `TemaController`: Automático (segue o celular), Claro ou Escuro, salvo com `shared_preferences` |
+
+**Componentes compartilhados** (`lib/src/apresentacao/widgets/`): `CardApp`, `CardDestaque` (um por tela), `StatusChip`, `IconeModulo`, `TelaVazia` (ilustração clara/escura), `LogoApp`/`AssinaturaApp`, `ChipsFiltroStatus`, `CampoBuscaSelecao`, `CampoData`.
+
+**Ícones:** Material Symbols Rounded (`material_symbols_icons`). **Marca:** ícone do app, logo e ilustrações em `assets/` (ícone gerado com `dart run flutter_launcher_icons`). Os PDFs ficam sempre claros (documento para o cliente).
+
+**Auditoria** (análise + testes + valores fixos; registra em `docs/identidade_visual/PROGRESSO.md`):
+
+```bash
+dart run tool/identidade_visual/verificar.dart --final
 ```
 
 ---
@@ -461,12 +496,14 @@ flutter test
 flutter test --coverage
 ```
 
-### Testes Existentes
+### Testes Existentes (114)
 
-| Arquivo | Módulo | Tipo |
-|---|---|---|
-| `usuario_modelo_test.dart` | Auth | Unitário (modelo) |
-| `cliente_modelo_test.dart` | Clientes | Unitário (modelo) |
+| Área | O que cobre |
+|---|---|
+| Modelos | `UsuarioModelo`, `ClienteModelo`, `ItemMaterial` |
+| Regras | `ValidadorCpf`, `FiltroLista`, regras dos relatórios |
+| PDFs | Lista de materiais, relatório financeiro e de progresso |
+| Tema | Contraste WCAG (≥ 4,5:1) nos temas claro e escuro, `status_visual`, `StatusChip`, `TemaController`, cores dos gráficos |
 
 ---
 
@@ -486,6 +523,13 @@ flutter test --coverage
 | `fl_chart` | ^0.70.2 | Gráficos no módulo financeiro |
 | `url_launcher` | ^6.3.1 | Abertura de links externos |
 | `cupertino_icons` | ^1.0.8 | Ícones iOS-style |
+| `material_symbols_icons` | ^4.2960.0 | Ícones Material Symbols Rounded |
+| `flutter_svg` | ^2.3.0 | Logo e ilustrações em SVG |
+| `shared_preferences` | ^2.5.6 | Guarda a aparência escolhida (claro/escuro) |
+| `pdf` / `printing` | ^3.13.1 / ^5.15.1 | PDFs gerados no celular e compartilhamento |
+| `flutter_map` / `latlong2` | ^7.0.2 / ^0.9.1 | Mapa da obra (OpenStreetMap) |
+| `http` | ^1.2.2 | Geocodificação do endereço |
+| `package_info_plus` | ^10.2.2 | Versão do app em Configurações |
 
 ### Desenvolvimento
 
@@ -494,6 +538,7 @@ flutter test --coverage
 | `flutter_test` | SDK | Framework de testes |
 | `flutter_lints` | ^5.0.0 | Regras de linting |
 | `mocktail` | ^1.0.5 | Mocks para testes unitários |
+| `flutter_launcher_icons` | ^0.14.4 | Gera o ícone do app a partir de `assets/icone/` |
 
 ---
 
@@ -507,7 +552,7 @@ flutter test --coverage
 | **Reload após mutação** | Após criar/editar/excluir, o controller recarrega a lista completa |
 | **Desnormalização proposital** | Campos como `clienteNome` copiados na gravação para evitar JOINs |
 | **Soft delete** | Inativação em vez de exclusão física (`ativo: false`) |
-| **`core/` minimalista** | Apenas configuração do Supabase; pronto para crescer |
+| **Visual só pelo tema** | Nenhuma cor, fonte ou sombra fixa fora de `core/tema`; telas usam `Theme.of(context)` e `context.cores` |
 | **Dados complexos em JSONB** | Itens de orçamento e etapas de obra armazenados como JSONB no PostgreSQL |
 
 ---

@@ -1,5 +1,7 @@
 # Passo a passo — nova identidade visual do PaintManager
 
+> **Concluído em 18/10/2026.** Este documento guiou a implantação e foi mantido como registro. A pasta `kit_identidade_visual/` citada abaixo foi removida na Fase 6: o código dos modelos está em `lib/src/core/tema/` e `lib/src/apresentacao/widgets/`, e a auditoria continua disponível com `dart run tool/identidade_visual/verificar.dart --final`. Placar em `PROGRESSO.md`.
+
 Guia de execução, fase por fase, para você (Jan) e o seu agente trabalharem juntos. O **PLANO_IDENTIDADE_VISUAL.md** é a especificação (o quê e por quê); este arquivo é a ordem de execução (como e quando).
 
 **Legenda:** 👤 você · 🤖 agente · ✅ verificação · 🛑 o agente pergunta antes

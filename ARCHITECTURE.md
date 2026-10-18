@@ -13,18 +13,17 @@ lib/
 ├── main.dart                        # Ponto de entrada, MultiProvider e rotas
 └── src/
     ├── core/                        # Infraestrutura transversal
-    │   └── config/
-    │       └── supabase_config.dart  # Configuração e acesso ao cliente Supabase
+    │   ├── config/                  # Cliente Supabase
+    │   ├── tema/                    # Identidade visual (cores, fontes, medidas, temas)
+    │   ├── pdf/                     # PdfService
+    │   ├── filtros/                 # FiltroLista
+    │   ├── servicos/                # Geocodificação
+    │   └── validadores/             # ValidadorCpf
     │
     ├── apresentacao/                # UI compartilhada entre módulos
-    │   ├── controllers/
-    │   │   └── dashboard_controller.dart
-    │   ├── paginas/
-    │   │   ├── dashboard_page.dart
-    │   │   └── em_construcao_page.dart
-    │   └── widgets/
-    │       ├── drawer_comum.dart
-    │       └── menu_lateral.dart
+    │   ├── controllers/             # Dashboard e alertas
+    │   ├── paginas/                 # Resumo Geral
+    │   └── widgets/                 # Menu, GuardaRota, CardApp, StatusChip, TelaVazia...
     │
     └── modules/                     # Módulos de funcionalidade
         ├── auth/
@@ -278,6 +277,22 @@ Modelo.deMapa()  →  Entidade
 
 ---
 
+## Tema e Identidade Visual
+
+A aparência do app inteiro sai de `lib/src/core/tema/` (manual da marca aprovado em 15/10/2026):
+
+- **`CoresApp`** é uma `ThemeExtension` com os tokens de cor nos temas claro e escuro; as telas leem com `context.cores` (ex.: `context.cores.inkMuted`). Cores que o Material já entende (botões, campos, cards, diálogos, calendário) são configuradas uma vez em `tema_app.dart`.
+- **Tipografia** (`tipografia_app.dart`): EB Garamond para títulos e Manrope para texto e valores, via `textTheme`.
+- **Medidas** (`medidas_app.dart`): espaços múltiplos de 4, raios (campo 8, botão 12, card 16) e área de toque mínima de 48.
+- **Status** (`status_visual.dart`): um único mapa status → rótulo, ícone e cores, usado pelo `StatusChip` e pelos chips de filtro.
+- **Modo escuro**: `TemaController` (Provider) guarda Automático/Claro/Escuro com `shared_preferences`; o `MaterialApp` lê `themeMode` dele.
+
+**Regra:** nenhuma cor, tamanho de fonte ou sombra fixos fora de `core/tema` (os geradores de PDF têm cores próprias do documento). A auditoria `dart run tool/identidade_visual/verificar.dart --final` roda análise, testes e procura valores fixos.
+
+Componentes compartilhados em `apresentacao/widgets/`: `CardApp` (card sem sombra), `CardDestaque` (valor principal, um por tela), `StatusChip`, `IconeModulo`, `TelaVazia`, `LogoApp`/`AssinaturaApp`.
+
+---
+
 ## Dependências Externas
 
 | Pacote | Versão | Uso |
@@ -290,6 +305,12 @@ Modelo.deMapa()  →  Entidade
 | `intl` | ^0.20.2 | Localização pt_BR (datas e números) |
 | `fl_chart` | ^0.70.2 | Gráficos no módulo financeiro |
 | `url_launcher` | ^6.3.1 | Abertura de links externos |
+| `material_symbols_icons` | ^4.2960.0 | Ícones Material Symbols Rounded |
+| `flutter_svg` | ^2.3.0 | Logo e ilustrações em SVG |
+| `shared_preferences` | ^2.5.6 | Aparência escolhida (claro/escuro) |
+| `pdf` / `printing` | ^3.13.1 / ^5.15.1 | PDFs e compartilhamento |
+| `flutter_map` / `latlong2` | ^7.0.2 / ^0.9.1 | Mapa da obra |
+| `package_info_plus` | ^10.2.2 | Versão do app |
 
 ---
 
@@ -300,4 +321,4 @@ Modelo.deMapa()  →  Entidade
 - **Reload após mutação:** após criar, editar ou excluir, o controller sempre recarrega a lista completa — simples e previsível.
 - **Desnormalização proposital:** campos como `Obra.clienteNome` são copiados na gravação para evitar JOINs nas consultas de listagem.
 - **Soft delete:** inativação em vez de exclusão física (`ativo: false`, `status: 'inativo'`).
-- **`core/` minimalista:** apenas a configuração do Supabase hoje; pronto para receber utilitários, constantes e abstrações base conforme o projeto cresce.
+- **Visual só pelo tema:** nenhuma cor, fonte ou sombra fixa fora de `core/tema`; as telas usam `Theme.of(context)` e `context.cores`, o que permite o modo escuro sem tocar nas telas.
