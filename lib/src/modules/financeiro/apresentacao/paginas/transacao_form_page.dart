@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:provider/provider.dart';
 import '../../dominio/entidades/transacao.dart';
 import '../../../clientes/dominio/entidades/cliente.dart';
@@ -7,7 +8,9 @@ import '../../../obras/dominio/entidades/obra.dart';
 import '../controllers/financeiro_controller.dart';
 import '../../../clientes/apresentacao/controllers/cliente_controller.dart';
 import '../../../obras/apresentacao/controllers/obra_controller.dart';
-import '../../../../core/tema/paleta_sahara.dart';
+import '../../../../apresentacao/widgets/card_app.dart';
+import '../../../../core/tema/cores_app.dart';
+import '../../../../core/tema/medidas_app.dart';
 import '../../../../apresentacao/widgets/campo_data.dart';
 import '../../../../apresentacao/widgets/campo_busca_selecao.dart';
 
@@ -68,13 +71,18 @@ class _TransacaoFormPageState extends State<TransacaoFormPage> {
 
   List<String> get _categoriasAtuais => _tipo == 'Receita' ? _categoriasReceita : _categoriasDespesa;
 
+  void _avisarErro(String mensagem) {
+    final c = context.cores;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(mensagem, style: TextStyle(color: c.onError)), backgroundColor: c.error),
+    );
+  }
+
   void _salvar() async {
     if (_formKey.currentState!.validate()) {
       final valor = double.tryParse(_valorController.text.replaceAll(',', '.')) ?? 0;
       if (valor <= 0) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("O valor deve ser maior que zero."), backgroundColor: Colors.red, behavior: SnackBarBehavior.floating),
-        );
+        _avisarErro("O valor deve ser maior que zero.");
         return;
       }
 
@@ -101,15 +109,11 @@ class _TransacaoFormPageState extends State<TransacaoFormPage> {
         if (mounted) {
           Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Transação salva com sucesso!"), backgroundColor: Colors.green, behavior: SnackBarBehavior.floating),
+            const SnackBar(content: Text("Transação salva com sucesso!")),
           );
         }
       } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Erro ao salvar: $e"), backgroundColor: Colors.red, behavior: SnackBarBehavior.floating),
-          );
-        }
+        if (mounted) _avisarErro("Erro ao salvar: $e");
       }
     }
   }
@@ -119,39 +123,36 @@ class _TransacaoFormPageState extends State<TransacaoFormPage> {
     final carregando = context.watch<FinanceiroController>().carregando;
     final isEdicao = widget.transacaoParaEdicao != null;
     final isReceita = _tipo == 'Receita';
+    final c = context.cores;
+    final texto = Theme.of(context).textTheme;
+    final corTipo = isReceita ? c.success : c.error;
 
     return Scaffold(
-      backgroundColor: PaletaSahara.background,
-      appBar: AppBar(
-        title: Text(isEdicao ? "Editar Transação" : "Nova $_tipo", style: const TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: PaletaSahara.cardSurface,
-        foregroundColor: PaletaSahara.onSurface,
-        elevation: 0.5,
-      ),
+      appBar: AppBar(title: Text(isEdicao ? "Editar Transação" : "Nova $_tipo")),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(Espaco.margemTela),
         child: Form(
           key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // === TIPO (Receita / Despesa) ===
-              _sectionTitle("Tipo de Transação", Icons.swap_vert),
-              const SizedBox(height: 12),
+              _sectionTitle("Tipo de Transação", Symbols.swap_vert_rounded),
+              const SizedBox(height: Espaco.x3),
               _card(
                 child: Row(
                   children: [
-                    Expanded(child: _tipoButton("Receita", Icons.arrow_upward, Colors.green, isReceita)),
-                    const SizedBox(width: 12),
-                    Expanded(child: _tipoButton("Despesa", Icons.arrow_downward, Colors.red, !isReceita)),
+                    Expanded(child: _tipoButton("Receita", Symbols.arrow_upward_rounded, c.success, c.successSoft, isReceita)),
+                    const SizedBox(width: Espaco.x3),
+                    Expanded(child: _tipoButton("Despesa", Symbols.arrow_downward_rounded, c.error, c.errorSoft, !isReceita)),
                   ],
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: Espaco.x6),
 
               // === VALOR E DATA ===
-              _sectionTitle("Valor e Data", Icons.attach_money),
-              const SizedBox(height: 12),
+              _sectionTitle("Valor e Data", Symbols.payments_rounded),
+              const SizedBox(height: Espaco.x3),
               _card(
                 child: Column(
                   children: [
@@ -159,29 +160,29 @@ class _TransacaoFormPageState extends State<TransacaoFormPage> {
                       controller: _valorController,
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
                       inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[\d.,]'))],
-                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                      style: texto.displayMedium,
                       decoration: InputDecoration(
                         labelText: "Valor (R\$)",
                         prefixText: "R\$ ",
-                        prefixStyle: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: isReceita ? Colors.green : Colors.red),
-                        prefixIcon: Icon(Icons.attach_money, color: isReceita ? Colors.green : Colors.red),
-                        filled: true, fillColor: Colors.grey[50],
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
-                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
-                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: isReceita ? Colors.green : Colors.red, width: 1.5)),
+                        prefixStyle: texto.displayMedium?.copyWith(color: corTipo),
+                        prefixIcon: Icon(Symbols.payments_rounded, color: corTipo),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(Raio.campo),
+                          borderSide: BorderSide(color: corTipo, width: 1.5),
+                        ),
                       ),
                       validator: (v) => v == null || v.isEmpty ? "Informe o valor" : null,
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: Espaco.x4),
                     _datePicker(),
                   ],
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: Espaco.x6),
 
               // === DETALHES ===
-              _sectionTitle("Detalhes", Icons.description_outlined),
-              const SizedBox(height: 12),
+              _sectionTitle("Detalhes", Symbols.description_rounded),
+              const SizedBox(height: Espaco.x3),
               _card(
                 child: Column(
                   children: [
@@ -190,60 +191,54 @@ class _TransacaoFormPageState extends State<TransacaoFormPage> {
                       maxLines: 2,
                       decoration: _inputDeco(
                         "Descrição",
-                        Icons.edit_note,
+                        Symbols.edit_note_rounded,
                         isReceita ? "Ex: Sinal de 50% da pintura externa" : "Ex: Compra de 2 latas de massa corrida",
                       ),
                       validator: (v) => v == null || v.isEmpty ? "Campo obrigatório" : null,
                     ),
-                    const SizedBox(height: 16),
-                    _buildDropdown("Categoria", _categoria, _categoriasAtuais, Icons.category_outlined, (v) {
+                    const SizedBox(height: Espaco.x4),
+                    _buildDropdown("Categoria", _categoria, _categoriasAtuais, Symbols.category_rounded, (v) {
                       setState(() => _categoria = v!);
                     }),
-                    const SizedBox(height: 16),
-                    _buildDropdown("Status", _status, ['Efetivado', 'Pendente', 'Atrasado'], Icons.flag_outlined, (v) {
+                    const SizedBox(height: Espaco.x4),
+                    _buildDropdown("Status", _status, ['Efetivado', 'Pendente', 'Atrasado'], Symbols.flag_rounded, (v) {
                       setState(() => _status = v!);
                     }),
-                    const SizedBox(height: 16),
-                    _buildDropdown("Pagamento", _formaPagamento, ['PIX', 'Cartão de Crédito', 'Dinheiro', 'Boleto', 'Transferência'], Icons.payment, (v) {
+                    const SizedBox(height: Espaco.x4),
+                    _buildDropdown("Pagamento", _formaPagamento, ['PIX', 'Cartão de Crédito', 'Dinheiro', 'Boleto', 'Transferência'], Symbols.credit_card_rounded, (v) {
                       setState(() => _formaPagamento = v!);
                     }),
                   ],
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: Espaco.x6),
 
               // === VINCULAÇÃO (opcional) ===
-              _sectionTitle("Vincular (opcional)", Icons.link),
-              const SizedBox(height: 12),
+              _sectionTitle("Vincular (opcional)", Symbols.link_rounded),
+              const SizedBox(height: Espaco.x3),
               _card(
                 child: Column(
                   children: [
                     _obraDropdown(),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: Espaco.x4),
                     _clienteDropdown(),
                   ],
                 ),
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: Espaco.x8),
 
               // === BOTÃO SALVAR ===
               SizedBox(
                 width: double.infinity,
-                height: 52,
-                child: ElevatedButton.icon(
+                child: FilledButton.icon(
                   onPressed: carregando ? null : _salvar,
                   icon: carregando
-                      ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : const Icon(Icons.save_outlined, size: 20),
-                  label: Text(carregando ? "Salvando..." : "Salvar Transação", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: PaletaSahara.primary,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  ),
+                      ? SizedBox(height: 18, width: 18, child: CircularProgressIndicator(color: c.inkMuted, strokeWidth: 2))
+                      : const Icon(Symbols.save_rounded, size: TamanhoIcone.pequeno),
+                  label: Text(carregando ? "Salvando..." : "Salvar Transação"),
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: Espaco.x6),
             ],
           ),
         ),
@@ -254,39 +249,38 @@ class _TransacaoFormPageState extends State<TransacaoFormPage> {
   // --- WIDGETS AUXILIARES ---
 
   Widget _sectionTitle(String t, IconData ic) => Row(children: [
-    Icon(ic, size: 20, color: Colors.grey[700]), const SizedBox(width: 8),
-    Text(t, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+    Icon(ic, size: TamanhoIcone.pequeno, color: context.cores.primary), const SizedBox(width: Espaco.x2),
+    Flexible(child: Text(t, style: Theme.of(context).textTheme.titleMedium)),
   ]);
 
-  Widget _card({required Widget child}) => Container(
-    width: double.infinity, padding: const EdgeInsets.all(16),
-    decoration: BoxDecoration(color: PaletaSahara.cardSurface, borderRadius: BorderRadius.circular(12),
-      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)]),
-    child: child,
+  Widget _card({required Widget child}) => SizedBox(
+    width: double.infinity,
+    child: CardApp(child: child),
   );
 
-  Widget _tipoButton(String label, IconData icon, Color cor, bool selecionado) {
+  Widget _tipoButton(String label, IconData icon, Color cor, Color fundo, bool selecionado) {
+    final c = context.cores;
     return InkWell(
       onTap: () => setState(() {
         _tipo = label;
         // Ajustar categoria padrão ao trocar tipo
         _categoria = label == 'Receita' ? 'Mão de Obra' : 'Materiais';
       }),
-      borderRadius: BorderRadius.circular(10),
+      borderRadius: BorderRadius.circular(Raio.botao),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        padding: const EdgeInsets.symmetric(vertical: Espaco.x4),
         decoration: BoxDecoration(
-          color: selecionado ? cor.withValues(alpha: 0.12) : Colors.grey[50],
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: selecionado ? cor : Colors.grey[300]!, width: selecionado ? 2 : 1),
+          color: selecionado ? fundo : c.surfaceSunken,
+          borderRadius: BorderRadius.circular(Raio.botao),
+          border: Border.all(color: selecionado ? cor : c.border, width: selecionado ? 2 : 1),
         ),
         child: Column(
           children: [
-            Icon(icon, color: selecionado ? cor : Colors.grey[400], size: 28),
+            Icon(icon, color: selecionado ? cor : c.inkMuted, size: 28),
             const SizedBox(height: 6),
-            Text(label, style: TextStyle(
-              fontWeight: FontWeight.bold, fontSize: 14,
-              color: selecionado ? cor : Colors.grey[400],
+            Text(label, style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: selecionado ? cor : c.inkMuted,
             )),
           ],
         ),
@@ -301,44 +295,44 @@ class _TransacaoFormPageState extends State<TransacaoFormPage> {
     aoMudar: (d) => setState(() => _dataTransacao = d),
   );
 
+  // Campos: fundo, borda, foco e erro vêm do tema (InputDecorationTheme).
   Widget _buildDropdown(String label, String currentValue, List<String> options, IconData icon, Function(String?) onChanged) {
     return DropdownButtonFormField<String>(
       initialValue: options.contains(currentValue) ? currentValue : options.first,
       decoration: InputDecoration(
         labelText: label,
-        prefixIcon: Icon(icon, size: 20, color: Colors.grey[600]),
-        filled: true, fillColor: Colors.grey[50],
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
+        prefixIcon: Icon(icon, size: TamanhoIcone.pequeno),
       ),
-      items: options.map((o) => DropdownMenuItem(value: o, child: Text(o, style: const TextStyle(fontSize: 14)))).toList(),
+      items: options.map((o) => DropdownMenuItem(value: o, child: Text(o))).toList(),
       onChanged: onChanged,
     );
   }
 
   Widget _clienteDropdown() {
+    final c = context.cores;
+    final texto = Theme.of(context).textTheme;
+
     // Com obra vinculada, o cliente é o da obra (não pode divergir dela).
     if (_obraId != null) {
       return Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        padding: const EdgeInsets.all(Espaco.x3),
         decoration: BoxDecoration(
-          color: Colors.grey[100],
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.grey[300]!),
+          color: c.disabledBg,
+          borderRadius: BorderRadius.circular(Raio.campo),
         ),
         child: Row(
           children: [
-            Icon(Icons.person_outline, size: 20, color: Colors.grey[600]),
+            Icon(Symbols.person_rounded, size: TamanhoIcone.pequeno, color: c.inkMuted),
             const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text("Cliente (da obra)", style: TextStyle(fontSize: 11, color: Colors.grey[600])),
+                  Text("Cliente (da obra)", style: texto.bodySmall?.copyWith(color: c.inkMuted, letterSpacing: 0)),
                   Text(
                     (_clienteNome?.isNotEmpty ?? false) ? _clienteNome! : '—',
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                    style: texto.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
                   ),
                 ],
               ),
@@ -352,7 +346,7 @@ class _TransacaoFormPageState extends State<TransacaoFormPage> {
     return CampoBuscaSelecao<Cliente>(
       rotulo: "Vincular ao Cliente (opcional)",
       dica: "Nome, CPF ou telefone do cliente...",
-      icone: Icons.person_search_outlined,
+      icone: Symbols.person_search_rounded,
       textoInicial: _clienteNome,
       buscar: context.read<ClienteController>().buscar,
       tituloDe: (c) => c.nome,
@@ -375,8 +369,8 @@ class _TransacaoFormPageState extends State<TransacaoFormPage> {
         CampoBuscaSelecao<Obra>(
           rotulo: "Vincular à Obra (opcional)",
           dica: "Título da obra ou nome do cliente...",
-          icone: Icons.construction,
-          iconeItem: Icons.construction,
+          icone: Symbols.construction_rounded,
+          iconeItem: Symbols.construction_rounded,
           textoInicial: _obraTitulo,
           buscar: context.read<ObraController>().buscarObrasParaLancamento,
           tituloDe: (o) => o.tituloDaObra,
@@ -393,10 +387,10 @@ class _TransacaoFormPageState extends State<TransacaoFormPage> {
           }),
         ),
         Padding(
-          padding: const EdgeInsets.only(left: 4, top: 6),
+          padding: const EdgeInsets.only(left: Espaco.x1, top: 6),
           child: Text(
             "Só aparecem obras Em Andamento ou Concluídas.",
-            style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: context.cores.inkMuted, letterSpacing: 0),
           ),
         ),
       ],
@@ -404,11 +398,8 @@ class _TransacaoFormPageState extends State<TransacaoFormPage> {
   }
 
   InputDecoration _inputDeco(String label, IconData icon, String hint) => InputDecoration(
-    labelText: label, hintText: hint, hintStyle: TextStyle(color: Colors.grey[400]),
-    prefixIcon: Icon(icon, size: 20, color: Colors.grey[600]),
-    filled: true, fillColor: Colors.grey[50],
-    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
-    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
-    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: PaletaSahara.primary, width: 1.5)),
+    labelText: label,
+    hintText: hint,
+    prefixIcon: Icon(icon, size: TamanhoIcone.pequeno),
   );
 }
