@@ -9,6 +9,7 @@ import '../../../../apresentacao/widgets/drawer_comum.dart';
 import '../../../../apresentacao/widgets/icone_modulo.dart';
 import '../../../../core/tema/cores_app.dart';
 import '../../../../core/tema/medidas_app.dart';
+import '../../../../core/tema/tema_controller.dart';
 import '../../../../core/validadores/validador_cpf.dart';
 
 /// Configurações: dados da conta do usuário logado, troca de senha e
@@ -83,6 +84,9 @@ class ConfiguracoesPage extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: Espaco.x6),
+                const _TituloSecao('Aparência'),
+                const CardApp(child: _SeletorAparencia()),
+                const SizedBox(height: Espaco.x6),
                 const _TituloSecao('Segurança'),
                 CardApp(
                   padding: EdgeInsets.zero,
@@ -116,6 +120,43 @@ class ConfiguracoesPage extends StatelessWidget {
                 ),
               ],
             ),
+    );
+  }
+}
+
+/// Automático (segue o celular), Claro ou Escuro. A escolha fica salva no
+/// aparelho pelo TemaController e vale assim que é tocada.
+class _SeletorAparencia extends StatelessWidget {
+  const _SeletorAparencia();
+
+  @override
+  Widget build(BuildContext context) {
+    final tema = context.watch<TemaController>();
+    final c = context.cores;
+    final legenda = Theme.of(context).textTheme.bodySmall?.copyWith(color: c.inkMuted, letterSpacing: 0);
+
+    // Lista de opções (e não 3 botões lado a lado): não estoura com a
+    // fonte grande do celular.
+    Widget opcao(ThemeMode modo, IconData icone, String titulo, String descricao) => RadioListTile<ThemeMode>(
+          value: modo,
+          contentPadding: EdgeInsets.zero,
+          secondary: Icon(icone, color: tema.modo == modo ? c.primary : c.inkMuted),
+          title: Text(titulo),
+          subtitle: Text(descricao, style: legenda),
+        );
+
+    return RadioGroup<ThemeMode>(
+      groupValue: tema.modo,
+      onChanged: (modo) {
+        if (modo != null) tema.definir(modo);
+      },
+      child: Column(
+        children: [
+          opcao(ThemeMode.system, Symbols.brightness_auto_rounded, 'Automático', 'Acompanha o tema do celular'),
+          opcao(ThemeMode.light, Symbols.light_mode_rounded, 'Claro', 'Sempre claro'),
+          opcao(ThemeMode.dark, Symbols.dark_mode_rounded, 'Escuro', 'Sempre escuro'),
+        ],
+      ),
     );
   }
 }

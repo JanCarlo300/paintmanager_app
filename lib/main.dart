@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'src/core/config/supabase_config.dart';
 import 'src/core/tema/tema_app.dart';
+import 'src/core/tema/tema_controller.dart';
 import 'src/apresentacao/widgets/guarda_rota.dart';
 
 // Imports de Auth
@@ -77,9 +79,13 @@ void main() async {
 
   await initializeDateFormatting('pt_BR', null);
 
+  // Aparência escolhida em Configurações (Automático, Claro ou Escuro).
+  final prefs = await SharedPreferences.getInstance();
+
   runApp(
     MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => TemaController(prefs)),
         // Dashboard
         ChangeNotifierProvider(
           create: (_) => DashboardController(),
@@ -136,11 +142,11 @@ class PaintManagerApp extends StatelessWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      // Tema do manual da marca (core/tema). O escuro só é liberado na Fase 5,
-      // quando nenhuma tela tiver mais cor fixa.
+      // Tema do manual da marca (core/tema). Segue o celular por padrão; a
+      // escolha fica em Configurações > Aparência.
       theme: temaClaro(),
       darkTheme: temaEscuro(),
-      themeMode: ThemeMode.light,
+      themeMode: context.watch<TemaController>().modo,
       home: const AuthCheck(),
       routes: {
         '/login': (context) => const LoginPage(),
