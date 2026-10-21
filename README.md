@@ -44,7 +44,7 @@ O PaintManager resolve os principais desafios da gestão de serviços de pintura
 
 | Camada | Tecnologia | Versão |
 |---|---|---|
-| **Framework** | Flutter | SDK ^3.9.2 |
+| **Framework** | Flutter | SDK Dart ^3.11.0 |
 | **Linguagem** | Dart | — |
 | **Backend** | Supabase (PostgreSQL + Auth) | `supabase_flutter` ^2.12.2 |
 | **Gerenciamento de Estado** | Provider / ChangeNotifier | `provider` ^6.1.5 |
@@ -76,7 +76,7 @@ flutter pub get
 
 # 3. Configure as variáveis de ambiente (veja seção abaixo)
 cp .env.example .env
-# Edite o arquivo .env com suas credenciais do Supabase
+# Copie .env.example para .env e preencha SUPABASE_URL e SUPABASE_ANON_KEY
 
 # 4. Execute as migrações SQL no Supabase Dashboard
 # (veja a pasta db/)
@@ -89,14 +89,16 @@ flutter run
 
 ## 🔐 Variáveis de Ambiente
 
-Crie um arquivo `.env` na raiz do projeto com as seguintes variáveis:
+Copie `.env.example` para `.env` e preencha com os dados do seu projeto Supabase (*Project Settings > API*):
 
 ```env
 SUPABASE_URL=https://seu-projeto.supabase.co
-SUPABASE_ANON_KEY=sua-chave-anonima-aqui
+SUPABASE_ANON_KEY=sua-chave-anon-publica
 ```
 
-> **Nota:** O arquivo `.env` é carregado pela biblioteca `flutter_dotenv` e acessado via a classe `SupabaseConfig` em `lib/src/core/config/supabase_config.dart`.
+> ⚠️ O `.env` é **empacotado dentro do APK** (asset do Flutter). Coloque nele **somente** essas duas chaves públicas — a segurança dos dados vem do RLS. Chaves de administrador (`service_role`, access token, senha do banco) **nunca** entram no `.env`: guarde-as em `.env.servidor`, que fica fora do app e do git. A Edge Function `criar-usuario` recebe a chave de serviço do próprio Supabase.
+
+O `.env` é lido pelo `flutter_dotenv` na classe `SupabaseConfig` (`lib/src/core/config/supabase_config.dart`).
 
 ---
 
@@ -274,183 +276,113 @@ dart run tool/identidade_visual/verificar.dart --final
 
 ### 🔐 Auth (Autenticação e Usuários)
 
-**Entidade:** `Usuario`
+**Entidade:** `Usuario` — `id`, `authId` (UUID do Supabase Auth), `nome`, `email`, `cpf` (login), `telefone`, `funcao`, `status` (ativo/inativo), `primeiroAcesso`, `criadoEm`.
 
-| Campo | Tipo | Descrição |
-|---|---|---|
-| `id` | `int?` | ID do registro na tabela |
-| `authId` | `String?` | UUID do Supabase Auth |
-| `nome` | `String` | Nome completo |
-| `email` | `String` | E-mail |
-| `cpf` | `String` | CPF (usado como login) |
-| `telefone` | `String` | Telefone de contato |
-| `funcao` | `String` | Administrador / Funcionário |
-| `status` | `bool` | Ativo/Inativo |
-| `primeiroAcesso` | `bool` | Obriga troca de senha no primeiro login |
-| `criadoEm` | `DateTime` | Data de criação |
+**Funções e permissões** (valem nas telas, pelo `GuardaRota`, e no banco, por RLS — `db/seguranca_2_permissoes_por_funcao.sql`):
+
+| | Administrador | Gerente | Funcionário |
+|---|---|---|---|
+| Clientes, Orçamentos | tudo (cliente: só ele exclui) | tudo, menos excluir cliente | — |
+| Financeiro | tudo | tudo, menos excluir | — |
+| Obras | tudo | tudo, menos excluir | só as obras em que está alocado: vê, marca o checklist e usa o chat |
+| Usuários | tudo | — | — |
+| Resumo Geral e Relatórios | ✓ | ✓ | — |
 
 **Funcionalidades:**
-- Login por CPF + senha (busca email pelo CPF, depois autentica via Supabase Auth)
-- Recuperação de senha
-- Troca obrigatória de senha no primeiro acesso
-- Gestão de usuários (listagem, criação, edição)
-- Logout
-
-**Fluxo de autenticação:**
-```
-App inicia → AuthCheck
-    ├─ Sessão Supabase existe? → DashboardPage
-    └─ Não existe            → LoginPage
-
-onAuthStateChange:
-    signedIn  → navega para /home
-    signedOut → navega para /login
-```
+- Login por CPF + senha: a função `buscar_email_por_login` (SECURITY DEFINER) devolve só o e-mail; ninguém lê a tabela `usuario` sem sessão.
+- Recuperação de senha por código enviado ao e-mail (3 passos) e troca obrigatória no primeiro acesso, com regra de senha (`ValidadorSenha`).
+- Cadastro de usuário pela **Edge Function** `supabase/functions/criar-usuario` (cria a conta no Auth sem trocar a sessão do administrador; usa a chave de serviço do próprio Supabase, nunca a do app).
+- Usuário inativado perde o acesso no banco mesmo com a sessão aberta.
+- Configurações: dados da conta, alterar senha (confere a senha atual), aparência (claro/escuro/automático) e versão do app.
 
 ---
 
 ### 👥 Clientes
 
-**Entidade:** `Cliente`
+**Entidade:** `Cliente` — `id`, `nome`, `email`, `telefone`, `endereco`, `cpfOuCnpj`, `ativo`, `criadoEm`, `atualizadoEm`.
 
-| Campo | Tipo | Descrição |
-|---|---|---|
-| `id` | `int?` | ID do registro |
-| `nome` | `String` | Nome completo |
-| `email` | `String` | E-mail |
-| `telefone` | `String` | Telefone |
-| `endereco` | `String` | Endereço |
-| `cpfOuCnpj` | `String` | CPF ou CNPJ |
-| `ativo` | `bool` | Ativo/Inativo (soft delete) |
-| `criadoEm` | `DateTime` | Data de criação |
-| `atualizadoEm` | `DateTime?` | Última atualização |
-
-**Funcionalidades:** Listagem, criação, edição, inativação (soft delete)
+**Funcionalidades:** listagem com filtros (com obra ativa, ativos, inativos) e busca; cadastro e edição; inativação (soft delete). CPF opcional, validado pelo Módulo 11 no app (`ValidadorCpf`) e no banco (trigger, `db/rf_item_3_1_validacao_cpf.sql`). Busca no banco sem diferenciar acentos (`buscar_clientes`).
 
 ---
 
 ### 📝 Orçamentos
 
-**Entidade:** `Orcamento`
+**Entidade:** `Orcamento` — `id`, `idObra` (obrigatório), `clienteNome`, `descricao`, `dataCriacao`, `dataValidade`, `status`, `itensServico` (JSONB: descrição, metragem, valor/m², subtotal), `materiaisInclusos`, `valorMateriais`, `valorMaoDeObra`, `desconto`, `valorTotal` (calculado), `formaPagamento`.
 
-| Campo | Tipo | Descrição |
-|---|---|---|
-| `id` | `int?` | ID do registro |
-| `idObra` | `int?` | Referência à obra (se vinculado) |
-| `clienteNome` | `String` | Nome do cliente (desnormalizado) |
-| `descricao` | `String` | Descrição do serviço |
-| `dataCriacao` | `DateTime` | Data de criação |
-| `dataValidade` | `DateTime` | Data de validade |
-| `status` | `String` | Pendente / Aprovado / Rejeitado / Concluído |
-| `itensServico` | `List<ItemServico>` | Itens detalhados (JSONB) |
-| `materiaisInclusos` | `bool` | Se materiais estão inclusos |
-| `valorMateriais` | `double` | Valor dos materiais |
-| `valorMaoDeObra` | `double` | Valor da mão de obra |
-| `desconto` | `double` | Desconto aplicado |
-| `valorTotal` | `double` | **Calculado automaticamente** |
-| `formaPagamento` | `String` | PIX / Cartão / Dinheiro / Boleto |
+**Regras:**
+- Status do DERS: **Pendente, Aprovado, Recusado** (trava `CHECK` no banco). Orçamento Recusado que é editado volta para Pendente.
+- A obra só sai de "Não Iniciada" se tiver um orçamento **Aprovado** (app + trigger, `db/rf_item_1_2_obra_inicia_com_orcamento_aprovado.sql`).
 
-**Sub-entidade:** `ItemServico` — descrição, metragem (m²), valor unitário (R$/m²), subtotal calculado.
-
-**Funcionalidades:** CRUD completo, cálculo automático de totais, verificação de vencimento
+**Funcionalidades:** lista com chips de status, busca e filtros (período de criação, vencidos, vencendo em 7 dias); envio ao cliente por **WhatsApp** ou **e-mail** com a mensagem pronta.
 
 ---
 
 ### 🏗 Obras
 
-**Entidade:** `Obra`
+**Entidade:** `Obra` — `id`, `idOrcamento`, `idCliente`, `clienteNome`, `tituloDaObra`, `endereco`, `dataInicio`, `dataPrevisaoTermino`, `dataConclusao`, `status` (Não Iniciada / Em Andamento / Pausada / Concluída), `progresso` (calculado pelas etapas), `etapasServico` (JSONB), `listaMateriais` (JSONB: descrição, quantidade, unidade), `latitude`/`longitude`, `criadoEm`.
 
-| Campo | Tipo | Descrição |
-|---|---|---|
-| `id` | `int?` | ID do registro |
-| `idOrcamento` | `int?` | Orçamento vinculado |
-| `idCliente` | `int` | Cliente responsável |
-| `clienteNome` | `String` | Nome do cliente (desnormalizado) |
-| `tituloDaObra` | `String` | Título descritivo |
-| `endereco` | `String` | Local da obra |
-| `dataInicio` | `DateTime` | Início previsto |
-| `dataPrevisaoTermino` | `DateTime` | Término previsto |
-| `dataConclusao` | `DateTime?` | Data de conclusão efetiva |
-| `status` | `String` | Não Iniciada / Em Andamento / Pausada / Concluída |
-| `progresso` | `double` | 0–100% (**calculado automaticamente**) |
-| `etapasServico` | `List<EtapaServico>` | Etapas do serviço (JSONB) |
-| `anotacoes` | `String` | Observações gerais |
-| `materiaisFaltantes` | `List<String>` | Lista de materiais pendentes |
-
-**Sub-entidade:** `EtapaServico` — nome da etapa + flag de conclusão.
-
-**Funcionalidades:** CRUD completo, progresso automático baseado em etapas, detalhamento completo
+**Funcionalidades:**
+- **Equipe** (`equipe_obra`): Administrador e Gerente alocam funcionários; o Funcionário só vê as obras em que está alocado (RLS).
+- **Checklist de etapas** com progresso automático. Obra **Concluída é definitiva**: status, etapas e progresso travam (app + trigger, `db/etapa_5_obra_concluida_travada.sql`).
+- **Chat da obra** em tempo real (Supabase Realtime, tabela `obra_mensagem`): autor e cargo preenchidos pelo banco, mensagens não editáveis. Sino com obras que têm mensagens novas (`chat_leitura`, `chat_nao_lidas()`).
+- **Mapa:** o endereço vira coordenada (OpenStreetMap/Nominatim, gratuito); mapa nos detalhes e botão "Como chegar".
+- **Lista de materiais** editável na obra e **PDF** para compartilhar (WhatsApp, e-mail, salvar).
+- Lista com chips de status, busca e filtros (período, atrasadas, terminando em 7 dias).
 
 ---
 
 ### 💰 Financeiro
 
-**Entidade:** `Transacao`
+**Entidade:** `Transacao` — `id`, `tipo` (Receita/Despesa), `categoria`, `valor` (sempre positivo), `descricao`, `dataTransacao`, `status` (Efetivado/Pendente/Atrasado), `formaPagamento`, `idCliente`, `idOrcamento`, `idObra` (opcional), `clienteNome`, `obraTitulo`, `comprovanteUrl`.
 
-| Campo | Tipo | Descrição |
-|---|---|---|
-| `id` | `int?` | ID do registro |
-| `tipo` | `String` | Receita / Despesa |
-| `categoria` | `String` | Mão de Obra / Materiais / Ferramentas / Transporte / Alimentação / Outros |
-| `valor` | `double` | Valor (sempre positivo no banco) |
-| `descricao` | `String` | Descrição da transação |
-| `dataTransacao` | `DateTime` | Data da transação |
-| `status` | `String` | Efetivado / Pendente / Atrasado |
-| `formaPagamento` | `String` | PIX / Cartão de Crédito / Dinheiro / Boleto |
-| `idCliente` | `int?` | Cliente associado |
-| `idOrcamento` | `int?` | Orçamento associado |
-| `clienteNome` | `String?` | Nome do cliente (desnormalizado) |
-| `obraTitulo` | `String?` | Título da obra (desnormalizado) |
-| `comprovanteUrl` | `String?` | URL do comprovante |
+**Regras:** o vínculo com a obra é real (`id_obra`) e só aceita obras **Em Andamento** ou **Concluída** (app + trigger, `db/rf011_transacao_obra.sql`); com obra vinculada, o cliente é o da obra. Só o Administrador exclui lançamentos.
 
-**Funcionalidades:** Registro de receitas e despesas, edição, exclusão, categorização, gráficos (FL Chart)
+**Funcionalidades:** painel por mês (saldo, pendente, receitas, despesas), lista de lançamentos, cadastro e edição.
 
 ---
 
 ### 📊 Relatórios
 
-**Entidade:** `RelatorioGeral`
+**Entidade:** `RelatorioGeral` — receitas, despesas, lucro líquido, obras concluídas e em andamento, orçamentos gerados e aprovados, taxa de conversão, despesas por categoria e evolução mensal.
 
-| KPI | Descrição |
-|---|---|
-| `totalReceitas` | Soma de todas as receitas no período |
-| `totalDespesas` | Soma de todas as despesas no período |
-| `lucroLiquido` | Receitas − Despesas (calculado) |
-| `quantidadeObrasConcluidas` | Obras com status "Concluída" |
-| `quantidadeObrasEmAndamento` | Obras com status "Em Andamento" |
-| `totalOrcamentosGerados` | Quantidade total de orçamentos |
-| `totalOrcamentosAprovados` | Orçamentos com status "Aprovado" |
-| `taxaConversaoOrcamentos` | Aprovados / Gerados × 100 (calculado) |
-| `despesasPorCategoria` | Breakdown por categoria |
-| `receitasPorMes` / `despesasPorMes` | Evolução mensal |
+**Funcionalidades:** filtros de período (7/30/90 dias, mês, ano, personalizado), gráfico de barras receita × despesa, pizza por categoria (cor fixa por categoria), métricas de operação e **exportação em PDF** — Financeiro e de Progresso — por período e, opcionalmente, por obra. Conta só orçamentos aprovados e obras em andamento ou concluídas (regra do DERS).
+
+---
+
+### 🔔 Alertas (Resumo Geral)
+
+Sino com alertas calculados dos dados já existentes, sem push: orçamentos pendentes vencidos ou vencendo em 3 dias e obras com prazo estourado.
 
 ---
 
 ## 🗄 Banco de Dados
 
-O backend utiliza **Supabase (PostgreSQL)** com **Row Level Security (RLS)** habilitado.
+O backend utiliza **Supabase (PostgreSQL)** com **Row Level Security (RLS)** em todas as tabelas e regras de negócio também em triggers.
 
-### Tabelas Principais
+### Tabelas
 
 | Tabela | Descrição |
 |---|---|
-| `usuario` | Usuários do sistema (vinculados ao `auth.users` via `auth_id`) |
-| `cliente` | Clientes cadastrados |
-| `orcamento` | Orçamentos com itens em JSONB |
-| `obra` | Obras com etapas em JSONB |
-| `transacao` | Transações financeiras (receitas e despesas) |
+| `usuario` | Usuários do sistema (ligados ao `auth.users` por `auth_id`) |
+| `cliente` | Clientes |
+| `orcamento` | Orçamentos, itens em JSONB |
+| `obra` | Obras: etapas e lista de materiais em JSONB, coordenadas |
+| `equipe_obra` | Funcionários alocados em cada obra |
+| `obra_mensagem` | Chat de cada obra |
+| `chat_leitura` | Até onde cada usuário leu o chat de cada obra |
+| `transacao` | Receitas e despesas, com vínculo opcional à obra |
 
-### Scripts de Migração
+### Scripts (`db/`)
 
-Os scripts SQL estão na pasta `db/` e devem ser executados no **SQL Editor do Supabase** na seguinte ordem:
+Execute no **SQL Editor do Supabase**. Todos podem rodar duas vezes sem estragar nada. Ordem em que foram aplicados neste projeto:
 
-1. `supabase_migration.sql` — Tabela `usuario` + RLS + admin inicial
-2. `supabase_migrate_cliente.sql` — Tabela `cliente`
-3. `supabase_migrate_orcamento.sql` — Tabela `orcamento`
-4. `supabase_migrate_obra.sql` — Tabela `obra`
-5. `supabase_migrate_financeiro.sql` — Tabela `transacao`
-6. `rls_policy_usuario.sql` — Políticas RLS adicionais
-7. `supabase_seed_admin.sql` — Seed do administrador
+1. **Estrutura:** `supabase_migration.sql`, `supabase_migrate_cliente.sql`, `supabase_migrate_orcamento.sql`, `supabase_migrate_obra.sql`, `supabase_migrate_financeiro.sql`, `supabase_migrate_equipe_obra.sql`
+2. **Administrador inicial:** `supabase_seed_admin.sql` (troque os marcadores `<CPF_DO_ADMIN>`, `<EMAIL_DO_ADMIN>` etc. antes de rodar)
+3. **Login:** `rf002_fase_a_buscar_email_login.sql`
+4. **Funcionalidades:** `rf_item_2_1_rls_obra_por_alocacao.sql`, `rf_item_3_2_coordenadas_obra.sql`, `rf_item_2_3_chat_obra.sql`, `fix_cliente_tamanho_colunas.sql`, `rf_item_3_1_validacao_cpf.sql`, `fix_colunas_curtas_obra_usuario.sql`, `orcamento_status_3_opcoes.sql`, `rf_item_1_2_obra_inicia_com_orcamento_aprovado.sql`, `etapa_2_busca_com_filtro.sql`, `etapa_5_obra_concluida_travada.sql`, `etapa_6_lista_materiais.sql`, `etapa_7_chat_leitura.sql`, `rf011_transacao_obra.sql`
+5. **Segurança (por último):** `seguranca_1_login_sem_leitura_anonima.sql`, `seguranca_2_permissoes_por_funcao.sql`
+
+> ⚠️ **Não rode** `rls_policy_usuario.sql`: é antigo e reabre a leitura anônima da tabela de usuários (substituído pelos scripts de segurança). `diagnostico_*.sql` e `limpeza_*.sql` só serviram para limpar as tabelas do modelo do TFC I num banco antigo.
 
 ---
 
@@ -458,19 +390,19 @@ Os scripts SQL estão na pasta `db/` e devem ser executados no **SQL Editor do S
 
 ### Rotas Estáticas
 
-| Rota | Tela |
-|---|---|
-| `/login` | `LoginPage` |
-| `/home` | `DashboardPage` |
-| `/recuperar-senha` | `RecuperarSenhaPage` |
-| `/redefinir-senha-obrigatoria` | `RedefinirSenhaObrigatoriaPage` |
-| `/clientes` | `ClienteListPage` |
-| `/usuarios` | `UsuarioListPage` |
-| `/orcamentos` | `OrcamentoListPage` |
-| `/obras` | `ObraListPage` |
-| `/financeiro` | `FinanceiroPage` |
-| `/relatorios` | `RelatoriosPage` |
-| `/configuracoes` | `EmConstrucaoPage` |
+| Rota | Tela | Quem acessa |
+|---|---|---|
+| `/login` | `LoginPage` | todos |
+| `/recuperar-senha` | `RecuperarSenhaPage` | todos |
+| `/redefinir-senha-obrigatoria` | `RedefinirSenhaObrigatoriaPage` | primeiro acesso |
+| `/home` | `DashboardPage` (Resumo Geral) | Administrador, Gerente |
+| `/clientes` | `ClienteListPage` | Administrador, Gerente |
+| `/usuarios` | `UsuarioListPage` | Administrador |
+| `/orcamentos` | `OrcamentoListPage` | Administrador, Gerente |
+| `/obras` | `ObraListPage` | todos (Funcionário: só as alocadas) |
+| `/financeiro` | `FinanceiroPage` | Administrador, Gerente |
+| `/relatorios` | `RelatoriosPage` | Administrador, Gerente |
+| `/configuracoes` | `ConfiguracoesPage` | todos |
 
 ### Rotas Dinâmicas (`onGenerateRoute`)
 

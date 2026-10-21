@@ -116,8 +116,8 @@ O menu lateral e os atalhos trocavam de tela substituindo a anterior, então o v
 - Os testes manuais de cada etapa foram feitos por você no Samsung A55 e estão registrados nas tabelas acima.
 
 ### 4.4 Documentação e repositório
-- `README.md` e `ARCHITECTURE.md`: atualizados em 18/10 com a identidade visual (pastas, tema, componentes, dependências, testes). Ainda falta descrever por módulo `equipe_obra`, `GuardaRota`, chat, mapa, PDFs e a Edge Function.
-- Falta um `.env.example` (o README o menciona).
+- ✅ `README.md` e `ARCHITECTURE.md` atualizados em 18/10: identidade visual, cada módulo como está hoje (equipe, chat, mapa, PDFs, Edge Function, permissões por função), banco com as 8 tabelas e a ordem dos scripts (com aviso para **não** rodar o antigo `rls_policy_usuario.sql`), rotas e fluxo de login.
+- ✅ `.env.example` criado. **Corrigida falha de segurança (18/10):** o `.env` ia inteiro dentro do APK com chaves de administrador (`service_role`, access token, senha do banco). Elas foram para `.env.servidor` (fora do app e do git); o APK agora leva só `SUPABASE_URL` e `SUPABASE_ANON_KEY` (conferido no APK gerado). O APK antigo nunca saiu do celular do Jan, então não foi preciso trocar a chave.
 - **Figura 19 (DER) do relatório do TFC:** precisa ser refeita com as tabelas reais (`usuario`, `cliente`, `obra`, `orcamento`, `transacao`, `equipe_obra`, `obra_mensagem`, `chat_leitura`).
 - ✅ Tela de **Configurações** (16/10, testada pelo Jan): dados da conta do usuário logado, **Alterar senha** (confere a senha atual; mesma regra de senha do primeiro acesso) e versão do app. Substituiu o placeholder "Em construção".
 - Redação da monografia: não tenho como ver isso pelo código; você precisa confirmar o andamento.
@@ -152,7 +152,7 @@ Troca da paleta "Sahara" pelo manual da marca aprovado em 15/10, seguindo `kit_i
 
 1. **Ampliar os testes:** `ValidadorSenha`, repositórios com `mocktail`, controllers de Obra e de alertas.
 2. **APK de release** assinado (chave fora do git).
-3. **Documentação:** detalhar no README os módulos novos (equipe, chat, mapa, PDFs, Edge Function) e criar o `.env.example`.
+3. ~~Documentação: README por módulo e `.env.example`~~ ✅ feito em 18/10.
 4. **Melhorias opcionais:** aceitar e validar CNPJ no cliente; paginação das listas.
 
 ---

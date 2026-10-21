@@ -239,16 +239,17 @@ App inicia
     ▼
 AuthCheck.initState()
     │
-    ├─ Supabase.currentSession existe? ──► DashboardPage
-    │
-    └─ Não existe ──────────────────────► LoginPage
+    ├─ Sem sessão ─────────────────────────► LoginPage
+    ├─ Primeiro acesso pendente ───────────► RedefinirSenhaObrigatoriaPage
+    ├─ Funcionário ────────────────────────► ObraListPage (só as obras alocadas)
+    └─ Administrador / Gerente ────────────► DashboardPage (Resumo Geral)
 
 Enquanto o app está aberto, escuta onAuthStateChange:
-    signedIn  ──► navega para /home
+    signedIn  ──► tela inicial da função
     signedOut ──► navega para /login
 ```
 
-O login funciona em duas etapas no Supabase: primeiro busca o e-mail pelo CPF na tabela `usuario` (acesso anônimo), depois chama `auth.signInWithPassword()` com as credenciais reais.
+O login funciona em duas etapas: a função `buscar_email_por_login` (SECURITY DEFINER) devolve só o e-mail ligado ao CPF — sem sessão ninguém lê a tabela `usuario` — e depois `auth.signInWithPassword()` autentica com as credenciais reais. Cada tela também passa pelo `GuardaRota`, e o banco aplica as mesmas permissões por RLS (`db/seguranca_2_permissoes_por_funcao.sql`).
 
 ---
 
