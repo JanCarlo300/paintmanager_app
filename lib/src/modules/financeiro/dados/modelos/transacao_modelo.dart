@@ -12,11 +12,9 @@ class TransacaoModelo extends Transacao {
     super.status,
     super.formaPagamento,
     super.idCliente,
-    super.idOrcamento,
     super.idObra,
     super.clienteNome,
     super.obraTitulo,
-    super.comprovanteUrl,
   });
 
   /// Cria um TransacaoModelo a partir do Map retornado pelo Supabase (snake_case)
@@ -31,11 +29,9 @@ class TransacaoModelo extends Transacao {
       status: mapa['status'] ?? 'Efetivado',
       formaPagamento: mapa['forma_pagamento'] ?? 'PIX',
       idCliente: mapa['id_cliente'],
-      idOrcamento: mapa['id_orcamento'],
       idObra: (mapa['id_obra'] as num?)?.toInt(),
       clienteNome: mapa['cliente_nome'],
       obraTitulo: mapa['obra_titulo'],
-      comprovanteUrl: mapa['comprovante_url'],
     );
   }
 
@@ -52,11 +48,9 @@ class TransacaoModelo extends Transacao {
       'status': status,
       'forma_pagamento': formaPagamento,
       'id_cliente': idCliente,
-      'id_orcamento': idOrcamento,
       'id_obra': idObra,
       'cliente_nome': clienteNome ?? '',
       'obra_titulo': obraTitulo ?? '',
-      'comprovante_url': comprovanteUrl ?? '',
     };
   }
 }

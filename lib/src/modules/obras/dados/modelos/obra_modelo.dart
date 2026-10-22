@@ -6,7 +6,6 @@ import '../../dominio/entidades/item_material.dart';
 class ObraModelo extends Obra {
   ObraModelo({
     super.id,
-    super.idOrcamento,
     required super.idCliente,
     required super.clienteNome,
     required super.tituloDaObra,
@@ -51,7 +50,6 @@ class ObraModelo extends Obra {
 
     return ObraModelo(
       id: mapa['id_obra'],
-      idOrcamento: mapa['id_orcamento'],
       idCliente: mapa['id_cliente'] ?? 0,
       clienteNome: mapa['cliente_nome'] ?? '',
       tituloDaObra: mapa['titulo_da_obra'] ?? '',
@@ -84,7 +82,6 @@ class ObraModelo extends Obra {
   Map<String, dynamic> paraMapa() {
     return {
       'id_cliente': idCliente,
-      'id_orcamento': idOrcamento,
       'titulo_da_obra': tituloDaObra,
       'cliente_nome': clienteNome,
       'endereco': endereco,

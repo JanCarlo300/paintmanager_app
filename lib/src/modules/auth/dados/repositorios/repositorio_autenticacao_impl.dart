@@ -203,14 +203,12 @@ class RepositorioAutenticacaoImpl implements RepositorioAutenticacao {
       final userId = session.user.id;
 
       // Busca dados completos do usuário na tabela 'usuario'
-      print("Session found! User ID: $userId");
       final resultado = await _supabase
           .from('usuario')
           .select()
           .eq('auth_id', userId)
           .maybeSingle();
 
-      print("Resultado tabela usuario: $resultado");
       if (resultado == null) return null;
 
       return UsuarioModelo.deMapa(resultado);

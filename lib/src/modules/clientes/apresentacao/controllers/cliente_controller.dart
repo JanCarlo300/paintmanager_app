@@ -57,10 +57,4 @@ class ClienteController extends ChangeNotifier {
     await _repositorio.atualizarStatus(id, true);
     await carregarClientes();
   }
-
-  /// Exclui permanentemente um cliente
-  Future<void> excluir(int id) async {
-    await _repositorio.excluirCliente(id);
-    await carregarClientes();
-  }
 }

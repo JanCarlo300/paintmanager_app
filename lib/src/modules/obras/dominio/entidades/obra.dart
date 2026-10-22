@@ -4,7 +4,6 @@ import 'item_material.dart';
 /// Entidade de domínio — Obra.
 class Obra {
   final int? id;
-  final int? idOrcamento;
   final int idCliente;
   final String clienteNome;     // cache desnormalizado para exibição rápida
   final String tituloDaObra;
@@ -30,7 +29,6 @@ class Obra {
 
   Obra({
     this.id,
-    this.idOrcamento,
     required this.idCliente,
     required this.clienteNome,
     required this.tituloDaObra,

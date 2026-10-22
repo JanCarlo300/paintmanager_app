@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/config/supabase_config.dart';
 import '../../dominio/entidades/cliente.dart';
@@ -21,19 +22,14 @@ class RepositorioClienteImpl implements RepositorioCliente {
       for (var mapa in (resultado as List)) {
         try {
           clientes.add(ClienteModelo.deMapa(mapa));
-        } catch (e, stackTrace) {
-          // Captura a falha silenciosa: imprime exatamente qual registro falhou na conversão
-          print('=====================================');
-          print('ERRO FATAL DE PARSING NO CLIENTE:');
-          print('Payload: $mapa');
-          print('Exceção: $e');
-          print('Stack: $stackTrace');
-          print('=====================================');
+        } catch (e) {
+          // Um registro que não converte não derruba a lista inteira. Só no
+          // modo de desenvolvimento, e sem os dados do cliente (LGPD).
+          debugPrint('Cliente ${mapa['id_cliente']} ignorado: erro de conversão ($e)');
         }
       }
       return clientes;
-    } catch (e, stackTrace) {
-      print('Erro de rede ou query listarClientes: $e\\n$stackTrace');
+    } catch (e) {
       throw 'Erro ao listar clientes: $e';
     }
   }
@@ -89,15 +85,6 @@ class RepositorioClienteImpl implements RepositorioCliente {
       }
     } catch (e) {
       throw 'Erro ao salvar cliente: $e';
-    }
-  }
-
-  @override
-  Future<void> excluirCliente(int id) async {
-    try {
-      await _supabase.from('cliente').delete().eq('id_cliente', id);
-    } catch (e) {
-      throw 'Erro ao excluir cliente: $e';
     }
   }
 

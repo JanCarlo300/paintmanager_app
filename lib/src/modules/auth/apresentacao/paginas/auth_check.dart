@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'login_page.dart';
 import 'redefinir_senha_obrigatoria_page.dart';
-import '../../../../apresentacao/paginas/dashboard_page.dart';
+import '../../../resumo/apresentacao/paginas/resumo_geral_page.dart';
 import '../../../obras/apresentacao/paginas/obra_list_page.dart';
 import '../controllers/auth_controller.dart';
 
@@ -127,7 +127,7 @@ class _AuthCheckState extends State<AuthCheck> {
 
     if (_isAuthenticated) {
       if (_primeiroAcessoPendente) return const RedefinirSenhaObrigatoriaPage();
-      return _funcao == 'Funcionário' ? const ObraListPage() : const DashboardPage();
+      return _funcao == 'Funcionário' ? const ObraListPage() : const ResumoGeralPage();
     }
 
     return const LoginPage();

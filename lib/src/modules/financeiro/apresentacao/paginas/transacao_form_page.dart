@@ -99,7 +99,6 @@ class _TransacaoFormPageState extends State<TransacaoFormPage> {
         formaPagamento: _formaPagamento,
         idCliente: _clienteId,
         clienteNome: _clienteNome,
-        idOrcamento: widget.transacaoParaEdicao?.idOrcamento,
         idObra: _obraId,
         obraTitulo: _obraTitulo,
       );

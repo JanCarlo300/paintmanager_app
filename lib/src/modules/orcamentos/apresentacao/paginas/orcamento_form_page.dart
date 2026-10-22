@@ -677,7 +677,7 @@ _Orçamento gerado pelo PaintManager_
 
   Widget _buildDropdownPagamento() {
     return DropdownButtonFormField<String>(
-      value: _formaPagamento,
+      initialValue: _formaPagamento,
       decoration: const InputDecoration(
         labelText: "Forma de Pagamento",
         prefixIcon: Icon(Symbols.credit_card_rounded, size: TamanhoIcone.pequeno),

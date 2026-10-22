@@ -37,7 +37,6 @@ class RepositorioObraImpl implements RepositorioObra {
     try {
       final modelo = ObraModelo(
         id: obra.id,
-        idOrcamento: obra.idOrcamento,
         idCliente: obra.idCliente,
         clienteNome: obra.clienteNome,
         tituloDaObra: obra.tituloDaObra,

@@ -449,7 +449,6 @@ class _ObraFormPageState extends State<ObraFormPage> {
 
       final obra = Obra(
         id: widget.obraParaEdicao?.id,
-        idOrcamento: widget.obraParaEdicao?.idOrcamento,
         dataConclusao: widget.obraParaEdicao?.dataConclusao,
         idCliente: _clienteSelecionadoId ?? widget.obraParaEdicao?.idCliente ?? 0,
         clienteNome: _clienteNomeSelecionado,

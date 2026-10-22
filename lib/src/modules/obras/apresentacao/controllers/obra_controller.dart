@@ -84,7 +84,6 @@ class ObraController extends ChangeNotifier {
 
     final obraAtualizada = Obra(
       id: obra.id,
-      idOrcamento: obra.idOrcamento,
       idCliente: obra.idCliente,
       clienteNome: obra.clienteNome,
       tituloDaObra: obra.tituloDaObra,
@@ -132,7 +131,6 @@ class ObraController extends ChangeNotifier {
 
     final obraAtualizada = Obra(
       id: obra.id,
-      idOrcamento: obra.idOrcamento,
       idCliente: obra.idCliente,
       clienteNome: obra.clienteNome,
       tituloDaObra: obra.tituloDaObra,

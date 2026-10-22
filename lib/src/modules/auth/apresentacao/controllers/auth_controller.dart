@@ -50,23 +50,18 @@ class AuthController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      print("Tentando realizar login com CPF: $cpf");
       final usuario = await _repositorio.entrarComCpfESenha(cpf, senha);
-      print("Resultado do login: $usuario");
 
       if (usuario != null && context.mounted) {
         // Todo usuário no primeiro acesso é obrigado a trocar a senha,
         // inclusive administrador (RF002 - sem isenção por função).
         if (usuario.primeiroAcesso) {
-          print("Redirecionando para redefinir senha");
           Navigator.of(context).pushReplacementNamed('/redefinir-senha-obrigatoria');
         } else {
-          print("Redirecionando para ${rotaInicialParaFuncao(usuario.funcao)}");
           Navigator.of(context).pushReplacementNamed(rotaInicialParaFuncao(usuario.funcao));
         }
       }
     } catch (e) {
-      print("Erro no login recebido pelo controller: $e");
       if (context.mounted) {
         final mensagemErro = e.toString().replaceFirst('Exception: ', '').replaceFirst('Exception', '');
         _mostrarMensagem(context, mensagemErro, isErro: true);

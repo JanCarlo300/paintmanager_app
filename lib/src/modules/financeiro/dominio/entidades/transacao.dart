@@ -9,11 +9,9 @@ class Transacao {
   final String status;          // Efetivado | Pendente | Atrasado
   final String formaPagamento;  // PIX | Cartão de Crédito | Dinheiro | Boleto
   final int? idCliente;
-  final int? idOrcamento;
   final int? idObra;            // RF011 — vínculo opcional com a obra
   final String? clienteNome;    // cache desnormalizado
   final String? obraTitulo;     // cache desnormalizado
-  final String? comprovanteUrl;
 
   Transacao({
     this.id,
@@ -25,11 +23,9 @@ class Transacao {
     this.status = 'Efetivado',
     this.formaPagamento = 'PIX',
     this.idCliente,
-    this.idOrcamento,
     this.idObra,
     this.clienteNome,
     this.obraTitulo,
-    this.comprovanteUrl,
   });
 
   /// Verifica se é uma receita
