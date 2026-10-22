@@ -31,7 +31,8 @@ lib/
         ├── obras/
         ├── orcamentos/
         ├── financeiro/
-        └── relatorios/
+        ├── relatorios/
+        └── resumo/                  # Resumo Geral e sino de alertas
 ```
 
 ---
@@ -207,7 +208,7 @@ As rotas são declaradas em `main.dart` em dois grupos:
 | Rota | Destino |
 |---|---|
 | `/login` | `LoginPage` |
-| `/home` | `DashboardPage` |
+| `/home` | `ResumoGeralPage` |
 | `/recuperar-senha` | `RecuperarSenhaPage` |
 | `/redefinir-senha-obrigatoria` | `RedefinirSenhaObrigatoriaPage` |
 | `/clientes` | `ClienteListPage` |
@@ -242,7 +243,7 @@ AuthCheck.initState()
     ├─ Sem sessão ─────────────────────────► LoginPage
     ├─ Primeiro acesso pendente ───────────► RedefinirSenhaObrigatoriaPage
     ├─ Funcionário ────────────────────────► ObraListPage (só as obras alocadas)
-    └─ Administrador / Gerente ────────────► DashboardPage (Resumo Geral)
+    └─ Administrador / Gerente ────────────► ResumoGeralPage (Resumo Geral)
 
 Enquanto o app está aberto, escuta onAuthStateChange:
     signedIn  ──► tela inicial da função

@@ -25,3 +25,4 @@ Gerado por `dart run kit_identidade_visual/ferramentas/verificar.dart`.
 | 21/10/2026 11:51 | Ponto exato, Todo o período | 0/0 | 114/0 | 0 | 0 | aprovado |
 | 21/10/2026 12:06 | Excluir obra | 0/0 | 114/0 | 0 | 0 | aprovado |
 | 21/10/2026 21:45 | Relatório, exclusão, endereço com CEP | 0/0 | 115/0 | 0 | 0 | aprovado |
+| 22/10/2026 00:09 | Limpeza e módulo resumo | 0/0 | 115/0 | 0 | 0 | aprovado |

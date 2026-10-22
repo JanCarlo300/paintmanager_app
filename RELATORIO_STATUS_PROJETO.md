@@ -1,6 +1,6 @@
 # PaintManager — Relatório de Status do Projeto
 
-**TFC II — UniRV** · Autor: Jan Carlo · **Data de referência: 21/10/2026** (criado em 12/10, atualizado a cada etapa)
+**TFC II — UniRV** · Autor: Jan Carlo · **Data de referência: 22/10/2026** (criado em 12/10, atualizado a cada etapa)
 Base: código atual da branch `main`, scripts em `db/`, testes em `test/` e o relatório anterior de 01/10/2026.
 
 ---
@@ -142,6 +142,12 @@ Troca da paleta "Sahara" pelo manual da marca aprovado em 15/10, seguindo `kit_i
 - **Endereço da obra no padrão dos sites de compra:** CEP que preenche rua, bairro, cidade e UF (ViaCEP), número e complemento (quadra/lote) separados; scripts `db/obra_bairro_cidade_uf.sql` e `db/obra_cep_numero_complemento.sql`.
 - **Ponto exato da obra:** "Confirmar no mapa" (pino fixo, arrasta o mapa até o lote), GPS do celular e "Colar link" do Google Maps/WhatsApp; com ponto exato o "Como chegar" vai direto ao pino (`db/obra_localizacao_exata.sql`). Sem ponto, o Google recebe rua, número, bairro, cidade e CEP.
 - Diagnóstico do relatório (só leitura): `db/diagnostico_relatorio_progresso.sql`.
+
+### 4.7 Limpeza e organização (22/10, testadas pelo Jan)
+- **Código:** análise do Flutter zerada (eram 19 avisos); removidos os `print` que gravavam CPF e dados de usuário/cliente no log; removido código sem uso (`excluirCliente`, campos de colunas apagadas).
+- **Banco:** removidas 5 colunas sem uso — `obra.anotacoes` (texto já migrado para o chat; cópia em `backup_colunas_removidas`), `obra.id_orcamento`, `obra.data_fim`, `transacao.comprovante_url`, `transacao.id_orcamento` (`db/limpeza_colunas_sem_uso.sql`).
+- **Arquivos:** removido `db/rls_policy_usuario.sql` (reabria a leitura anônima); scripts do TFC I em `db/historico/`; relatório de QA antigo em `docs/historico/`.
+- **Arquitetura:** novo módulo `resumo` (entidades, repositório, `ResumoController`) no lugar dos controllers que consultavam o banco direto da tela; o Resumo Geral agora carrega ao abrir (antes, só na abertura do app, podendo ficar zerado) e tem "puxar para atualizar".
 
 ---
 

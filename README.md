@@ -178,13 +178,10 @@ paintmanager_app/
 │       │   ├── tema/                      # Identidade visual: cores, fontes, medidas, temas
 │       │   ├── pdf/                       # PdfService (PDFs gerados no celular)
 │       │   ├── filtros/                   # FiltroLista (ordenação, período, prazo)
-│       │   ├── servicos/                  # Geocodificação (OpenStreetMap)
+│       │   ├── servicos/                  # CEP (ViaCEP), geocodificação (OpenStreetMap), GPS/link
 │       │   └── validadores/               # ValidadorCpf
 │       │
 │       ├── apresentacao/                  # UI compartilhada entre módulos
-│       │   ├── controllers/               # Dashboard e alertas (sino)
-│       │   ├── paginas/
-│       │   │   └── dashboard_page.dart    # Resumo Geral
 │       │   └── widgets/                   # Menu lateral, GuardaRota, CardApp, StatusChip,
 │       │                                  # TelaVazia, LogoApp, busca, data, filtros...
 │       │
@@ -194,30 +191,22 @@ paintmanager_app/
 │           ├── obras/                     # Gestão de Obras
 │           ├── orcamentos/                # Gestão de Orçamentos
 │           ├── financeiro/                # Gestão Financeira
-│           └── relatorios/                # Relatórios e KPIs
+│           ├── relatorios/                # Relatórios e KPIs
+│           └── resumo/                    # Resumo Geral (tela inicial) e sino de alertas
 │
-├── db/                                    # Scripts SQL de migração
-│   ├── supabase_migration.sql             # Migração principal (usuario + admin)
-│   ├── supabase_migrate_cliente.sql       # Migração do módulo cliente
-│   ├── supabase_migrate_orcamento.sql     # Migração do módulo orçamento
-│   ├── supabase_migrate_obra.sql          # Migração do módulo obra
-│   ├── supabase_migrate_financeiro.sql    # Migração do módulo financeiro
-│   ├── supabase_seed_admin.sql            # Seed do usuário administrador
-│   └── rls_policy_usuario.sql             # Políticas RLS para a tabela usuario
+├── db/                                    # Scripts SQL (ordem de execução na seção Banco de Dados)
+│   ├── supabase_migrat*.sql               # Estrutura das tabelas
+│   ├── supabase_seed_admin.sql            # Administrador inicial (com marcadores)
+│   ├── rf*/etapa_*/obra_*/fix_*.sql       # Funcionalidades e ajustes, com conferência no fim
+│   ├── seguranca_*.sql                    # Login sem leitura anônima e permissões por função (RLS)
+│   ├── diagnostico_relatorio_progresso.sql# Consulta só de leitura
+│   └── historico/                         # Diagnóstico e limpeza das tabelas do TFC I (já aplicados)
 │
-├── test/                                  # Testes automatizados
-│   ├── docs/
-│   │   └── qa_audit_report.md             # Relatório de auditoria de qualidade
-│   └── modules/
-│       ├── auth/
-│       │   └── dados/modelos/
-│       │       └── usuario_modelo_test.dart
-│       └── clientes/
-│           └── dados/modelos/
-│               └── cliente_modelo_test.dart
+├── test/                                  # Testes automatizados (espelha a estrutura de lib/)
 │
 ├── assets/                                # Ícone do app, logo, ilustrações e fontes do PDF
 ├── docs/identidade_visual/                # Plano, passo a passo e progresso da identidade visual
+├── docs/historico/                        # Relatório de auditoria de QA antigo
 ├── tool/identidade_visual/                # Auditoria de valores fixos (verificar.dart)
 ├── pubspec.yaml                           # Dependências e configuração do projeto
 ├── analysis_options.yaml                  # Regras de linting
@@ -382,7 +371,7 @@ Execute no **SQL Editor do Supabase**. Todos podem rodar duas vezes sem estragar
 4. **Funcionalidades:** `rf_item_2_1_rls_obra_por_alocacao.sql`, `rf_item_3_2_coordenadas_obra.sql`, `rf_item_2_3_chat_obra.sql`, `fix_cliente_tamanho_colunas.sql`, `rf_item_3_1_validacao_cpf.sql`, `fix_colunas_curtas_obra_usuario.sql`, `orcamento_status_3_opcoes.sql`, `rf_item_1_2_obra_inicia_com_orcamento_aprovado.sql`, `etapa_2_busca_com_filtro.sql`, `etapa_5_obra_concluida_travada.sql`, `etapa_6_lista_materiais.sql`, `etapa_7_chat_leitura.sql`, `rf011_transacao_obra.sql`
 5. **Segurança (por último):** `seguranca_1_login_sem_leitura_anonima.sql`, `seguranca_2_permissoes_por_funcao.sql`
 
-> ⚠️ **Não rode** `rls_policy_usuario.sql`: é antigo e reabre a leitura anônima da tabela de usuários (substituído pelos scripts de segurança). `diagnostico_*.sql` e `limpeza_*.sql` só serviram para limpar as tabelas do modelo do TFC I num banco antigo.
+> O antigo `rls_policy_usuario.sql` foi removido do projeto em 22/10/2026: ele reabria a leitura anônima da tabela de usuários (substituído pelos scripts de segurança). Os scripts de `db/historico/` só serviram para limpar as tabelas do modelo do TFC I num banco antigo.
 
 ---
 
@@ -395,7 +384,7 @@ Execute no **SQL Editor do Supabase**. Todos podem rodar duas vezes sem estragar
 | `/login` | `LoginPage` | todos |
 | `/recuperar-senha` | `RecuperarSenhaPage` | todos |
 | `/redefinir-senha-obrigatoria` | `RedefinirSenhaObrigatoriaPage` | primeiro acesso |
-| `/home` | `DashboardPage` (Resumo Geral) | Administrador, Gerente |
+| `/home` | `ResumoGeralPage` (Resumo Geral) | Administrador, Gerente |
 | `/clientes` | `ClienteListPage` | Administrador, Gerente |
 | `/usuarios` | `UsuarioListPage` | Administrador |
 | `/orcamentos` | `OrcamentoListPage` | Administrador, Gerente |
