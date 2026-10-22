@@ -60,6 +60,8 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
     // Só o responsável técnico (Gerente/Administrador) confirma mudanças de
     // status e mexe na equipe alocada — Funcionário só acompanha.
     final podeGerenciarObra = !ehFuncionario;
+    // DERS: só o Administrador exclui obras (o banco também barra os outros).
+    final podeExcluirObra = usuarioLogado?.funcao == 'Administrador';
     final c = context.cores;
 
     // Item 2.1: só decide "acesso restrito" com as alocações DELE carregadas.
@@ -126,6 +128,12 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
               icon: const Icon(Symbols.edit_rounded),
               tooltip: "Editar obra",
               onPressed: () => Navigator.pushNamed(context, '/obra-formulario', arguments: obraAtual),
+            ),
+          if (podeExcluirObra && obraAtual.id != null)
+            IconButton(
+              icon: Icon(Symbols.delete_rounded, color: c.error),
+              tooltip: "Excluir obra",
+              onPressed: () => _confirmarExclusao(obraAtual, controller),
             ),
           if (podeGerenciarObra && obraAtual.status == 'Concluída')
             Padding(
@@ -236,7 +244,32 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text("Endereço", style: _legenda()),
-                    Text(obraAtual.endereco, style: texto.bodyMedium),
+                    Text(obraAtual.enderecoCompleto, style: texto.bodyMedium),
+                    if (obraAtual.temPontoExato)
+                      Padding(
+                        padding: const EdgeInsets.only(top: Espaco.x1),
+                        child: Row(
+                          children: [
+                            Icon(Symbols.where_to_vote_rounded, size: 14, color: c.success),
+                            const SizedBox(width: Espaco.x1),
+                            Flexible(
+                              child: Text(
+                                "Ponto exato salvo: o \"Como chegar\" vai direto ao local.",
+                                style: _legenda()?.copyWith(color: c.success),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    // Obras antigas não têm cidade/UF: sem isso o "Como chegar" erra.
+                    if (!obraAtual.temCidade)
+                      Padding(
+                        padding: const EdgeInsets.only(top: Espaco.x1),
+                        child: Text(
+                          "Falta cidade e UF: edite a obra para o \"Como chegar\" encontrar o local.",
+                          style: _legenda()?.copyWith(color: c.warning),
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -618,6 +651,82 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
     }
   }
 
+  // Excluir obra: mostra o que vai junto antes de confirmar.
+  Future<void> _confirmarExclusao(Obra obra, ObraController controller) async {
+    final ({int orcamentos, int lancamentos, int mensagens}) vinculos;
+    try {
+      vinculos = await controller.contarVinculos(obra.id!);
+    } catch (e) {
+      if (mounted) _avisarErro('$e');
+      return;
+    }
+    if (!mounted) return;
+    final c = context.cores;
+    final texto = Theme.of(context).textTheme;
+
+    final itens = <String>[
+      if (vinculos.orcamentos > 0) '${vinculos.orcamentos} orçamento(s) desta obra serão EXCLUÍDOS junto.',
+      if (vinculos.mensagens > 0) '${vinculos.mensagens} mensagem(ns) do chat serão excluídas.',
+      'A equipe alocada é desfeita.',
+      if (vinculos.lancamentos > 0)
+        '${vinculos.lancamentos} lançamento(s) financeiro(s) continuam no Financeiro, sem a obra.',
+    ];
+
+    final confirmou = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Excluir obra?"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('"${obra.tituloDaObra}" será apagada de vez. Não dá para desfazer.'),
+            const SizedBox(height: Espaco.x3),
+            for (final item in itens)
+              Padding(
+                padding: const EdgeInsets.only(bottom: Espaco.x1),
+                child: Text(
+                  '• $item',
+                  style: texto.bodyMedium?.copyWith(
+                    color: item.contains('EXCLUÍDOS') ? c.error : c.inkMuted,
+                    fontWeight: item.contains('EXCLUÍDOS') ? FontWeight.w700 : null,
+                  ),
+                ),
+              ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text("Cancelar")),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: FilledButton.styleFrom(backgroundColor: c.error, foregroundColor: c.onError),
+            child: const Text("Excluir obra"),
+          ),
+        ],
+      ),
+    );
+    if (confirmou != true || !mounted) return;
+
+    try {
+      await controller.excluir(obra.id!);
+      if (!mounted) return;
+      final mensageiro = ScaffoldMessenger.of(context);
+      Navigator.of(context).pop();
+      mensageiro.showSnackBar(
+        SnackBar(content: Text('Obra "${obra.tituloDaObra}" excluída.')),
+      );
+    } catch (e) {
+      if (mounted) _avisarErro('$e');
+    }
+  }
+
+  void _avisarErro(String mensagem) {
+    final c = context.cores;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(mensagem, style: TextStyle(color: c.onError)), backgroundColor: c.error),
+    );
+  }
+
   // Concluir é definitivo (status e checklist travam), então sempre confirma.
   Future<bool?> _confirmarConclusao(BuildContext context, int pendentes) {
     return showDialog<bool>(
@@ -640,16 +749,38 @@ class _ObraDetalhesPageState extends State<ObraDetalhesPage> {
   }
 
   void _abrirMapa(Obra obra) async {
-    // Item 3.2 — prefere a coordenada geocodificada (mais precisa); se a obra
-    // não tiver coordenada (geocodificação falhou ou obra antiga), cai para
-    // a busca por texto do endereço.
-    final uri = obra.temCoordenadas
-        ? Uri.parse("https://www.google.com/maps/dir/?api=1&destination=${obra.latitude},${obra.longitude}")
-        : Uri.parse("https://www.google.com/maps/dir/?api=1&destination=${Uri.encodeComponent(obra.endereco)}");
+    // Com cidade/UF, o Google Maps acha o endereço em texto (entende quadra e
+    // lote) melhor do que a coordenada aproximada do mapa gratuito. Obra
+    // antiga sem cidade: usa a coordenada, se houver; senão, o texto que tiver.
+    final String destino;
+    if (obra.temPontoExato) {
+      // GPS no local ou link de localização: vai direto ao pino, como uma
+      // localização recebida pelo WhatsApp.
+      destino = '${obra.latitude},${obra.longitude}';
+    } else if (obra.temCidade) {
+      // Rua, número, bairro, cidade, UF e CEP (sem quadra/lote, que o Google não conhece).
+      destino = Uri.encodeComponent(obra.enderecoParaRota);
+    } else if (obra.temCoordenadas) {
+      destino = '${obra.latitude},${obra.longitude}';
+    } else {
+      destino = Uri.encodeComponent(obra.enderecoCompleto);
+    }
+    final uri = Uri.parse("https://www.google.com/maps/dir/?api=1&destination=$destino");
+
+    var abriu = false;
     try {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
+      abriu = await launchUrl(uri, mode: LaunchMode.externalApplication);
     } catch (_) {
-      // Falha silenciosa se não conseguir abrir
+      abriu = false;
+    }
+    if (!abriu && mounted) {
+      final c = context.cores;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Não foi possível abrir o Google Maps.", style: TextStyle(color: c.onError)),
+          backgroundColor: c.error,
+        ),
+      );
     }
   }
 }

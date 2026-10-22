@@ -42,6 +42,12 @@ class RepositorioObraImpl implements RepositorioObra {
         clienteNome: obra.clienteNome,
         tituloDaObra: obra.tituloDaObra,
         endereco: obra.endereco,
+        numero: obra.numero,
+        complemento: obra.complemento,
+        cep: obra.cep,
+        bairro: obra.bairro,
+        cidade: obra.cidade,
+        uf: obra.uf,
         dataInicio: obra.dataInicio,
         dataPrevisaoTermino: obra.dataPrevisaoTermino,
         dataConclusao: obra.dataConclusao,
@@ -51,6 +57,7 @@ class RepositorioObraImpl implements RepositorioObra {
         listaMateriais: obra.listaMateriais,
         latitude: obra.latitude,
         longitude: obra.longitude,
+        localizacaoExata: obra.localizacaoExata,
       );
 
       if (obra.id == null) {
@@ -70,10 +77,32 @@ class RepositorioObraImpl implements RepositorioObra {
 
   @override
   Future<void> excluirObra(int id) async {
+    final List apagadas;
     try {
-      await _supabase.from('obra').delete().eq('id_obra', id);
+      // .select() devolve o que foi apagado: sem permissão (RLS), o banco não
+      // dá erro, só não apaga nada — e aí avisamos.
+      apagadas = await _supabase.from('obra').delete().eq('id_obra', id).select('id_obra');
     } catch (e) {
       throw 'Erro ao excluir obra: $e';
+    }
+    if (apagadas.isEmpty) {
+      throw 'A obra não foi excluída. Só o Administrador pode excluir obras.';
+    }
+  }
+
+  @override
+  Future<({int orcamentos, int lancamentos, int mensagens})> contarVinculos(int obraId) async {
+    try {
+      final orcamentos = await _supabase.from('orcamento').select('id_orcamento').eq('id_obra', obraId);
+      final lancamentos = await _supabase.from('transacao').select('id_transacao').eq('id_obra', obraId);
+      final mensagens = await _supabase.from('obra_mensagem').select('id_mensagem').eq('obra_id', obraId);
+      return (
+        orcamentos: (orcamentos as List).length,
+        lancamentos: (lancamentos as List).length,
+        mensagens: (mensagens as List).length,
+      );
+    } catch (e) {
+      throw 'Erro ao verificar a obra: $e';
     }
   }
 

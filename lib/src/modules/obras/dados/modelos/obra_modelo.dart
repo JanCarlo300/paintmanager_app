@@ -11,6 +11,12 @@ class ObraModelo extends Obra {
     required super.clienteNome,
     required super.tituloDaObra,
     required super.endereco,
+    super.numero,
+    super.complemento,
+    super.cep,
+    super.bairro,
+    super.cidade,
+    super.uf,
     required super.dataInicio,
     required super.dataPrevisaoTermino,
     super.dataConclusao,
@@ -20,6 +26,7 @@ class ObraModelo extends Obra {
     super.listaMateriais,
     super.latitude,
     super.longitude,
+    super.localizacaoExata,
     super.criadoEm,
   });
 
@@ -49,6 +56,12 @@ class ObraModelo extends Obra {
       clienteNome: mapa['cliente_nome'] ?? '',
       tituloDaObra: mapa['titulo_da_obra'] ?? '',
       endereco: mapa['endereco'] ?? '',
+      numero: mapa['numero'] ?? '',
+      complemento: mapa['complemento'] ?? '',
+      cep: mapa['cep'] ?? '',
+      bairro: mapa['bairro'] ?? '',
+      cidade: mapa['cidade'] ?? '',
+      uf: (mapa['uf'] ?? '').toString().trim(),
       dataInicio: DateTime.tryParse(mapa['data_inicio'] ?? '') ?? DateTime.now(),
       dataPrevisaoTermino: DateTime.tryParse(mapa['data_previsao_termino'] ?? '') ?? DateTime.now(),
       dataConclusao: mapa['data_conclusao'] != null
@@ -60,6 +73,7 @@ class ObraModelo extends Obra {
       listaMateriais: materiais,
       latitude: (mapa['latitude'] as num?)?.toDouble(),
       longitude: (mapa['longitude'] as num?)?.toDouble(),
+      localizacaoExata: mapa['localizacao_exata'] == true,
       criadoEm: DateTime.tryParse(mapa['created_at']?.toString() ?? '')?.toLocal(),
     );
   }
@@ -74,6 +88,12 @@ class ObraModelo extends Obra {
       'titulo_da_obra': tituloDaObra,
       'cliente_nome': clienteNome,
       'endereco': endereco,
+      'numero': numero.trim().isEmpty ? null : numero.trim(),
+      'complemento': complemento.trim().isEmpty ? null : complemento.trim(),
+      'cep': cep.replaceAll(RegExp(r'[^0-9]'), '').length == 8 ? cep.replaceAll(RegExp(r'[^0-9]'), '') : null,
+      'bairro': bairro.trim().isEmpty ? null : bairro.trim(),
+      'cidade': cidade.trim().isEmpty ? null : cidade.trim(),
+      'uf': uf.trim().isEmpty ? null : uf.trim().toUpperCase(),
       'data_inicio': dataInicio.toIso8601String().split('T').first,           // DATE
       'data_previsao_termino': dataPrevisaoTermino.toIso8601String().split('T').first,
       'data_conclusao': dataConclusao?.toIso8601String().split('T').first,
@@ -82,6 +102,7 @@ class ObraModelo extends Obra {
       'etapas_servico': etapasServico.map((e) => e.paraMapa()).toList(),       // JSONB
       'lista_materiais': listaMateriais.map((m) => m.paraMapa()).toList(),    // JSONB
       'latitude': latitude,
+      'localizacao_exata': localizacaoExata && latitude != null && longitude != null,
       'longitude': longitude,
     };
   }

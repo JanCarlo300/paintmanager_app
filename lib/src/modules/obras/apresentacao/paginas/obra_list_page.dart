@@ -408,7 +408,7 @@ class _ObraListPageState extends State<ObraListPage> {
 
             linha(Symbols.person_rounded, obra.clienteNome),
             const SizedBox(height: Espaco.x1),
-            linha(Symbols.location_on_rounded, obra.endereco),
+            linha(Symbols.location_on_rounded, obra.enderecoCompleto),
             const SizedBox(height: Espaco.x1),
             linha(
               Symbols.calendar_today_rounded,

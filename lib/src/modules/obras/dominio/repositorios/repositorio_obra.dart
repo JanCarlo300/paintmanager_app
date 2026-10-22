@@ -8,6 +8,10 @@ abstract class RepositorioObra {
   Future<void> salvarObra(Obra obra);
   Future<void> excluirObra(int id);
 
+  /// O que está ligado à obra, para avisar antes de excluir: orçamentos e
+  /// mensagens vão junto (CASCADE); lançamentos ficam, sem a obra.
+  Future<({int orcamentos, int lancamentos, int mensagens})> contarVinculos(int obraId);
+
   /// RF010 - Alocar Equipe à Obra
   Future<List<Usuario>> listarFuncionariosAlocados(int obraId);
   Future<void> alocarFuncionario(int obraId, int usuarioId);

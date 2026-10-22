@@ -29,7 +29,7 @@ Future<Uint8List> gerarPdfListaMateriais(
       ]),
       PdfService.secao('Obra', [
         PdfService.campo('Título', obra.tituloDaObra),
-        PdfService.campo('Endereço', obra.endereco),
+        PdfService.campo('Endereço', obra.enderecoCompleto),
       ]),
       PdfService.secao('Materiais (${obra.listaMateriais.length})', [
         if (obra.listaMateriais.isEmpty)

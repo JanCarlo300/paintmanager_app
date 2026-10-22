@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import '../../dominio/entidades/obra.dart';
 import '../../dominio/entidades/etapa_servico.dart';
 import '../../dominio/entidades/item_material.dart';
@@ -12,6 +14,9 @@ import '../../../../apresentacao/widgets/card_app.dart';
 import '../../../../core/tema/cores_app.dart';
 import '../../../../core/tema/medidas_app.dart';
 import '../../../../core/servicos/geocodificacao_service.dart';
+import '../../../../core/servicos/localizacao_service.dart';
+import '../../../../core/servicos/cep_service.dart';
+import 'confirmar_local_page.dart';
 import '../../../../apresentacao/widgets/campo_busca_selecao.dart';
 import '../../../../apresentacao/widgets/campo_data.dart';
 import '../widgets/pdf_lista_materiais_acao.dart';
@@ -32,6 +37,19 @@ class _ObraFormPageState extends State<ObraFormPage> {
   String _clienteNomeSelecionado = '';
   late TextEditingController _tituloController;
   late TextEditingController _enderecoController;
+  late TextEditingController _cepController;
+  late TextEditingController _numeroController;
+  late TextEditingController _complementoController;
+  late TextEditingController _bairroController;
+  final _cepMask = MaskTextInputFormatter(mask: '#####-###', filter: {"#": RegExp(r'[0-9]')});
+  bool _buscandoCep = false;
+  late TextEditingController _cidadeController;
+  String? _uf;
+
+  /// Ponto exato (GPS no local ou link de localização). Com ele, o
+  /// "Como chegar" vai direto ao pino em vez de procurar o endereço.
+  Coordenada? _pontoExato;
+  bool _buscandoPonto = false;
   final _materialDescricaoController = TextEditingController();
   final _materialQuantidadeController = TextEditingController();
   final _materialUnidadeController = TextEditingController();
@@ -42,6 +60,11 @@ class _ObraFormPageState extends State<ObraFormPage> {
   final List<ItemMaterial> _listaMateriais = [];
 
   bool get _obraConcluida => widget.obraParaEdicao?.status == 'Concluída';
+
+  static const _ufs = [
+    'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA',
+    'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO',
+  ];
 
   final _etapasPadrao = [
     'Preparação/Emassamento',
@@ -58,6 +81,15 @@ class _ObraFormPageState extends State<ObraFormPage> {
 
     _tituloController = TextEditingController(text: obra?.tituloDaObra);
     _enderecoController = TextEditingController(text: obra?.endereco);
+    _cepController = TextEditingController(text: obra?.cepFormatado);
+    _numeroController = TextEditingController(text: obra?.numero);
+    _complementoController = TextEditingController(text: obra?.complemento);
+    _bairroController = TextEditingController(text: obra?.bairro);
+    _cidadeController = TextEditingController(text: obra?.cidade);
+    _uf = _ufs.contains(obra?.uf) ? obra!.uf : null;
+    if (obra != null && obra.temPontoExato) {
+      _pontoExato = Coordenada(latitude: obra.latitude!, longitude: obra.longitude!);
+    }
     _dataInicio = obra?.dataInicio ?? DateTime.now();
     _dataPrevisao = obra?.dataPrevisaoTermino ?? DateTime.now().add(const Duration(days: 15));
 
@@ -84,6 +116,11 @@ class _ObraFormPageState extends State<ObraFormPage> {
   void dispose() {
     _tituloController.dispose();
     _enderecoController.dispose();
+    _cepController.dispose();
+    _numeroController.dispose();
+    _complementoController.dispose();
+    _bairroController.dispose();
+    _cidadeController.dispose();
     _materialDescricaoController.dispose();
     _materialQuantidadeController.dispose();
     _materialUnidadeController.dispose();
@@ -130,6 +167,223 @@ class _ObraFormPageState extends State<ObraFormPage> {
 
   void _avisarMaterial(String mensagem) => _avisarErro(mensagem);
 
+  // --- PONTO EXATO DA OBRA -------------------------------------------------
+
+  Future<void> _obterPonto(Future<Coordenada> Function() obter) async {
+    setState(() => _buscandoPonto = true);
+    try {
+      final ponto = await obter();
+      if (!mounted) return;
+      setState(() => _pontoExato = ponto);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Ponto exato gravado. Salve a obra para guardar.')),
+      );
+    } catch (e) {
+      if (mounted) _avisarErro('$e');
+    } finally {
+      if (mounted) setState(() => _buscandoPonto = false);
+    }
+  }
+
+  Future<void> _colarLink() async {
+    final campo = TextEditingController();
+    final texto = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Colar localização'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Abra a localização no Google Maps, toque em Compartilhar e copie o link. '
+              'Também vale colar coordenadas, como -17.7912, -50.9231.',
+              style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(color: ctx.cores.inkMuted),
+            ),
+            const SizedBox(height: Espaco.x3),
+            TextField(
+              controller: campo,
+              minLines: 1,
+              maxLines: 3,
+              decoration: InputDecoration(
+                labelText: 'Link ou coordenadas',
+                suffixIcon: IconButton(
+                  tooltip: 'Colar',
+                  icon: const Icon(Symbols.content_paste_rounded),
+                  onPressed: () async {
+                    final dados = await Clipboard.getData(Clipboard.kTextPlain);
+                    if (dados?.text != null) campo.text = dados!.text!;
+                  },
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, campo.text), child: const Text('Usar')),
+        ],
+      ),
+    );
+    campo.dispose();
+    if (texto == null || texto.trim().isEmpty) return;
+    await _obterPonto(() => LocalizacaoService().deTexto(texto));
+  }
+
+  /// Como no checkout de uma loja: CEP completo preenche rua, bairro, cidade e UF.
+  Future<void> _preencherPorCep() async {
+    if (_buscandoCep) return;
+    setState(() => _buscandoCep = true);
+    try {
+      final e = await CepService().buscar(_cepController.text);
+      if (!mounted) return;
+      setState(() {
+        if (e.logradouro.isNotEmpty) _enderecoController.text = e.logradouro;
+        if (e.bairro.isNotEmpty) _bairroController.text = e.bairro;
+        _cidadeController.text = e.cidade;
+        if (_ufs.contains(e.uf)) _uf = e.uf;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.logradouro.isEmpty
+            ? 'CEP da cidade inteira: preencha a rua.'
+            : 'Endereço preenchido pelo CEP. Agora o número e o complemento.')),
+      );
+    } catch (erro) {
+      if (mounted) _avisarErro('$erro');
+    } finally {
+      if (mounted) setState(() => _buscandoCep = false);
+    }
+  }
+
+  /// Abre o mapa no ponto já salvo ou no ponto aproximado do endereço, para
+  /// o usuário arrastar até o lote (como nos apps de entrega).
+  Future<void> _confirmarNoMapa() async {
+    final enderecoTexto = [
+      [_enderecoController.text.trim(), _numeroController.text.trim(), _complementoController.text.trim()]
+          .where((p) => p.isNotEmpty)
+          .join(', '),
+      _bairroController.text.trim(),
+      [_cidadeController.text.trim(), _uf ?? ''].where((p) => p.isNotEmpty).join(' - '),
+    ].where((p) => p.isNotEmpty).join(' - ');
+
+    var inicial = _pontoExato;
+    final aproximado = inicial == null;
+    if (inicial == null) {
+      setState(() => _buscandoPonto = true);
+      inicial = await GeocodificacaoService().buscarCoordenadasObra(
+        endereco: _enderecoController.text,
+        numero: _numeroController.text,
+        bairro: _bairroController.text,
+        cidade: _cidadeController.text,
+        uf: _uf ?? '',
+        cep: _cepController.text,
+        aceitarSoCidade: true,
+      );
+      if (!mounted) return;
+      setState(() => _buscandoPonto = false);
+    }
+    if (inicial == null) {
+      _avisarErro('Não achei esse endereço no mapa. Preencha CEP ou cidade e UF e tente de novo.');
+      return;
+    }
+
+    final escolhido = await Navigator.of(context).push<Coordenada>(
+      MaterialPageRoute(
+        builder: (_) => ConfirmarLocalPage(
+          inicial: inicial!,
+          endereco: enderecoTexto,
+          pontoAproximado: aproximado,
+        ),
+      ),
+    );
+    if (escolhido != null && mounted) {
+      setState(() => _pontoExato = escolhido);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Local confirmado. Salve a obra para guardar.')),
+      );
+    }
+  }
+
+  Widget _localizacaoExata() {
+    final c = context.cores;
+    final texto = Theme.of(context).textTheme;
+    final ponto = _pontoExato;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(Espaco.x3),
+      decoration: BoxDecoration(
+        color: ponto != null ? c.successSoft : c.surfaceSunken,
+        borderRadius: BorderRadius.circular(Raio.campo),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                ponto != null ? Symbols.where_to_vote_rounded : Symbols.my_location_rounded,
+                size: TamanhoIcone.pequeno,
+                color: ponto != null ? c.success : c.primary,
+              ),
+              const SizedBox(width: Espaco.x2),
+              Expanded(
+                child: Text('Ponto exato no mapa (opcional)',
+                    style: texto.bodyMedium?.copyWith(fontWeight: FontWeight.w700)),
+              ),
+            ],
+          ),
+          const SizedBox(height: Espaco.x1),
+          Text(
+            ponto != null
+                ? 'Gravado: ${ponto.latitude.toStringAsFixed(6)}, ${ponto.longitude.toStringAsFixed(6)}. '
+                    'O "Como chegar" vai direto a este ponto.'
+                : 'Para o "Como chegar" levar até o lote: confirme o ponto no mapa, '
+                    'grave o GPS estando no local ou cole o link da localização que o cliente mandou.',
+            style: texto.bodySmall?.copyWith(color: c.inkMuted, letterSpacing: 0),
+          ),
+          if (_buscandoPonto) ...[
+            const SizedBox(height: Espaco.x2),
+            const LinearProgressIndicator(minHeight: 3),
+          ],
+          const SizedBox(height: Espaco.x2),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: _buscandoPonto ? null : _confirmarNoMapa,
+              icon: const Icon(Symbols.pin_drop_rounded, size: TamanhoIcone.pequeno),
+              label: Text(ponto != null ? 'Ajustar no mapa' : 'Confirmar no mapa'),
+            ),
+          ),
+          const SizedBox(height: Espaco.x2),
+          Wrap(
+            spacing: Espaco.x2,
+            runSpacing: Espaco.x1,
+            children: [
+              OutlinedButton.icon(
+                onPressed: _buscandoPonto ? null : () => _obterPonto(LocalizacaoService().localizacaoAtual),
+                icon: const Icon(Symbols.my_location_rounded, size: 18),
+                label: const Text('Usar minha localização'),
+              ),
+              OutlinedButton.icon(
+                onPressed: _buscandoPonto ? null : _colarLink,
+                icon: const Icon(Symbols.link_rounded, size: 18),
+                label: const Text('Colar link'),
+              ),
+              if (ponto != null)
+                TextButton.icon(
+                  onPressed: _buscandoPonto ? null : () => setState(() => _pontoExato = null),
+                  style: TextButton.styleFrom(foregroundColor: c.error),
+                  icon: const Icon(Symbols.close_rounded, size: 18),
+                  label: const Text('Remover'),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   void _avisarErro(String mensagem) {
     final c = context.cores;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -169,11 +423,29 @@ class _ObraFormPageState extends State<ObraFormPage> {
               .toList();
 
       final enderecoDigitado = _enderecoController.text.trim();
+      final numero = _numeroController.text.trim();
+      final complemento = _complementoController.text.trim();
+      final cep = CepService.soDigitos(_cepController.text);
+      final bairro = _bairroController.text.trim();
+      final cidade = _cidadeController.text.trim();
+      final uf = _uf ?? '';
 
-      // Item 3.2 — geocodifica o endereço (gratuito, via OpenStreetMap/Nominatim).
-      // Se falhar (sem internet, endereço não encontrado), mantém a coordenada
-      // anterior em vez de apagar o que já tinha funcionado antes.
-      final coordenada = await GeocodificacaoService().buscarCoordenadas(enderecoDigitado);
+      // Item 3.2 — coordenada para o mapa dos detalhes (OpenStreetMap/Nominatim,
+      // gratuito). Endereço igual ao anterior: reaproveita a coordenada. Mudou:
+      // busca de novo; se não achar, fica sem mapa (melhor que um ponto errado).
+      final mesmoEndereco = original != null &&
+          original.endereco.trim() == enderecoDigitado &&
+          original.numero.trim() == numero &&
+          original.cep == cep &&
+          original.bairro.trim() == bairro &&
+          original.cidade.trim() == cidade &&
+          original.uf.trim() == uf;
+      // Ponto exato escolhido pelo usuário tem prioridade e dispensa a busca.
+      final coordenada = _pontoExato ??
+          (mesmoEndereco && original.temCoordenadas && !original.localizacaoExata
+              ? Coordenada(latitude: original.latitude!, longitude: original.longitude!)
+              : await GeocodificacaoService().buscarCoordenadasObra(
+                  endereco: enderecoDigitado, numero: numero, bairro: bairro, cidade: cidade, uf: uf, cep: cep));
 
       final obra = Obra(
         id: widget.obraParaEdicao?.id,
@@ -183,13 +455,20 @@ class _ObraFormPageState extends State<ObraFormPage> {
         clienteNome: _clienteNomeSelecionado,
         tituloDaObra: _tituloController.text.trim(),
         endereco: enderecoDigitado,
+        numero: numero,
+        complemento: complemento,
+        cep: cep,
+        bairro: bairro,
+        cidade: cidade,
+        uf: uf,
         dataInicio: _dataInicio,
         dataPrevisaoTermino: _dataPrevisao,
         status: widget.obraParaEdicao?.status ?? 'Não Iniciada',
         etapasServico: etapas,
         listaMateriais: _listaMateriais,
-        latitude: coordenada?.latitude ?? widget.obraParaEdicao?.latitude,
-        longitude: coordenada?.longitude ?? widget.obraParaEdicao?.longitude,
+        latitude: coordenada?.latitude,
+        longitude: coordenada?.longitude,
+        localizacaoExata: _pontoExato != null,
       );
 
       try {
@@ -247,7 +526,76 @@ class _ObraFormPageState extends State<ObraFormPage> {
                   children: [
                     _textField("Título da Obra", _tituloController, Symbols.title_rounded, "Ex: Pintura Externa Casa Centro"),
                     const SizedBox(height: Espaco.x4),
-                    _textField("Endereço", _enderecoController, Symbols.location_on_rounded, "Rua, Número, Bairro, Cidade"),
+                    // CEP primeiro, como no checkout de uma loja: preenche o resto sozinho.
+                    TextFormField(
+                      controller: _cepController,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [_cepMask],
+                      onChanged: (v) {
+                        if (CepService.soDigitos(v).length == 8) _preencherPorCep();
+                      },
+                      decoration: InputDecoration(
+                        labelText: "CEP",
+                        hintText: "00000-000",
+                        helperText: "Preenche rua, bairro e cidade sozinho",
+                        prefixIcon: const Icon(Symbols.markunread_mailbox_rounded, size: TamanhoIcone.pequeno),
+                        suffixIcon: _buscandoCep
+                            ? const Padding(
+                                padding: EdgeInsets.all(Espaco.x3),
+                                child: SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)),
+                              )
+                            : IconButton(
+                                tooltip: "Buscar CEP",
+                                icon: const Icon(Symbols.search_rounded),
+                                onPressed: _preencherPorCep,
+                              ),
+                      ),
+                    ),
+                    const SizedBox(height: Espaco.x4),
+                    _textField("Rua / Avenida", _enderecoController, Symbols.location_on_rounded, "Ex: Rua Rodezir Baylão"),
+                    const SizedBox(height: Espaco.x4),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(
+                          width: 112,
+                          child: _textField("Número", _numeroController, Symbols.tag_rounded, "S/N", obrigatorio: false),
+                        ),
+                        const SizedBox(width: Espaco.x3),
+                        Expanded(
+                          child: _textField("Complemento", _complementoController, Symbols.grid_view_rounded,
+                              "Qd N, Lt 19", obrigatorio: false),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: Espaco.x4),
+                    _textField("Bairro (opcional)", _bairroController, Symbols.holiday_village_rounded, "Ex: Eldorado", obrigatorio: false),
+                    const SizedBox(height: Espaco.x4),
+                    // Cidade e UF: sem eles o mapa e o "Como chegar" não acham a obra.
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: _textField("Cidade", _cidadeController, Symbols.location_city_rounded, "Ex: Rio Verde"),
+                        ),
+                        const SizedBox(width: Espaco.x3),
+                        SizedBox(
+                          width: 104,
+                          child: DropdownButtonFormField<String>(
+                            // A chave recria o campo quando o CEP preenche a UF.
+                            key: ValueKey(_uf),
+                            initialValue: _uf,
+                            isExpanded: true,
+                            decoration: const InputDecoration(labelText: "UF"),
+                            items: _ufs.map((u) => DropdownMenuItem(value: u, child: Text(u))).toList(),
+                            onChanged: (v) => setState(() => _uf = v),
+                            validator: (v) => v == null ? "UF" : null,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: Espaco.x4),
+                    _localizacaoExata(),
                     const SizedBox(height: Espaco.x4),
                     _periodoDaObra(),
                   ],
@@ -357,14 +705,15 @@ class _ObraFormPageState extends State<ObraFormPage> {
     ),
   );
 
-  Widget _textField(String label, TextEditingController c, IconData ic, String hint) => TextFormField(
+  Widget _textField(String label, TextEditingController c, IconData ic, String hint, {bool obrigatorio = true}) => TextFormField(
     controller: c,
+    textCapitalization: TextCapitalization.words,
     decoration: InputDecoration(
       labelText: label,
       hintText: hint,
       prefixIcon: Icon(ic, size: TamanhoIcone.pequeno),
     ),
-    validator: (v) => v == null || v.isEmpty ? "Campo obrigatório" : null,
+    validator: obrigatorio ? (v) => v == null || v.trim().isEmpty ? "Campo obrigatório" : null : null,
   );
 
   Widget _periodoDaObra() {

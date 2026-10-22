@@ -56,11 +56,17 @@ class ObraController extends ChangeNotifier {
     }
   }
 
-  /// Exclui permanentemente uma obra
+  /// Exclui permanentemente uma obra (só Administrador — DERS e RLS)
   Future<void> excluir(int id) async {
     await _repositorio.excluirObra(id);
-    await carregarObras();
+    // Tira da lista sem recarregar tudo: recarregar liga o "carregando" e
+    // redesenhava a tela de detalhes enquanto ela fechava (tela vermelha).
+    _obras = _obras.where((o) => o.id != id).toList();
+    notifyListeners();
   }
+
+  Future<({int orcamentos, int lancamentos, int mensagens})> contarVinculos(int obraId) =>
+      _repositorio.contarVinculos(obraId);
 
   /// Alterna o status de uma etapa e recalcula o progresso
   Future<void> alternarEtapa(Obra obra, int indiceEtapa) async {
@@ -83,6 +89,12 @@ class ObraController extends ChangeNotifier {
       clienteNome: obra.clienteNome,
       tituloDaObra: obra.tituloDaObra,
       endereco: obra.endereco,
+      numero: obra.numero,
+      complemento: obra.complemento,
+      cep: obra.cep,
+      bairro: obra.bairro,
+      cidade: obra.cidade,
+      uf: obra.uf,
       dataInicio: obra.dataInicio,
       dataPrevisaoTermino: obra.dataPrevisaoTermino,
       dataConclusao: obra.dataConclusao,
@@ -92,6 +104,7 @@ class ObraController extends ChangeNotifier {
       listaMateriais: obra.listaMateriais,
       latitude: obra.latitude,
       longitude: obra.longitude,
+      localizacaoExata: obra.localizacaoExata,
     );
 
     await salvar(obraAtualizada);
@@ -124,6 +137,12 @@ class ObraController extends ChangeNotifier {
       clienteNome: obra.clienteNome,
       tituloDaObra: obra.tituloDaObra,
       endereco: obra.endereco,
+      numero: obra.numero,
+      complemento: obra.complemento,
+      cep: obra.cep,
+      bairro: obra.bairro,
+      cidade: obra.cidade,
+      uf: obra.uf,
       dataInicio: obra.dataInicio,
       dataPrevisaoTermino: obra.dataPrevisaoTermino,
       dataConclusao: concluindo ? DateTime.now() : obra.dataConclusao,
@@ -135,6 +154,7 @@ class ObraController extends ChangeNotifier {
       listaMateriais: obra.listaMateriais,
       latitude: obra.latitude,
       longitude: obra.longitude,
+      localizacaoExata: obra.localizacaoExata,
     );
 
     await salvar(obraAtualizada);
