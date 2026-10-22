@@ -21,3 +21,7 @@ Gerado por `dart run kit_identidade_visual/ferramentas/verificar.dart`.
 | 18/10/2026 01:27 | Verificação final | 0/0 | 114/0 | 0 | 0 | aprovado |
 | 18/10/2026 01:28 | Fase 5 | 0/0 | 114/0 | 0 | 0 | aprovado |
 | 18/10/2026 01:33 | Fase 6 — entrega | 0/0 | 114/0 | 0 | 0 | aprovado |
+| 21/10/2026 01:19 | Correções: progresso, cabeçalho, endereço | 0/0 | 114/0 | 0 | 0 | aprovado |
+| 21/10/2026 11:51 | Ponto exato, Todo o período | 0/0 | 114/0 | 0 | 0 | aprovado |
+| 21/10/2026 12:06 | Excluir obra | 0/0 | 114/0 | 0 | 0 | aprovado |
+| 21/10/2026 21:45 | Relatório, exclusão, endereço com CEP | 0/0 | 115/0 | 0 | 0 | aprovado |

@@ -1,6 +1,6 @@
 # PaintManager — Relatório de Status do Projeto
 
-**TFC II — UniRV** · Autor: Jan Carlo · **Data de referência: 18/10/2026** (criado em 12/10, atualizado a cada etapa)
+**TFC II — UniRV** · Autor: Jan Carlo · **Data de referência: 21/10/2026** (criado em 12/10, atualizado a cada etapa)
 Base: código atual da branch `main`, scripts em `db/`, testes em `test/` e o relatório anterior de 01/10/2026.
 
 ---
@@ -134,6 +134,14 @@ Troca da paleta "Sahara" pelo manual da marca aprovado em 15/10, seguindo `kit_i
 | 4 — Telas (lotes A–H) | ✅ 18/10 | **A · Estrutura ✅ 16/10**: menu (Usuários em 7º, por decisão do Jan), busca, data, filtros, chips, acesso restrito, avisos, Configurações; alerta do sino passou a guardar `urgente` em vez de cor. **B · Acesso ✅ 16/10**: login, recuperar senha, primeiro acesso, alterar senha e Usuários (sem `GoogleFonts` fora do tema). **C · Resumo Geral ✅ 16/10**: cabeçalho claro, indicadores com `IconeModulo`, saldo no `CardDestaque`, `StatusChip` nas obras, alertas e telas vazias com ilustração. **D · Clientes ✅ 16/10**: lista (chips compartilhados, `CardApp`, `TelaVazia` com atalho para todos os ativos) e formulário. **E · Obras ✅ 16/10**: lista, detalhes, chat, formulário e PDF da lista de materiais; cores de status unificadas pelo `status_visual` (Em Andamento azul, Concluída verde). **F · Orçamentos ✅ 16/10**: lista e formulário com `StatusChip`, seletor de status pelo `status_visual`, WhatsApp no verde do tema. **G · Financeiro ✅ 18/10**: saldo no `CardDestaque` (pendente na legenda), receitas/despesas em `success`/`error`, formulário com valor no estilo do manual. **H · Relatórios ✅ 18/10**: lucro no `CardDestaque`, gráficos nas cores do tema e paleta fixa por categoria (`core/tema/cores_graficos.dart`, aprovada pelo Jan), nome/%/valor por categoria. **Fase 4 concluída: zero valores fixos fora de `core/tema` e dos PDFs** |
 | 5 — Modo escuro + Configurações | ✅ 18/10 · testado pelo Jan | `TemaController` (segue o celular por padrão, escolha salva com `shared_preferences`), seção Aparência em Configurações (Automático/Claro/Escuro), `PaletaSahara` apagada; 114 testes |
 | 6 — Testes e documentação | ✅ 18/10 | README, ARCHITECTURE e histórico atualizados; plano e passo a passo em `docs/identidade_visual/`; auditoria permanente em `tool/identidade_visual/verificar.dart`; pasta do kit removida. Falta o Jan juntar a branch na `main` e tirar os prints para o TFC |
+
+### 4.6 Correções e melhorias de 21/10 (testadas pelo Jan)
+- **Resumo Geral:** o cabeçalho mostra a logo com o nome do app no lugar do "Olá, usuário".
+- **Relatório de Progresso:** seção "Obras a iniciar" (obras Não Iniciada cadastradas até o fim do período, fora dos números de progresso); filtro **"Tudo"** (01/01/2020 até hoje); regra corrigida — obra concluída conta pela data de conclusão (antes sumia se o início previsto fosse depois do período) e a tela de Relatórios passou a contar obras pela mesma regra do PDF; resumo com total, em execução, concluídas e a iniciar.
+- **Excluir obra:** só o Administrador (DERS + RLS), com confirmação que mostra orçamentos, mensagens e lançamentos ligados; o app avisa se o banco recusar.
+- **Endereço da obra no padrão dos sites de compra:** CEP que preenche rua, bairro, cidade e UF (ViaCEP), número e complemento (quadra/lote) separados; scripts `db/obra_bairro_cidade_uf.sql` e `db/obra_cep_numero_complemento.sql`.
+- **Ponto exato da obra:** "Confirmar no mapa" (pino fixo, arrasta o mapa até o lote), GPS do celular e "Colar link" do Google Maps/WhatsApp; com ponto exato o "Como chegar" vai direto ao pino (`db/obra_localizacao_exata.sql`). Sem ponto, o Google recebe rua, número, bairro, cidade e CEP.
+- Diagnóstico do relatório (só leitura): `db/diagnostico_relatorio_progresso.sql`.
 
 ---
 
