@@ -95,8 +95,8 @@ class _RelatoriosPageState extends State<RelatoriosPage> {
 
   // === FILTRO DE PERÍODO ===
   Widget _buildFiltroPeriodo(RelatorioController controller) {
-    final filtros = ['7 dias', 'Este Mês', '30 dias', '90 dias', 'Este Ano'];
-    final filtrosValor = ['Últimos 7 dias', 'Este Mês', 'Últimos 30 dias', 'Últimos 90 dias', 'Este Ano'];
+    final filtros = ['7 dias', 'Este Mês', '30 dias', '90 dias', 'Este Ano', 'Tudo'];
+    final filtrosValor = ['Últimos 7 dias', 'Este Mês', 'Últimos 30 dias', 'Últimos 90 dias', 'Este Ano', 'Todo o período'];
     final c = context.cores;
     final texto = Theme.of(context).textTheme;
     final personalizado = controller.filtroSelecionado == 'Personalizado';

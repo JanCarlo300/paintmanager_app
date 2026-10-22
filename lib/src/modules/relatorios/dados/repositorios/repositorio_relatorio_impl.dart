@@ -104,18 +104,30 @@ class RepositorioRelatorioImpl implements RepositorioRelatorio {
   Future<List<Obra>> listarObrasParaProgresso(DateTime inicio, DateTime fim, {int? obraId}) async {
     try {
       var consulta = _supabase.from('obra').select().neq('status', 'Não Iniciada');
-      if (obraId != null) {
-        consulta = consulta.eq('id_obra', obraId);
-      } else {
-        // O banco já descarta o que começou depois do período; o resto da
-        // regra ("em execução no período") fica em obraEmExecucaoNoPeriodo.
-        consulta = consulta.lte('data_inicio', _dia(fim));
-      }
+      // Sem filtro de data no banco: obra concluída antes do início previsto
+      // (ou em andamento com início futuro) precisa chegar até a regra
+      // obraEmExecucaoNoPeriodo, que decide com as datas reais.
+      if (obraId != null) consulta = consulta.eq('id_obra', obraId);
       final resultado = await consulta.order('data_inicio');
       final obras = (resultado as List).map((m) => ObraModelo.deMapa(m)).toList();
       return obraId != null ? obras : obras.where((o) => obraEmExecucaoNoPeriodo(o, inicio, fim)).toList();
     } catch (e) {
       throw 'Erro ao buscar obras: $e';
+    }
+  }
+
+  @override
+  Future<List<Obra>> listarObrasAIniciar(DateTime fim, {int? obraId}) async {
+    try {
+      var consulta = _supabase.from('obra').select().eq('status', 'Não Iniciada');
+      if (obraId != null) consulta = consulta.eq('id_obra', obraId);
+      final resultado = await consulta.order('data_inicio');
+      return (resultado as List)
+          .map((m) => ObraModelo.deMapa(m))
+          .where((o) => obraAIniciarAte(o, fim))
+          .toList();
+    } catch (e) {
+      throw 'Erro ao buscar obras a iniciar: $e';
     }
   }
 
@@ -170,22 +182,21 @@ class RepositorioRelatorioImpl implements RepositorioRelatorio {
     }
   }
 
-  /// Busca obras do período e conta por status
+  /// Conta as obras do período pela MESMA regra do PDF de Progresso
+  /// (obraEmExecucaoNoPeriodo), para tela e relatório sempre baterem.
   Future<Map<String, dynamic>> _buscarObras(String inicio, String fim) async {
     try {
-      final resultado = await _supabase
-          .from('obra')
-          .select()
-          .gte('data_inicio', inicio)
-          .lte('data_inicio', fim);
+      final resultado = await _supabase.from('obra').select().neq('status', 'Não Iniciada');
+      final ini = DateTime.parse(inicio);
+      final f = DateTime.parse(fim);
 
       int concluidas = 0;
       int emAndamento = 0;
 
-      for (final row in (resultado as List)) {
-        final status = row['status'] ?? '';
-        if (status == 'Concluída') concluidas++;
-        if (status == 'Em Andamento') emAndamento++;
+      for (final o in (resultado as List).map((m) => ObraModelo.deMapa(m))) {
+        if (!obraEmExecucaoNoPeriodo(o, ini, f)) continue;
+        if (o.status == 'Concluída') concluidas++;
+        if (o.status == 'Em Andamento') emAndamento++;
       }
 
       return {'concluidas': concluidas, 'emAndamento': emAndamento};

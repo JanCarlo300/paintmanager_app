@@ -20,4 +20,8 @@ abstract class RepositorioRelatorio {
 
   /// Obras já iniciadas cujo período cruza o período do relatório.
   Future<List<Obra>> listarObrasParaProgresso(DateTime inicio, DateTime fim, {int? obraId});
+
+  /// Obras Não Iniciada cadastradas até o fim do período (seção "Obras a
+  /// iniciar" do Relatório de Progresso).
+  Future<List<Obra>> listarObrasAIniciar(DateTime fim, {int? obraId});
 }

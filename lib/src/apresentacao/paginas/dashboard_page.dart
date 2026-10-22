@@ -2,14 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import '../../modules/auth/dominio/entidades/usuario.dart';
-import '../../modules/auth/apresentacao/controllers/auth_controller.dart';
 import '../controllers/dashboard_controller.dart';
 import '../controllers/notificacao_controller.dart';
 import '../widgets/card_app.dart';
 import '../widgets/card_destaque.dart';
 import '../widgets/drawer_comum.dart';
 import '../widgets/icone_modulo.dart';
+import '../widgets/logo_app.dart';
 import '../widgets/status_chip.dart';
 import '../widgets/tela_vazia.dart';
 import '../../core/tema/cores_app.dart';
@@ -30,7 +29,7 @@ class DashboardPage extends StatelessWidget {
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
-          // ─── Cabeçalho: saudação + data ───
+          // ─── Cabeçalho: assinatura da marca (logo + nome do app) ───
           SliverAppBar(
             expandedHeight: 140,
             floating: false,
@@ -58,29 +57,14 @@ class DashboardPage extends StatelessWidget {
               background: SafeArea(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(Espaco.x5, 50, Espaco.x5, Espaco.x4),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      StreamBuilder<Usuario?>(
-                        stream: context.read<AuthController>().usuarioAtual,
-                        builder: (context, snapshot) {
-                          final nome = snapshot.data?.nome ?? 'Usuário';
-                          final primeiroNome = nome.split(' ').first;
-                          return Text(
-                            'Olá, $primeiroNome! 👋',
-                            style: texto.headlineMedium,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          );
-                        },
-                      ),
-                      const SizedBox(height: Espaco.x1),
-                      Text(
-                        _capitalizar(DateFormat("EEEE, dd 'de' MMMM", 'pt_BR').format(DateTime.now())),
-                        style: texto.bodyMedium?.copyWith(color: c.inkMuted),
-                      ),
-                    ],
+                  child: Align(
+                    alignment: Alignment.bottomLeft,
+                    // scaleDown só entra em telas muito estreitas ou fonte grande.
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: AssinaturaApp(tamanhoLogo: 48, estilo: texto.headlineMedium),
+                    ),
                   ),
                 ),
               ),
@@ -453,9 +437,6 @@ class DashboardPage extends StatelessWidget {
     return NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$', decimalDigits: 2)
         .format(valor);
   }
-
-  String _capitalizar(String texto) =>
-      texto.isEmpty ? texto : texto[0].toUpperCase() + texto.substring(1);
 
   // ═══════════════════════════════════════════
   // ALERTAS (RF013 simplificado)

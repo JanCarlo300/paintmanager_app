@@ -56,6 +56,11 @@ class RelatorioController extends ChangeNotifier {
         _inicio = DateTime(agora.year, 1, 1);
         _fim = DateTime(agora.year, 12, 31, 23, 59, 59);
         break;
+      case 'Todo o período':
+        // Relatório completo: desde antes da primeira obra até hoje.
+        _inicio = DateTime(2020, 1, 1);
+        _fim = DateTime(agora.year, agora.month, agora.day, 23, 59, 59);
+        break;
       default:
         break;
     }
@@ -100,11 +105,13 @@ class RelatorioController extends ChangeNotifier {
 
   Future<Uint8List> gerarPdfProgresso({Obra? obra}) async {
     final obras = await _repositorio.listarObrasParaProgresso(_inicio, _fim, obraId: obra?.id);
+    final aIniciar = await _repositorio.listarObrasAIniciar(_fim, obraId: obra?.id);
     return gerarPdfRelatorioProgresso(
       inicio: _inicio,
       fim: _fim,
       obraTitulo: obra?.tituloDaObra,
       obras: obras,
+      obrasAIniciar: aIniciar,
     );
   }
 

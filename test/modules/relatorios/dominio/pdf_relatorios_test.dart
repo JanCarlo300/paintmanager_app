@@ -85,8 +85,12 @@ void main() {
       expect(obraEmExecucaoNoPeriodo(obra('Não Iniciada', DateTime(2026, 10, 5), DateTime(2026, 10, 20)), inicio, fim), isFalse);
     });
 
-    test('começou depois do período não entra', () {
-      expect(obraEmExecucaoNoPeriodo(obra('Em Andamento', DateTime(2026, 11, 2), DateTime(2026, 11, 20)), inicio, fim), isFalse);
+    test('Em Andamento com início depois do período: não entra se ainda não chegou', () {
+      final o = obra('Em Andamento', DateTime(2026, 11, 2), DateTime(2026, 11, 20));
+      // Relatório de outubro tirado em dezembro: começou em novembro, fora.
+      expect(obraEmExecucaoNoPeriodo(o, inicio, fim, hoje: DateTime(2026, 12, 1)), isFalse);
+      // Mas se já está rodando hoje (21/10), está em execução em outubro.
+      expect(obraEmExecucaoNoPeriodo(o, inicio, fim, hoje: DateTime(2026, 10, 21)), isTrue);
     });
 
     test('Em Andamento atrasada (previsão antes do período) entra', () {
@@ -105,6 +109,13 @@ void main() {
       expect(obraEmExecucaoNoPeriodo(noPeriodo, inicio, fim), isTrue);
       expect(obraEmExecucaoNoPeriodo(antes, inicio, fim), isFalse);
       expect(obraEmExecucaoNoPeriodo(semDataConclusao, inicio, fim), isTrue);
+    });
+
+    test('Concluída antes do início previsto entra pelo dia da conclusão', () {
+      // Caso real: "Pintura Quarto", início previsto 07/11, concluída 19/10.
+      final o = obra('Concluída', DateTime(2026, 11, 7), DateTime(2026, 11, 30), concluida: DateTime(2026, 10, 19));
+      expect(obraEmExecucaoNoPeriodo(o, inicio, fim), isTrue);
+      expect(obraEmExecucaoNoPeriodo(o, DateTime(2026, 11, 1), DateTime(2026, 11, 30)), isFalse);
     });
   });
 

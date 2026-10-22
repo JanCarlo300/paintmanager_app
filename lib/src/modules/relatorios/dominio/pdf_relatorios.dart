@@ -24,20 +24,41 @@ List<Transacao> filtrarLancamentosValidos(List<Transacao> transacoes, Map<int, S
 
 DateTime _soDia(DateTime d) => DateTime(d.year, d.month, d.day);
 
+/// Seção "Obras a iniciar" do Relatório de Progresso: obras Não Iniciada que
+/// já estavam cadastradas até o fim do período, qualquer que seja a data de
+/// início prevista. Não entram nos números de progresso (regra do DERS); a
+/// obra só começa depois que um orçamento dela é aprovado.
+bool obraAIniciarAte(Obra o, DateTime fim) {
+  if (o.status != 'Não Iniciada') return false;
+  final criada = o.criadoEm;
+  return criada == null || !_soDia(criada).isAfter(_soDia(fim));
+}
+
 /// Relatório de Progresso: obras que estiveram EM EXECUÇÃO no período.
-/// - Não Iniciada: fica de fora;
-/// - começou depois do fim do período: fica de fora;
-/// - Em Andamento/Pausada: entra (ainda está rodando — inclusive atrasada);
-/// - Concluída: entra se foi concluída do início do período em diante
-///   (sem data de conclusão, vale a previsão de término).
-bool obraEmExecucaoNoPeriodo(Obra o, DateTime inicio, DateTime fim) {
+/// - Não Iniciada: fica de fora (vai para "Obras a iniciar");
+/// - Em Andamento/Pausada: entra se começou até o fim do período (como está
+///   rodando, conta no mais tardar a partir de hoje) — inclusive atrasada;
+/// - Concluída: entra se foi concluída do início do período em diante e
+///   começou até o fim dele (sem data de conclusão, vale a previsão de
+///   término; concluída antes do início previsto, vale a conclusão).
+bool obraEmExecucaoNoPeriodo(Obra o, DateTime inicio, DateTime fim, {DateTime? hoje}) {
   if (o.status == 'Não Iniciada') return false;
-  if (_soDia(o.dataInicio).isAfter(_soDia(fim))) return false;
+  final ini = _soDia(inicio);
+  final f = _soDia(fim);
+  final previsto = _soDia(o.dataInicio);
+
   if (o.status == 'Concluída') {
-    final terminou = o.dataConclusao ?? o.dataPrevisaoTermino;
-    return !_soDia(terminou).isBefore(_soDia(inicio));
+    final terminou = _soDia(o.dataConclusao ?? o.dataPrevisaoTermino);
+    // Vale o que aconteceu: concluída antes da data de início prevista
+    // começou, no máximo, no dia em que terminou.
+    final comecou = previsto.isBefore(terminou) ? previsto : terminou;
+    return !terminou.isBefore(ini) && !comecou.isAfter(f);
   }
-  return true;
+
+  // Em Andamento / Pausada: está rodando agora, então começou no mais tardar hoje.
+  final h = _soDia(hoje ?? DateTime.now());
+  final comecou = previsto.isBefore(h) ? previsto : h;
+  return !comecou.isAfter(f);
 }
 
 class ResumoFinanceiro {
@@ -173,6 +194,7 @@ Future<Uint8List> gerarPdfRelatorioProgresso({
   required DateTime fim,
   String? obraTitulo,
   required List<Obra> obras,
+  List<Obra> obrasAIniciar = const [],
   DateTime? hoje,
   DateTime? geradoEm,
 }) {
@@ -184,13 +206,17 @@ Future<Uint8List> gerarPdfRelatorioProgresso({
     conteudo: [
       _filtros(inicio, fim, obraTitulo),
       if (obras.isEmpty)
-        _vazio('Nenhuma obra iniciada no período.')
+        _vazio(obrasAIniciar.isEmpty
+            ? 'Nenhuma obra iniciada no período.'
+            : 'Nenhuma obra em execução no período.')
       else ...[
         PdfService.secao('Resumo', [
-          PdfService.campo('Obras', '${obras.length}'),
+          PdfService.campo('Total de obras no relatório', '${obras.length + obrasAIniciar.length}'),
+          PdfService.campo('Em execução ou concluídas', '${obras.length}'),
           PdfService.campo('Em andamento', '${obras.where((o) => o.status == 'Em Andamento').length}'),
           PdfService.campo('Pausadas', '${obras.where((o) => o.status == 'Pausada').length}'),
           PdfService.campo('Concluídas', '${obras.where((o) => o.status == 'Concluída').length}'),
+          PdfService.campo('A iniciar', '${obrasAIniciar.length}'),
         ]),
         for (final o in obras)
           PdfService.secao(o.tituloDaObra, [
@@ -226,6 +252,26 @@ Future<Uint8List> gerarPdfRelatorioProgresso({
               ),
           ]),
       ],
+      if (obrasAIniciar.isNotEmpty)
+        PdfService.secao('Obras a iniciar (${obrasAIniciar.length})', [
+          _vazio('Cadastradas e ainda não iniciadas: não entram nos números acima. '
+              'A obra só começa depois que um orçamento dela é aprovado.'),
+          pw.SizedBox(height: 4),
+          _tabela(
+            cabecalho: ['#', 'Obra', 'Cliente', 'Início previsto'],
+            linhas: [
+              for (final (i, o) in obrasAIniciar.indexed)
+                ['${i + 1}', o.tituloDaObra, o.clienteNome, _data.format(o.dataInicio)],
+            ],
+            larguras: {
+              0: const pw.FixedColumnWidth(22),
+              1: const pw.FlexColumnWidth(3),
+              2: const pw.FlexColumnWidth(3),
+              3: const pw.FixedColumnWidth(70),
+            },
+            alinhamentos: {0: pw.Alignment.center},
+          ),
+        ]),
     ],
   );
 }
