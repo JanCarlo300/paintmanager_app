@@ -20,10 +20,10 @@ import 'src/modules/auth/dados/repositorios/repositorio_autenticacao_impl.dart';
 import 'src/modules/auth/apresentacao/controllers/usuario_controller.dart';
 import 'src/modules/auth/dados/repositorios/repositorio_usuario_impl.dart';
 
-// Imports de Dashboard
-import 'src/apresentacao/paginas/dashboard_page.dart';
-import 'src/apresentacao/controllers/dashboard_controller.dart';
-import 'src/apresentacao/controllers/notificacao_controller.dart';
+// Imports do Resumo Geral (tela inicial + sino de alertas)
+import 'src/modules/resumo/apresentacao/paginas/resumo_geral_page.dart';
+import 'src/modules/resumo/apresentacao/controllers/resumo_controller.dart';
+import 'src/modules/resumo/dados/repositorios/repositorio_resumo_impl.dart';
 
 // Imports de Clientes
 import 'src/modules/clientes/apresentacao/paginas/cliente_list_page.dart';
@@ -86,12 +86,9 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => TemaController(prefs)),
-        // Dashboard
+        // Resumo Geral — Supabase (carrega quando a tela abre)
         ChangeNotifierProvider(
-          create: (_) => DashboardController(),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => NotificacaoController(),
+          create: (_) => ResumoController(RepositorioResumoImpl()),
         ),
         // Auth & Usuários — Supabase
         ChangeNotifierProvider(
@@ -153,7 +150,7 @@ class PaintManagerApp extends StatelessWidget {
         '/recuperar-senha': (context) => RecuperarSenhaPage(),
         '/home': (context) => const GuardaRota(
               papeisPermitidos: ['Administrador', 'Gerente'],
-              child: DashboardPage(),
+              child: ResumoGeralPage(),
             ),
         '/redefinir-senha-obrigatoria': (context) => const RedefinirSenhaObrigatoriaPage(),
         '/clientes': (context) => const GuardaRota(

@@ -2,32 +2,49 @@ import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import '../controllers/dashboard_controller.dart';
-import '../controllers/notificacao_controller.dart';
-import '../widgets/card_app.dart';
-import '../widgets/card_destaque.dart';
-import '../widgets/drawer_comum.dart';
-import '../widgets/icone_modulo.dart';
-import '../widgets/logo_app.dart';
-import '../widgets/status_chip.dart';
-import '../widgets/tela_vazia.dart';
-import '../../core/tema/cores_app.dart';
-import '../../core/tema/medidas_app.dart';
+import '../controllers/resumo_controller.dart';
+import '../../dominio/entidades/alerta.dart';
+import '../../../../apresentacao/widgets/card_app.dart';
+import '../../../../apresentacao/widgets/card_destaque.dart';
+import '../../../../apresentacao/widgets/drawer_comum.dart';
+import '../../../../apresentacao/widgets/icone_modulo.dart';
+import '../../../../apresentacao/widgets/logo_app.dart';
+import '../../../../apresentacao/widgets/status_chip.dart';
+import '../../../../apresentacao/widgets/tela_vazia.dart';
+import '../../../../core/tema/cores_app.dart';
+import '../../../../core/tema/medidas_app.dart';
 
-class DashboardPage extends StatelessWidget {
-  const DashboardPage({super.key});
+/// Resumo Geral — tela inicial do Administrador e do Gerente.
+class ResumoGeralPage extends StatefulWidget {
+  const ResumoGeralPage({super.key});
+
+  @override
+  State<ResumoGeralPage> createState() => _ResumoGeralPageState();
+}
+
+class _ResumoGeralPageState extends State<ResumoGeralPage> {
+  @override
+  void initState() {
+    super.initState();
+    // Carrega ao abrir a tela, já com o usuário logado.
+    Future.microtask(() {
+      if (mounted) context.read<ResumoController>().carregarTudo();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    final notificacaoController = context.watch<NotificacaoController>();
-    final qtdAlertas = notificacaoController.alertas.length;
+    final controller = context.watch<ResumoController>();
+    final qtdAlertas = controller.alertas.length;
     final c = context.cores;
     final texto = Theme.of(context).textTheme;
 
     return Scaffold(
       drawer: const DrawerComum(),
-      body: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
+      body: RefreshIndicator(
+        onRefresh: controller.carregarTudo,
+        child: CustomScrollView(
+        physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
         slivers: [
           // ─── Cabeçalho: assinatura da marca (logo + nome do app) ───
           SliverAppBar(
@@ -50,7 +67,7 @@ class DashboardPage extends StatelessWidget {
                   textColor: c.onSecondary,
                   child: const Icon(Symbols.notifications_rounded),
                 ),
-                onPressed: () => _mostrarAlertas(context, notificacaoController),
+                onPressed: () => _mostrarAlertas(context, controller),
               ),
             ],
             flexibleSpace: FlexibleSpaceBar(
@@ -106,6 +123,7 @@ class DashboardPage extends StatelessWidget {
             ),
           ),
         ],
+        ),
       ),
     );
   }
@@ -121,7 +139,7 @@ class DashboardPage extends StatelessWidget {
   // 4 CARDS DE RESUMO
   // ═══════════════════════════════════════════
   Widget _buildResumoCards(BuildContext context) {
-    final dashboardCtrl = context.watch<DashboardController>();
+    final dashboardCtrl = context.watch<ResumoController>();
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -203,7 +221,7 @@ class DashboardPage extends StatelessWidget {
   // RESUMO FINANCEIRO
   // ═══════════════════════════════════════════
   Widget _buildResumoFinanceiro(BuildContext context) {
-    final dashboardCtrl = context.watch<DashboardController>();
+    final dashboardCtrl = context.watch<ResumoController>();
     final c = context.cores;
     if (dashboardCtrl.carregando) {
       return const Padding(
@@ -297,7 +315,7 @@ class DashboardPage extends StatelessWidget {
   // OBRAS RECENTES
   // ═══════════════════════════════════════════
   Widget _buildObrasRecentes(BuildContext context) {
-    final dashboardCtrl = context.watch<DashboardController>();
+    final dashboardCtrl = context.watch<ResumoController>();
     final c = context.cores;
     final texto = Theme.of(context).textTheme;
     if (dashboardCtrl.carregando) {
@@ -441,14 +459,17 @@ class DashboardPage extends StatelessWidget {
   // ═══════════════════════════════════════════
   // ALERTAS (RF013 simplificado)
   // ═══════════════════════════════════════════
-  void _mostrarAlertas(BuildContext context, NotificacaoController controller) {
+  IconData _iconeAlerta(TipoAlerta tipo) =>
+      tipo == TipoAlerta.obraAtrasada ? Symbols.construction_rounded : Symbols.request_quote_rounded;
+
+  void _mostrarAlertas(BuildContext context, ResumoController controller) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       builder: (ctx) => SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(Espaco.x5),
-          child: Consumer<NotificacaoController>(
+          child: Consumer<ResumoController>(
             builder: (context, ctrl, _) {
               final c = context.cores;
               final texto = Theme.of(context).textTheme;
@@ -467,7 +488,7 @@ class DashboardPage extends StatelessWidget {
                       ),
                     ],
                   ),
-                  if (ctrl.carregando)
+                  if (ctrl.carregandoAlertas)
                     const Padding(
                       padding: EdgeInsets.symmetric(vertical: Espaco.x6),
                       child: Center(child: CircularProgressIndicator()),
@@ -492,7 +513,7 @@ class DashboardPage extends StatelessWidget {
                             leading: CircleAvatar(
                               radius: 20,
                               backgroundColor: a.urgente ? c.errorSoft : c.warningSoft,
-                              child: Icon(a.icone, color: cor, size: TamanhoIcone.pequeno),
+                              child: Icon(_iconeAlerta(a.tipo), color: cor, size: TamanhoIcone.pequeno),
                             ),
                             title: Text(a.titulo, style: texto.bodyMedium?.copyWith(fontWeight: FontWeight.w700)),
                             subtitle: Text(
