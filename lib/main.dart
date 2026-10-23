@@ -71,16 +71,17 @@ void main() async {
   // Carrega variáveis de ambiente
   await dotenv.load(fileName: '.env');
 
-  // Inicializa Supabase (único backend para Auth & Usuários)
-  await Supabase.initialize(
-    url: SupabaseConfig.url,
-    anonKey: SupabaseConfig.anonKey,
-  );
-
-  await initializeDateFormatting('pt_BR', null);
-
-  // Aparência escolhida em Configurações (Automático, Claro ou Escuro).
-  final prefs = await SharedPreferences.getInstance();
+  // Supabase (sessão salva), datas em português e a aparência escolhida em
+  // Configurações não dependem uns dos outros: carregam ao mesmo tempo.
+  final iniciando = await Future.wait([
+    Supabase.initialize(
+      url: SupabaseConfig.url,
+      anonKey: SupabaseConfig.anonKey,
+    ),
+    initializeDateFormatting('pt_BR', null),
+    SharedPreferences.getInstance(),
+  ]);
+  final prefs = iniciando[2] as SharedPreferences;
 
   runApp(
     MultiProvider(
