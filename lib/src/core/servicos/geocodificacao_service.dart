@@ -17,6 +17,14 @@ class Coordenada {
 /// falhas em ruas novas). Ele serve de ponto de partida para o "Confirmar no
 /// mapa", onde o usuário arrasta o pino até o lote — esse sim é o ponto exato.
 class GeocodificacaoService {
+  /// [cliente] e [intervalo] permitem testar sem internet e sem espera.
+  GeocodificacaoService({http.Client? cliente, this.intervalo = const Duration(milliseconds: 1100)})
+      : _cliente = cliente;
+  final http.Client? _cliente;
+
+  /// Espera entre tentativas (política do Nominatim: 1 requisição por segundo).
+  final Duration intervalo;
+
   static const _userAgent = 'PaintManagerApp/1.0 (TFC UniRV; contato: jancarloalmeida36@gmail.com)';
   static const _baseUrl = 'https://nominatim.openstreetmap.org/search';
 
@@ -70,7 +78,7 @@ class GeocodificacaoService {
     ];
 
     for (var i = 0; i < tentativas.length; i++) {
-      if (i > 0) await Future<void>.delayed(const Duration(milliseconds: 1100));
+      if (i > 0) await Future<void>.delayed(intervalo);
       final coordenada = await tentativas[i]();
       if (coordenada != null) return coordenada;
     }
@@ -93,8 +101,8 @@ class GeocodificacaoService {
         'countrycodes': 'br',
       });
 
-      final resposta = await http
-          .get(uri, headers: {'User-Agent': _userAgent})
+      final cabecalhos = {'User-Agent': _userAgent};
+      final resposta = await (_cliente?.get(uri, headers: cabecalhos) ?? http.get(uri, headers: cabecalhos))
           .timeout(const Duration(seconds: 10));
 
       if (resposta.statusCode != 200) return null;

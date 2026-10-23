@@ -111,6 +111,12 @@ void main() {
       expect(obraEmExecucaoNoPeriodo(semDataConclusao, inicio, fim), isTrue);
     });
 
+    test('obraAIniciarAte: Não Iniciada cadastrada até o fim do período', () {
+      final o = obra('Não Iniciada', DateTime(2026, 11, 14), DateTime(2026, 11, 15));
+      expect(obraAIniciarAte(o, fim), isTrue); // início previsto em novembro, cadastrada antes
+      expect(obraAIniciarAte(obra('Em Andamento', DateTime(2026, 10, 1), DateTime(2026, 10, 9)), fim), isFalse);
+    });
+
     test('Concluída antes do início previsto entra pelo dia da conclusão', () {
       // Caso real: "Pintura Quarto", início previsto 07/11, concluída 19/10.
       final o = obra('Concluída', DateTime(2026, 11, 7), DateTime(2026, 11, 30), concluida: DateTime(2026, 10, 19));

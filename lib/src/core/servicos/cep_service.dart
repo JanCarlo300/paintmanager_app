@@ -22,6 +22,10 @@ class EnderecoCep {
 /// preenchimento automático dos sites de compra. Os erros chegam como
 /// `String`, prontas para mostrar ao usuário.
 class CepService {
+  /// [cliente] permite testar sem internet (MockClient); no app fica nulo.
+  CepService({http.Client? cliente}) : _cliente = cliente;
+  final http.Client? _cliente;
+
   static String soDigitos(String cep) => cep.replaceAll(RegExp(r'[^0-9]'), '');
 
   Future<EnderecoCep> buscar(String cep) async {
@@ -30,8 +34,8 @@ class CepService {
 
     final http.Response resposta;
     try {
-      resposta = await http
-          .get(Uri.parse('https://viacep.com.br/ws/$digitos/json/'))
+      final uri = Uri.parse('https://viacep.com.br/ws/$digitos/json/');
+      resposta = await (_cliente?.get(uri) ?? http.get(uri))
           .timeout(const Duration(seconds: 10));
     } catch (_) {
       throw 'Não foi possível consultar o CEP. Confira a internet.';
