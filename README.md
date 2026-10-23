@@ -417,12 +417,15 @@ flutter test
 flutter test --coverage
 ```
 
-### Testes Existentes (114)
+### Testes Existentes (175)
 
 | Área | O que cobre |
 |---|---|
 | Modelos | `UsuarioModelo`, `ClienteModelo`, `ItemMaterial` |
-| Regras | `ValidadorCpf`, `FiltroLista`, regras dos relatórios |
+| Regras | `ValidadorCpf`, `ValidadorCnpj`/máscara CPF-CNPJ, `ValidadorSenha`, `FiltroLista`, regras dos relatórios (progresso e "obras a iniciar"), alertas do Resumo Geral, endereço da obra |
+| Controllers (mocktail) | `ObraController` (concluída definitiva, início só com orçamento aprovado, checklist, excluir), `ResumoController`, `ClienteController` |
+| Serviços (HTTP falso) | CEP (ViaCEP), geocodificação (Nominatim), leitura de link/coordenadas do Google Maps |
+| Componentes | `StatusChip`, `ListaPaginada` |
 | PDFs | Lista de materiais, relatório financeiro e de progresso |
 | Tema | Contraste WCAG (≥ 4,5:1) nos temas claro e escuro, `status_visual`, `StatusChip`, `TemaController`, cores dos gráficos |
 

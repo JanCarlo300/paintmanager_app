@@ -12,12 +12,12 @@ Base: código atual da branch `main`, scripts em `db/`, testes em `test/` e o re
 | Requisitos funcionais (RF001–RF013) | **13 completos · 0 parciais · 0 não implementados** (atualizado em 15/10) |
 | Backlog de 02/10 (itens 1.x, 2.x, 3.x) | **Concluído** — 1.1 e 2.2 encerrados sem alteração por decisão do Jan; 1.2, 2.1, 2.3, 3.1 e 3.2 entregues e aprovados |
 | Plano de ajustes de outubro (Etapas 1 a 8.1) | **Todas entregues e aprovadas em 15/10** |
-| Testes automatizados | **114 testes passando**: modelos, validador de CPF, filtros das listas, item de material, PDFs, regras dos relatórios e, desde a identidade visual, contraste WCAG dos dois temas, status, `StatusChip`, `TemaController` e cores dos gráficos. Ainda sem testes de repositórios e controllers |
+| Testes automatizados | **175 testes passando** (22/10: + controllers com mocktail, serviços com HTTP falso, CNPJ, alertas, endereço, paginação): modelos, validador de CPF, filtros das listas, item de material, PDFs, regras dos relatórios e, desde a identidade visual, contraste WCAG dos dois temas, status, `StatusChip`, `TemaController` e cores dos gráficos. Ainda sem testes de repositórios e controllers |
 | Identidade visual | **Nova identidade do manual da marca concluída em 18/10** (Fases 0–6), com modo escuro; zero cores/fontes fixas fora de `core/tema` |
 | Backend | Supabase (PostgreSQL + Auth + RLS + Edge Function + Realtime) |
 | Segurança no banco | **Matriz de funções aplicada por RLS em todas as tabelas** e login sem leitura anônima (16/10) |
 | Build Android | APK debug gerando e instalando no Samsung A55 (se o adb não achar o celular, desligar a Ancoragem USB) |
-| Cronograma | A Semana 10 (28/09–03/10, "V&V finalizada") passou com cobertura de testes baixa; desde então subiu de 4 para 114 testes |
+| Cronograma | A Semana 10 (28/09–03/10, "V&V finalizada") passou com cobertura de testes baixa; desde então subiu de 4 para 175 testes |
 
 **Desde o relatório de 01/10:** todo o backlog do brief e todas as etapas do plano de ajustes foram entregues e aprovados por você.
 
@@ -112,7 +112,8 @@ O menu lateral e os atalhos trocavam de tela substituindo a anterior, então o v
 
 ### 4.3 Testes (V&V)
 - **114 testes unitários passando**: modelos de Usuário e Cliente, `ValidadorCpf`, `FiltroLista`, `ItemMaterial`, PDF da Lista de Materiais, regras/PDFs dos relatórios e os testes do tema (contraste WCAG ≥ 4,5:1 nos temas claro e escuro, `status_visual`, `StatusChip`, `TemaController`, cores dos gráficos).
-- **Ainda sem testes** de repositórios (Supabase), controllers e telas, nem de `ValidadorSenha` e `GeocodificacaoService`.
+- ✅ **22/10:** testes de controllers com repositório falso (mocktail: `ObraController`, `ResumoController`, `ClienteController`), serviços externos com internet falsa (CEP, geocodificação, link do Maps), `ValidadorSenha`, `ValidadorCnpj`, alertas, endereço da obra e `ListaPaginada`.
+- **Sem teste unitário:** os repositórios do Supabase (chamam o banco direto; só cabem em teste de integração contra um banco de teste) e as telas inteiras.
 - Os testes manuais de cada etapa foram feitos por você no Samsung A55 e estão registrados nas tabelas acima.
 
 ### 4.4 Documentação e repositório
@@ -149,6 +150,12 @@ Troca da paleta "Sahara" pelo manual da marca aprovado em 15/10, seguindo `kit_i
 - **Arquivos:** removido `db/rls_policy_usuario.sql` (reabria a leitura anônima); scripts do TFC I em `db/historico/`; relatório de QA antigo em `docs/historico/`.
 - **Arquitetura:** novo módulo `resumo` (entidades, repositório, `ResumoController`) no lugar dos controllers que consultavam o banco direto da tela; o Resumo Geral agora carrega ao abrir (antes, só na abertura do app, podendo ficar zerado) e tem "puxar para atualizar".
 
+### 4.8 Testes, CNPJ, paginação e Gradle (22/10)
+- **Testes:** de 115 para **175** (ver 4.3).
+- **CNPJ no cliente:** o campo "CPF ou CNPJ" formata sozinho (até 11 números = CPF, a partir do 12º = CNPJ) e valida os dois pelo Módulo 11, no app (`ValidadorCnpj`, `ValidadorDocumento`, `DocumentoInputFormatter`) e no banco (`db/cliente_cnpj.sql`, função `cnpj_valido`).
+- **Paginação:** Clientes, Obras, Orçamentos e Usuários mostram 20 por vez com "Mostrar mais" (`ListaPaginada`); filtros, busca e contagens continuam sobre a lista inteira. Limite: o app ainda baixa todos os registros do banco — com milhares de obras, levar filtros e paginação para o Supabase (`range()` + contagem no banco).
+- **Gradle:** Gradle 8.14 → 9.1.0, Android Gradle Plugin 8.11.1 → 9.0.1, Kotlin 2.2.20 → 2.3.20 (avisos do Flutter de fim de suporte); `kotlinOptions` migrado para `compilerOptions`; app migrado para o **Kotlin embutido do AGP 9** (sem aplicar o plugin de Kotlin; versão fixada em 2.3.20 no `settings.gradle.kts`) e `shared_preferences_android` atualizado para 2.5.2. O build do APK sai sem nenhum aviso. O aviso "SDK XML version 4" é das ferramentas do Android Studio instaladas no notebook, não do projeto.
+
 ---
 
 ## 5. Ações suas pendentes
@@ -167,7 +174,7 @@ Troca da paleta "Sahara" pelo manual da marca aprovado em 15/10, seguindo `kit_i
 1. **Ampliar os testes:** `ValidadorSenha`, repositórios com `mocktail`, controllers de Obra e de alertas.
 2. **APK de release** assinado (chave fora do git).
 3. ~~Documentação: README por módulo e `.env.example`~~ ✅ feito em 18/10.
-4. **Melhorias opcionais:** aceitar e validar CNPJ no cliente; paginação das listas.
+4. ~~Melhorias opcionais: CNPJ no cliente; paginação das listas~~ ✅ 22/10.
 
 ---
 
