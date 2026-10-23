@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../dominio/entidades/usuario.dart';
 import '../controllers/usuario_controller.dart';
+import '../../../../apresentacao/widgets/lista_paginada.dart';
 import '../../../../apresentacao/widgets/card_app.dart';
 import '../../../../apresentacao/widgets/chips_filtro_status.dart';
 import '../../../../apresentacao/widgets/drawer_comum.dart';
@@ -152,7 +153,11 @@ class _UsuarioListPageState extends State<UsuarioListPage> {
             if (usuariosFiltrados.isEmpty)
               _buildVazio()
             else
-              ...usuariosFiltrados.map((u) => _buildUsuarioCard(u, controller)),
+              ListaPaginada<Usuario>(
+                key: ValueKey('$_termoBusca|$_filtroAtual'),
+                itens: usuariosFiltrados,
+                construir: (u) => _buildUsuarioCard(u, controller),
+              ),
           ],
         ),
       ),

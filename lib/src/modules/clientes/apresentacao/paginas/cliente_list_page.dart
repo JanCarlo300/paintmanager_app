@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../dominio/entidades/cliente.dart';
 import '../controllers/cliente_controller.dart';
 import '../../../obras/apresentacao/controllers/obra_controller.dart';
+import '../../../../apresentacao/widgets/lista_paginada.dart';
 import '../../../../apresentacao/widgets/card_app.dart';
 import '../../../../apresentacao/widgets/chips_filtro_status.dart';
 import '../../../../apresentacao/widgets/drawer_comum.dart';
@@ -165,7 +166,11 @@ class _ClienteListPageState extends State<ClienteListPage> {
                 if (clientesFiltrados.isEmpty)
                   _buildVazio()
                 else
-                  ...clientesFiltrados.map((cl) => _buildClienteCard(cl, clienteCtrl, clienteIdsComObraAtiva)),
+                  ListaPaginada<Cliente>(
+                    key: ValueKey('$_termoBusca|$_filtroAtual'),
+                    itens: clientesFiltrados,
+                    construir: (cl) => _buildClienteCard(cl, clienteCtrl, clienteIdsComObraAtiva),
+                  ),
               ],
             ),
           );

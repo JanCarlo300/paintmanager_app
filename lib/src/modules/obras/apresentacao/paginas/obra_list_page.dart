@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../dominio/entidades/obra.dart';
 import '../controllers/obra_controller.dart';
 import 'obra_detalhes_page.dart';
+import '../../../../apresentacao/widgets/lista_paginada.dart';
 import '../../../../apresentacao/widgets/card_app.dart';
 import '../../../../apresentacao/widgets/drawer_comum.dart';
 import '../../../../apresentacao/widgets/status_chip.dart';
@@ -218,7 +219,11 @@ class _ObraListPageState extends State<ObraListPage> {
                         : "Cadastre a primeira obra pelo botão Nova Obra.",
               )
             else
-              ...filtradas.map((obra) => _buildObraCard(obra, formatoData)),
+              ListaPaginada<Obra>(
+                key: ValueKey(Object.hash(_termoBusca, _statusSelecionado, _filtro)),
+                itens: filtradas,
+                construir: (obra) => _buildObraCard(obra, formatoData),
+              ),
           ],
         ),
       ),

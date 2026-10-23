@@ -7,6 +7,7 @@ import '../../dominio/entidades/orcamento.dart';
 import '../../../clientes/dominio/entidades/cliente.dart';
 import '../controllers/orcamento_controller.dart';
 import '../../../clientes/apresentacao/controllers/cliente_controller.dart';
+import '../../../../apresentacao/widgets/lista_paginada.dart';
 import '../../../../apresentacao/widgets/card_app.dart';
 import '../../../../apresentacao/widgets/drawer_comum.dart';
 import '../../../../apresentacao/widgets/status_chip.dart';
@@ -245,7 +246,11 @@ _Orçamento gerado pelo PaintManager_
             if (filtrados.isEmpty)
               _buildVazio()
             else
-              ...filtrados.map((orc) => _buildOrcamentoCard(orc, controller, clientes)),
+              ListaPaginada<Orcamento>(
+                key: ValueKey(Object.hash(_termoBusca, _filtroAtual, _filtro)),
+                itens: filtrados,
+                construir: (orc) => _buildOrcamentoCard(orc, controller, clientes),
+              ),
           ],
         ),
       ),
