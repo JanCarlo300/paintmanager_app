@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:provider/provider.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
@@ -7,7 +8,8 @@ import '../controllers/cliente_controller.dart';
 import '../../../../apresentacao/widgets/card_app.dart';
 import '../../../../core/tema/cores_app.dart';
 import '../../../../core/tema/medidas_app.dart';
-import '../../../../core/validadores/validador_cpf.dart';
+import '../../../../core/validadores/documento_input_formatter.dart';
+import '../../../../core/validadores/validador_cnpj.dart';
 
 class ClienteFormPage extends StatefulWidget {
   final Cliente? clienteParaEdicao;
@@ -28,7 +30,6 @@ class _ClienteFormPageState extends State<ClienteFormPage> {
   late TextEditingController _documentoController;
 
   final _telefoneMask = MaskTextInputFormatter(mask: '(##) #####-####', filter: {"#": RegExp(r'[0-9]')});
-  final _documentoMask = MaskTextInputFormatter(mask: '###.###.###-##', filter: {"#": RegExp(r'[0-9]')});
 
   @override
   void initState() {
@@ -38,7 +39,8 @@ class _ClienteFormPageState extends State<ClienteFormPage> {
     _emailController = TextEditingController(text: c?.email);
     _telefoneController = TextEditingController(text: c?.telefone);
     _enderecoController = TextEditingController(text: c?.endereco);
-    _documentoController = TextEditingController(text: c?.cpfOuCnpj);
+    _documentoController = TextEditingController(
+        text: c == null || c.cpfOuCnpj.isEmpty ? '' : ValidadorDocumento.formatar(c.cpfOuCnpj));
   }
 
   @override
@@ -51,11 +53,8 @@ class _ClienteFormPageState extends State<ClienteFormPage> {
     super.dispose();
   }
 
-  String? _validarDocumento(String? valor) {
-    // Clientes antigos podem ter CNPJ (14 dígitos) gravado; só o CPF é validado.
-    if (ValidadorCpf.apenasDigitos(valor ?? '').length == 14) return null;
-    return ValidadorCpf.mensagemErro(valor, obrigatorio: false);
-  }
+  // CPF (11 números) ou CNPJ (14), opcional — ambos pelo Módulo 11.
+  String? _validarDocumento(String? valor) => ValidadorDocumento.mensagemErro(valor);
 
   void _salvar() async {
     if (_formKey.currentState!.validate()) {
@@ -133,7 +132,7 @@ class _ClienteFormPageState extends State<ClienteFormPage> {
                       _telefoneController,
                       Symbols.call_rounded,
                       "(00) 00000-0000",
-                      mask: _telefoneMask,
+                      formatter: _telefoneMask,
                       keyboardType: TextInputType.phone,
                     ),
                     const SizedBox(height: Espaco.x5),
@@ -141,8 +140,8 @@ class _ClienteFormPageState extends State<ClienteFormPage> {
                       "CPF ou CNPJ (opcional)",
                       _documentoController,
                       Symbols.badge_rounded,
-                      "000.000.000-00",
-                      mask: _documentoMask,
+                      "CPF ou CNPJ",
+                      formatter: DocumentoInputFormatter(),
                       keyboardType: TextInputType.number,
                       validator: _validarDocumento,
                     ),
@@ -186,7 +185,7 @@ class _ClienteFormPageState extends State<ClienteFormPage> {
     IconData icon,
     String hint, {
     TextInputType? keyboardType,
-    MaskTextInputFormatter? mask,
+    TextInputFormatter? formatter,
     String? Function(String?)? validator,
   }) {
     return Column(
@@ -197,7 +196,7 @@ class _ClienteFormPageState extends State<ClienteFormPage> {
         TextFormField(
           controller: controller,
           keyboardType: keyboardType,
-          inputFormatters: mask != null ? [mask] : [],
+          inputFormatters: formatter != null ? [formatter] : [],
           validator: validator ?? (value) => value == null || value.isEmpty ? "Campo obrigatório" : null,
           decoration: InputDecoration(
             hintText: hint,
