@@ -1,0 +1,41 @@
+﻿PaintManager - gerado em 24/10/2026 15:37
+Commit avaliado: af9dd31 - docs: README e relat├│rio de status com testes, CNPJ, pagina├º├úo e Gradle (23/10/2026 00:40)
+
+[ÔêÜ] Flutter (Channel stable, 3.47.3, on Microsoft Windows [vers├åo 10.0.26300.9711], locale pt-BR) [223ms]
+    ÔÇó Flutter version 3.47.3 on channel stable at C:\Users\janca\develop\flutter
+    ÔÇó Upstream repository https://github.com/flutter/flutter.git
+    ÔÇó Framework revision e8113bf456 (7 weeks ago), 2026-09-04 13:20:08 -0700
+    ÔÇó Engine revision 06a2e2a110
+    ÔÇó Dart version 3.13.3
+    ÔÇó DevTools version 2.60.0
+    ÔÇó Feature flags: enable-web, enable-linux-desktop, enable-macos-desktop, enable-windows-desktop, enable-android, enable-ios, cli-animations, enable-native-assets, enable-record-use, enable-swift-package-manager, omit-legacy-version-file, enable-lldb-debugging, enable-uiscene-migration
+
+[ÔêÜ] Windows Version (Windows 11 or higher, 26H2, 2009) [936ms]
+
+[!] Android toolchain - develop for Android devices (Android SDK version 36.0.0) [2,9s]
+    ÔÇó Android SDK at C:\Users\janca\AppData\Local\Android\sdk
+    ÔÇó Emulator version unknown
+    ÔÇó Platform android-36, build-tools 36.0.0
+    ÔÇó Java binary at: C:\Program Files\Eclipse Adoptium\jdk-17.0.20.101-hotspot\bin\java
+      This JDK is specified by the JAVA_HOME environment variable.
+      To manually set the JDK path, use: `flutter config --jdk-dir="path/to/jdk"`.
+    ÔÇó Java version OpenJDK Runtime Environment Temurin-17.0.20.1+1 (build 17.0.20.1+1)
+    ! Some Android licenses not accepted. To resolve this, run: flutter doctor --android-licenses
+
+[ÔêÜ] Chrome - develop for the web [240ms]
+    ÔÇó Chrome at C:\Program Files\Google\Chrome\Application\chrome.exe
+
+[X] Visual Studio - develop Windows apps [239ms]
+    X Visual Studio not installed; this is necessary to develop Windows apps.
+      Download at https://visualstudio.microsoft.com/downloads/.
+      Please install the "Desktop development with C++" workload, including all of its default components
+
+[ÔêÜ] Connected device (3 available) [423ms]
+    ÔÇó Windows (desktop) ÔÇó windows ÔÇó windows-x64    ÔÇó Microsoft Windows [vers├åo 10.0.26300.9711]
+    ÔÇó Chrome (web)      ÔÇó chrome  ÔÇó web-javascript ÔÇó Google Chrome 155.0.8059.81
+    ÔÇó Edge (web)        ÔÇó edge    ÔÇó web-javascript ÔÇó Microsoft Edge 156.0.4314.42
+
+[ÔêÜ] Network resources [1.782ms]
+    ÔÇó All expected network resources are available.
+
+! Doctor found issues in 2 categories.

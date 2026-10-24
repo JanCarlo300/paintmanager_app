@@ -1,0 +1,102 @@
+﻿hash;data;mensagem
+b987e26;09/02/2026;Initial commit
+85e2f98;11/02/2026;estrutura inicial do projeto Flutter
+163efe5;11/02/2026;merge: resolver conflito do README
+c8a939e;18/02/2026;feat: base do sistema vinculada ao firebase e login funcional (RF001)
+8e2c37f;18/02/2026;feat: CRUD completo de Clientes (Cadastro e Listagem em tempo real)
+1367e6a;06/03/2026;feat: ajustes do sistema vinculado ao firebase e login de usuário com cadastro
+5bf8e36;08/03/2026;feat: ajutes no cadastro de usuário, agora ele consegue redefinir sua própria senha e fazer login depois de um adm cadastrar ele
+4cef982;09/03/2026;feat: padronizar navegação com sidebar única e telas de CRUD de clientes
+9a227da;12/03/2026;feat: Financeiro, Relatórios (Dashboard Analítico) e responsividade mobile - Módulo Financeiro completo (transações, CRUD, dashboard) - Feature Relatórios com gráficos fl_chart (barras, pizza, KPIs) - Correção de responsividade em todas as telas para mobile - Headers verticais, busca full-width, padding 16px - Rodapé de orçamento responsivo (Column) - Drawer corrigido (overflow com Expanded+ListView)
+b58e5ac;23/03/2026;feat/ui: Redesign das telas de usuários, orçamentos e relatórios
+7d3a8ec;15/04/2026;chore: atualizar gitignore e dependencias supabase_flutter, mocktail e dotenv
+5af7285;15/04/2026;feat(core): adicionar configuracao centralizada do supabase (SupabaseConfig via dotenv)
+99d5f07;15/04/2026;feat(auth): migracao completa para supabase auth e public.usuario
+ecfabd6;15/04/2026;feat(clientes): refatoracao para clean architecture e supabase
+4d86334;15/04/2026;feat(obras): refatoracao para clean architecture e supabase
+e524491;15/04/2026;feat(orcamentos): refatoracao para clean architecture e supabase
+45a634f;15/04/2026;feat(ui): atualizar main.dart, dashboard, drawer e paginas compartilhadas
+144fb08;15/04/2026;feat(db): adicionar scripts sql de migracao supabase com rls
+303f7eb;15/04/2026;test(auth,clientes): adicionar testes unitarios dos modelos e relatorio qa
+d234111;16/04/2026;refactor(core): remocao completa do firebase, exclusao de pastas legadas e refatoracao final da ui de relatorios
+ad7e7a0;17/04/2026;refactor(ui): estabilizar estado dos dropdowns nos formularios
+5852d33;22/04/2026;fix(clientes): implementa parsing seguro (bulletproof) e logs de excecao no repositorio
+cb3de6f;05/06/2026;feat(obras,orcamentos): reformulacao completa dos formularios com supabase
+76f20e6;05/06/2026;versão sem erros, mais tem coisas pra ataulizar
+5a6ee3b;05/06/2026;refactor(arch): reorganizacao completa da arquitetura — remocao total do firebase
+5763d16;21/09/2026;chore: checkpoint antes do RF002 (recuperar senha)
+475746d;22/09/2026;feat(auth): script SQL Fase A do RF002 - funcao buscar_email_por_login
+7c344ef;24/09/2026;feat(auth): RF002 - recuperacao de senha por codigo e primeiro acesso reforcado
+673367b;25/09/2026;fix(auth): corrige troca de sessao ao cadastrar usuario (Edge Function)
+8fd3537;25/09/2026;fix: aplica correcoes rapidas do code review (SDK, login, arquivo duplicado)
+30e6ea8;25/09/2026;fix(android): remove residuo do Firebase do build Android
+8678ebf;25/09/2026;fix(tema): aplica a paleta Sahara no app inteiro (item 7 do code review)
+27e2424;25/09/2026;chore: remove menu_lateral.dart (widget orfao, nunca referenciado)
+64d048b;25/09/2026;feat(auth): controle de acesso por funcao (item 5 do roadmap)
+7d3a591;25/09/2026;feat(obras): RF010 - alocar equipe a obra
+d7afa98;25/09/2026;feat(dashboard): RF013 simplificado - alertas computados (sem push)
+34581b5;25/09/2026;fix(android): atualiza AGP e Kotlin para a versao minima exigida pelo Flutter instalado
+961d18e;02/10/2026;feat(obras): item 2.1 - Funcionario so acessa obras em que esta alocado
+ce93609;02/10/2026;chore(android): ignora pasta de build do modulo android
+0699a76;02/10/2026;feat(obras): item 3.2 - localizacao da obra via OpenStreetMap (gratuito)
+1c7b326;02/10/2026;feat(obras): item 2.1 - reforca no banco o acesso do funcionario por alocacao
+b8216e3;12/10/2026;feat(obras): item 2.3 - chat da obra em tempo real no lugar das Anotacoes
+ae19f23;12/10/2026;fix(navegacao): botao voltar do Android volta a tela anterior em vez de fechar o app
+9aafeaf;13/10/2026;fix(clientes): corrige erro varchar(45) ao salvar cliente e torna CPF/CNPJ opcional
+1d5b663;13/10/2026;feat(cpf): item 3.1 - validacao de CPF pelo Modulo 11 no app e no banco
+a293c77;13/10/2026;fix(db): amplia colunas VARCHAR(45) de obra e usuario que recebem texto livre
+d075ded;15/10/2026;feat(orcamentos): etapa 1 - status do orcamento com 3 opcoes e obra so inicia com orcamento aprovado (1.2)
+f36bb1b;15/10/2026;chore(db): script de limpeza das tabelas antigas do TFC I
+c862dfb;15/10/2026;feat(busca): etapa 2 - campo de busca com filtro no lugar das caixas seletoras
+51d9fb3;15/10/2026;feat(ui): etapa 3 - calendario em portugues e com as cores do app
+c085b3a;15/10/2026;fix(ui): menu lateral chama a tela inicial de "Resumo Geral" em vez de "Dashboard"
+b84c1b9;15/10/2026;feat(listas): etapa 4 - filtros e ordenacao nas listas de Obras e Orcamentos
+b617267;15/10/2026;feat(obras): etapa 5 - obra concluida fica travada
+b010139;15/10/2026;feat(obras): etapa 6 - "Materiais faltantes" vira "Lista de materiais"
+ccf2ef5;15/10/2026;refactor(obras): lista de materiais com uma linha de texto por item
+b1a463d;15/10/2026;revert(obras): volta a lista de materiais com descricao, quantidade e unidade
+428a1bc;15/10/2026;fix(obras): adiciona botao "Editar obra" nos detalhes da obra
+c121e37;15/10/2026;feat(obras): etapa 6b - lista de materiais nos detalhes e PDF da lista (8.2)
+573e078;15/10/2026;chore: registra o plugin printing nas plataformas desktop
+9ec919c;15/10/2026;feat(obras): etapa 7 - aviso de mensagens novas do chat na tela de Obras
+16ec62a;15/10/2026;fix(obras): obras do Funcionario sumiam ao reabrir o app
+27e1269;15/10/2026;feat(obras): avisos do chat atualizam em tempo real na tela de Obras
+4c7ee01;15/10/2026;feat(financeiro): RF011 - receita/despesa ligada de verdade a obra
+546446e;15/10/2026;feat(relatorios): etapa 8.1 - relatorios Financeiro e de Progresso em PDF (RF012)
+dfaa3fd;15/10/2026;fix(relatorios,financeiro): ajustes apos teste da etapa 8.1 e do RF011
+86a535a;15/10/2026;fix(db): conferencia da limpeza das tabelas antigas num resultado so
+7193710;15/10/2026;chore(db): diagnostico da tabela funcionario e de colunas sem uso em orcamento
+4417d40;15/10/2026;chore(db): limpeza da tabela funcionario e da coluna orcamento.id_etapas
+0174ce6;16/10/2026;docs: adiciona historico do projeto e relatorio de status
+19c5f31;16/10/2026;fix(seguranca): login deixa de ler a tabela usuario sem sessao (RF002 fase B)
+5619247;16/10/2026;fix(seguranca): permissoes por funcao aplicadas no banco via RLS
+42e6ffa;16/10/2026;feat(configuracoes): tela Minha conta e troca de senha
+2f2b5c0;16/10/2026;chore(tema): fase 0 - kit, assets e dependências da nova identidade visual
+03d9b99;16/10/2026;feat(tema): fase 1 - tema claro/escuro, tipografia e medidas do manual da marca
+86b59f4;16/10/2026;feat(tema): fase 2 - componentes StatusChip, CardApp, TelaVazia e logo
+195c1f0;16/10/2026;feat(marca): fase 3 - ícone do app, logo no login, menu e PDFs
+b6f0e48;16/10/2026;refactor(estrutura): fase 4 lote A - menu, busca, filtros e configurações na identidade visual nova
+81b7a90;16/10/2026;refactor(auth): fase 4 lote B - login, senhas e usuários na identidade visual nova
+d929a17;16/10/2026;refactor(dashboard): fase 4 lote C - Resumo Geral na identidade visual nova
+027fe47;16/10/2026;fix(financeiro): selos de categoria e status quebram linha em vez de estourar
+14ee8fd;16/10/2026;refactor(clientes): fase 4 lote D - lista e formulário de clientes na identidade visual nova
+1468218;16/10/2026;refactor(obras): fase 4 lote E - lista, detalhes, chat e formulário de obras na identidade visual nova
+d243033;16/10/2026;refactor(orcamentos): fase 4 lote F - lista e formulário de orçamentos na identidade visual nova
+f42c222;18/10/2026;refactor(financeiro): fase 4 lote G - painel e formulário financeiro na identidade visual nova
+c4829a4;18/10/2026;refactor(relatorios): fase 4 lote H - relatórios e gráficos na identidade visual nova
+2c5f78a;18/10/2026;feat(tema): fase 5 - modo escuro automático e tela de Configurações
+d0a71d5;18/10/2026;docs(tema): fase 6 - documentação da identidade visual e testes de contraste
+209b75f;18/10/2026;Merge da branch feat/identidade-visual: nova identidade visual (Fases 0 a 6)
+03418ca;21/10/2026;docs: README por módulo, .env.example e chaves de administrador fora do APK
+eb6aee2;21/10/2026;feat(relatorios): obras a iniciar, filtro Tudo e regra de progresso corrigida
+f6cde64;21/10/2026;feat(obras): endereço com CEP, ponto exato no mapa e exclusão de obra
+03e8786;21/10/2026;chore(db): scripts de endereço e ponto exato da obra e diagnóstico do relatório
+b197e6b;22/10/2026;refactor: limpeza de código sem uso e de logs com dados pessoais
+ebcec81;22/10/2026;refactor(resumo): módulo resumo com repositório para o Resumo Geral e alertas
+1551857;22/10/2026;chore(db): remove colunas sem uso e organiza scripts e documentação
+5894ecd;23/10/2026;test: controllers com mocktail, serviços com HTTP falso e regras novas
+87854da;23/10/2026;feat(clientes): CPF ou CNPJ com máscara automática e validação do CNPJ
+c8d0494;23/10/2026;feat(listas): paginação com "Mostrar mais" em Clientes, Obras, Orçamentos e Usuários
+f5e7ec8;23/10/2026;build(android): Gradle 9.1, AGP 9.0.1, Kotlin 2.3.20 e Kotlin embutido
+af9dd31;23/10/2026;docs: README e relatório de status com testes, CNPJ, paginação e Gradle
+aefb4de;24/10/2026;test(clientes): remove import desnecessário apontado pelo flutter analyze

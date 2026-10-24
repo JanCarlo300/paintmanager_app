@@ -1,0 +1,7 @@
+﻿PaintManager - gerado em 24/10/2026 15:37
+Commit avaliado: af9dd31 - docs: README e relat├│rio de status com testes, CNPJ, pagina├º├úo e Gradle (23/10/2026 00:40)
+
+Flutter 3.47.3 ÔÇó channel stable ÔÇó https://github.com/flutter/flutter.git
+Framework ÔÇó revision e8113bf456 (7 weeks ago) ÔÇó 2026-09-04 13:20:08 -0700
+Engine ÔÇó hash 0e228ec8c8d2abc9fcf1d053e8a40665bb859ec7 (revision 06a2e2a110) (1 months ago) ÔÇó 2026-09-03 16:07:13.000Z
+Tools ÔÇó Dart 3.13.3 ÔÇó DevTools 2.60.0

@@ -1,0 +1,9 @@
+﻿PaintManager - gerado em 24/10/2026 16:10
+Commit avaliado: aefb4de - test(clientes): remove import desnecessário apontado pelo flutter analyze (24/10/2026 16:07)
+
+Arquivos medidos: 35
+Linhas executáveis: 1123
+Linhas cobertas pelos testes: 870
+Cobertura total: 77.5%
+
+Obs.: a cobertura mede só os arquivos de lib/ carregados pelos testes.

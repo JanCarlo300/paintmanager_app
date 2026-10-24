@@ -1,0 +1,185 @@
+﻿PaintManager - gerado em 24/10/2026 16:10
+Commit avaliado: aefb4de - test(clientes): remove import desnecessário apontado pelo flutter analyze (24/10/2026 16:07)
+
+00:00 +0: loading C:/Users/janca/Documents/TFCII/paintmanager_app/test/apresentacao/widgets/lista_paginada_test.dart
+00:00 +0: C:/Users/janca/Documents/TFCII/paintmanager_app/test/apresentacao/widgets/lista_paginada_test.dart: mostra a primeira página e o botão com quantos faltam
+00:00 +1: C:/Users/janca/Documents/TFCII/paintmanager_app/test/apresentacao/widgets/lista_paginada_test.dart: mostra a primeira página e o botão com quantos faltam
+00:00 +2: C:/Users/janca/Documents/TFCII/paintmanager_app/test/apresentacao/widgets/lista_paginada_test.dart: mostra a primeira página e o botão com quantos faltam
+00:00 +3: C:/Users/janca/Documents/TFCII/paintmanager_app/test/apresentacao/widgets/lista_paginada_test.dart: mostra a primeira página e o botão com quantos faltam
+00:00 +4: C:/Users/janca/Documents/TFCII/paintmanager_app/test/apresentacao/widgets/lista_paginada_test.dart: mostra a primeira página e o botão com quantos faltam
+00:00 +5: C:/Users/janca/Documents/TFCII/paintmanager_app/test/apresentacao/widgets/lista_paginada_test.dart: mostra a primeira página e o botão com quantos faltam
+00:00 +6: C:/Users/janca/Documents/TFCII/paintmanager_app/test/apresentacao/widgets/lista_paginada_test.dart: mostra a primeira página e o botão com quantos faltam
+00:00 +7: C:/Users/janca/Documents/TFCII/paintmanager_app/test/apresentacao/widgets/lista_paginada_test.dart: mostra a primeira página e o botão com quantos faltam
+00:00 +8: C:/Users/janca/Documents/TFCII/paintmanager_app/test/apresentacao/widgets/lista_paginada_test.dart: mostra a primeira página e o botão com quantos faltam
+00:00 +9: C:/Users/janca/Documents/TFCII/paintmanager_app/test/apresentacao/widgets/lista_paginada_test.dart: mostra a primeira página e o botão com quantos faltam
+00:00 +10: C:/Users/janca/Documents/TFCII/paintmanager_app/test/apresentacao/widgets/lista_paginada_test.dart: mostra a primeira página e o botão com quantos faltam
+00:00 +11: C:/Users/janca/Documents/TFCII/paintmanager_app/test/apresentacao/widgets/lista_paginada_test.dart: mostra a primeira página e o botão com quantos faltam
+00:00 +12: C:/Users/janca/Documents/TFCII/paintmanager_app/test/apresentacao/widgets/lista_paginada_test.dart: mostra a primeira página e o botão com quantos faltam
+00:00 +13: C:/Users/janca/Documents/TFCII/paintmanager_app/test/apresentacao/widgets/lista_paginada_test.dart: mostra a primeira página e o botão com quantos faltam
+00:00 +14: C:/Users/janca/Documents/TFCII/paintmanager_app/test/apresentacao/widgets/lista_paginada_test.dart: mostra a primeira página e o botão com quantos faltam
+00:00 +15: C:/Users/janca/Documents/TFCII/paintmanager_app/test/apresentacao/widgets/lista_paginada_test.dart: mostra a primeira página e o botão com quantos faltam
+00:00 +16: C:/Users/janca/Documents/TFCII/paintmanager_app/test/apresentacao/widgets/lista_paginada_test.dart: mostra a primeira página e o botão com quantos faltam
+00:00 +17: C:/Users/janca/Documents/TFCII/paintmanager_app/test/apresentacao/widgets/lista_paginada_test.dart: mostra a primeira página e o botão com quantos faltam
+00:00 +18: C:/Users/janca/Documents/TFCII/paintmanager_app/test/apresentacao/widgets/lista_paginada_test.dart: mostra a primeira página e o botão com quantos faltam
+00:00 +19: C:/Users/janca/Documents/TFCII/paintmanager_app/test/apresentacao/widgets/lista_paginada_test.dart: mostra a primeira página e o botão com quantos faltam
+00:00 +20: C:/Users/janca/Documents/TFCII/paintmanager_app/test/apresentacao/widgets/lista_paginada_test.dart: mostra a primeira página e o botão com quantos faltam
+00:00 +21: C:/Users/janca/Documents/TFCII/paintmanager_app/test/apresentacao/widgets/lista_paginada_test.dart: mostra a primeira página e o botão com quantos faltam
+00:00 +22: C:/Users/janca/Documents/TFCII/paintmanager_app/test/apresentacao/widgets/lista_paginada_test.dart: mostra a primeira página e o botão com quantos faltam
+00:00 +23: C:/Users/janca/Documents/TFCII/paintmanager_app/test/apresentacao/widgets/lista_paginada_test.dart: mostra a primeira página e o botão com quantos faltam
+00:00 +24: C:/Users/janca/Documents/TFCII/paintmanager_app/test/apresentacao/widgets/lista_paginada_test.dart: mostra a primeira página e o botão com quantos faltam
+00:00 +25: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/servicos/localizacao_service_test.dart: extrairCoordenada (link do Google Maps / WhatsApp) prefere o ponto do alfinete (!3d…!4d…) ao centro do mapa (@…)
+00:00 +26: C:/Users/janca/Documents/TFCII/paintmanager_app/test/apresentacao/widgets/lista_paginada_test.dart: "Mostrar mais" traz a próxima página até acabar
+00:00 +27: C:/Users/janca/Documents/TFCII/paintmanager_app/test/apresentacao/widgets/lista_paginada_test.dart: "Mostrar mais" traz a próxima página até acabar
+00:00 +28: C:/Users/janca/Documents/TFCII/paintmanager_app/test/apresentacao/widgets/lista_paginada_test.dart: "Mostrar mais" traz a próxima página até acabar
+00:00 +29: C:/Users/janca/Documents/TFCII/paintmanager_app/test/apresentacao/widgets/lista_paginada_test.dart: "Mostrar mais" traz a próxima página até acabar
+00:00 +30: C:/Users/janca/Documents/TFCII/paintmanager_app/test/apresentacao/widgets/lista_paginada_test.dart: "Mostrar mais" traz a próxima página até acabar
+00:00 +31: C:/Users/janca/Documents/TFCII/paintmanager_app/test/apresentacao/widgets/lista_paginada_test.dart: "Mostrar mais" traz a próxima página até acabar
+00:00 +32: C:/Users/janca/Documents/TFCII/paintmanager_app/test/apresentacao/widgets/lista_paginada_test.dart: "Mostrar mais" traz a próxima página até acabar
+00:00 +33: C:/Users/janca/Documents/TFCII/paintmanager_app/test/apresentacao/widgets/lista_paginada_test.dart: "Mostrar mais" traz a próxima página até acabar
+00:00 +34: C:/Users/janca/Documents/TFCII/paintmanager_app/test/apresentacao/widgets/lista_paginada_test.dart: lista curta não mostra o botão
+00:01 +35: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/cores_graficos_test.dart: corDaCategoria (dark) cada categoria tem uma cor diferente
+00:01 +36: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/cores_graficos_test.dart: corDaCategoria (dark) cada categoria tem uma cor diferente
+00:01 +37: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/cores_app_test.dart: Contraste no tema claro texto principal sobre card
+00:01 +38: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/cores_graficos_test.dart: corDaCategoria (dark) a cor não depende de maiúsculas nem de espaços
+00:01 +39: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/cores_app_test.dart: Contraste no tema claro texto principal sobre diálogo
+00:01 +40: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/cores_graficos_test.dart: corDaCategoria (dark) categoria desconhecida usa um tom neutro diferente das conhecidas
+00:01 +41: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/cores_app_test.dart: Contraste no tema claro texto principal sobre campo
+00:01 +42: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/cores_graficos_test.dart: corDaCategoria (light) cada categoria tem uma cor diferente
+00:01 +43: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/cores_graficos_test.dart: corDaCategoria (light) cada categoria tem uma cor diferente
+00:01 +44: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/cores_graficos_test.dart: corDaCategoria (light) a cor não depende de maiúsculas nem de espaços
+00:01 +45: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/cores_app_test.dart: Contraste no tema claro texto secundário sobre card
+00:01 +46: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/cores_graficos_test.dart: corDaCategoria (light) categoria desconhecida usa um tom neutro diferente das conhecidas
+00:01 +47: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/cores_graficos_test.dart: corDaCategoria (light) categoria desconhecida usa um tom neutro diferente das conhecidas
+00:01 +48: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/cores_app_test.dart: Contraste no tema claro texto secundário sobre campo
+00:01 +49: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/cores_graficos_test.dart: claro e escuro usam tons diferentes para a mesma categoria
+00:01 +50: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/cores_app_test.dart: Contraste no tema claro texto do botão primário
+00:01 +51: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/cores_app_test.dart: Contraste no tema claro texto do botão primário pressionado
+00:01 +52: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/cores_app_test.dart: Contraste no tema claro link e botão secundário sobre card
+00:01 +53: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/cores_app_test.dart: Contraste no tema claro item selecionado
+00:01 +54: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/cores_app_test.dart: Contraste no tema claro contador de não lidas
+00:01 +55: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/cores_app_test.dart: Contraste no tema claro botão de exclusão
+00:01 +56: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/cores_app_test.dart: Contraste no tema claro card destaque: texto
+00:01 +57: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/cores_app_test.dart: Contraste no tema claro card destaque: legenda
+00:01 +58: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/cores_app_test.dart: Contraste no tema claro card destaque: valor
+00:01 +59: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/cores_app_test.dart: Contraste no tema claro chip Aprovado/Concluída
+00:01 +60: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/cores_app_test.dart: Contraste no tema claro chip Recusado
+00:01 +61: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/cores_app_test.dart: Contraste no tema claro chip Pendente/Pausada
+00:01 +62: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/cores_app_test.dart: Contraste no tema claro chip Em andamento
+00:01 +63: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/cores_app_test.dart: Contraste no tema claro receita sobre card
+00:01 +64: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/cores_app_test.dart: Contraste no tema claro despesa sobre card
+00:01 +65: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/cores_app_test.dart: Contraste no tema escuro texto principal sobre o fundo da tela
+00:01 +66: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/cores_app_test.dart: Contraste no tema escuro texto principal sobre card
+00:01 +67: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/cores_app_test.dart: Contraste no tema escuro texto principal sobre diálogo
+00:01 +68: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/cores_app_test.dart: Contraste no tema escuro texto principal sobre campo
+00:01 +69: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/cores_app_test.dart: Contraste no tema escuro texto secundário sobre o fundo da tela
+00:01 +70: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/cores_app_test.dart: Contraste no tema escuro texto secundário sobre card
+00:01 +71: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/cores_app_test.dart: Contraste no tema escuro texto secundário sobre diálogo
+00:01 +72: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/cores_app_test.dart: Contraste no tema escuro texto secundário sobre campo
+00:01 +73: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/cores_app_test.dart: Contraste no tema escuro texto do botão primário
+00:01 +74: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/cores_app_test.dart: Contraste no tema escuro texto do botão primário pressionado
+00:01 +75: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/cores_app_test.dart: Contraste no tema escuro link e botão secundário sobre card
+00:01 +76: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/cores_app_test.dart: Contraste no tema escuro item selecionado
+00:01 +77: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/cores_app_test.dart: Contraste no tema escuro contador de não lidas
+00:01 +78: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/cores_app_test.dart: Contraste no tema escuro botão de exclusão
+00:01 +79: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/cores_app_test.dart: Contraste no tema escuro card destaque: texto
+00:01 +80: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/cores_app_test.dart: Contraste no tema escuro card destaque: legenda
+00:01 +81: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/cores_app_test.dart: Contraste no tema escuro card destaque: valor
+00:01 +82: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/cores_app_test.dart: Contraste no tema escuro chip Aprovado/Concluída
+00:01 +83: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/cores_app_test.dart: Contraste no tema escuro chip Recusado
+00:01 +84: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/cores_app_test.dart: Contraste no tema escuro chip Pendente/Pausada
+00:01 +85: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/cores_app_test.dart: Contraste no tema escuro chip Em andamento
+00:01 +86: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/cores_app_test.dart: Contraste no tema escuro receita sobre card
+00:01 +87: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/cores_app_test.dart: Contraste no tema escuro despesa sobre card
+00:01 +88: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/cores_app_test.dart: claro e escuro têm 6 cores de categoria para os gráficos
+00:02 +89: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/status_visual_test.dart: visualDoStatus "Pendente" vira "Pendente"
+00:02 +90: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/status_visual_test.dart: visualDoStatus "Aprovado" vira "Aprovado"
+00:02 +91: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/status_visual_test.dart: visualDoStatus "Recusado" vira "Recusado"
+00:02 +92: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/status_visual_test.dart: visualDoStatus "Rejeitado" vira "Recusado"
+00:02 +93: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/status_visual_test.dart: visualDoStatus "Não Iniciada" vira "Não iniciada"
+00:02 +94: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/status_visual_test.dart: visualDoStatus "Em Andamento" vira "Em andamento"
+00:02 +95: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/status_visual_test.dart: visualDoStatus "Em andamento" vira "Em andamento"
+00:02 +96: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/status_visual_test.dart: visualDoStatus "Pausada" vira "Pausada"
+00:02 +97: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/status_visual_test.dart: visualDoStatus "Concluída" vira "Concluída"
+00:02 +98: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/status_visual_test.dart: visualDoStatus "  concluida " vira "Concluída"
+00:02 +99: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/status_visual_test.dart: visualDoStatus cores seguem o manual
+00:02 +100: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/status_visual_test.dart: visualDoStatus status desconhecido aparece neutro com o próprio texto
+00:02 +101: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/status_visual_test.dart: normalizarStatus tira acentos, maiúsculas e espaços extras
+00:02 +102: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/tema_controller_test.dart: padrão é seguir o celular
+00:02 +103: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/tema_controller_test.dart: a escolha fica salva e volta ao reabrir o app
+00:02 +104: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/tema/tema_controller_test.dart: avisa a tela quando muda
+00:02 +105: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/validadores/validador_cnpj_test.dart: ValidadorCnpj (Módulo 11) CNPJs válidos, com e sem máscara
+00:02 +106: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/validadores/validador_cnpj_test.dart: ValidadorCnpj (Módulo 11) dígito verificador errado, repetido ou incompleto
+00:02 +107: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/validadores/validador_cnpj_test.dart: ValidadorDocumento (campo CPF ou CNPJ do cliente) vazio é aceito (campo opcional)
+00:02 +108: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/validadores/validador_cnpj_test.dart: ValidadorDocumento (campo CPF ou CNPJ do cliente) decide pelo tamanho: 11 = CPF, 14 = CNPJ
+00:02 +109: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/validadores/validador_cnpj_test.dart: ValidadorDocumento (campo CPF ou CNPJ do cliente) formatar
+00:02 +110: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/validadores/validador_cnpj_test.dart: DocumentoInputFormatter vira CPF até 11 números e CNPJ a partir do 12º
+00:02 +111: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/validadores/validador_cnpj_test.dart: DocumentoInputFormatter ignora letras e corta no 14º número
+00:02 +112: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/validadores/validador_cpf_test.dart: ValidadorCpf.ehValido aceita CPFs válidos, com ou sem máscara
+00:02 +113: C:/Users/janca/Documents/TFCII/paintmanager_app/test/modules/auth/dados/modelos/usuario_modelo_test.dart: UsuarioModelo Tests deMapa deve retornar um UsuarioModelo valido
+00:02 +114: C:/Users/janca/Documents/TFCII/paintmanager_app/test/modules/auth/dados/modelos/usuario_modelo_test.dart: UsuarioModelo Tests deMapa deve retornar um UsuarioModelo valido
+00:02 +115: C:/Users/janca/Documents/TFCII/paintmanager_app/test/modules/auth/dados/modelos/usuario_modelo_test.dart: UsuarioModelo Tests deMapa deve retornar um UsuarioModelo valido
+00:02 +116: C:/Users/janca/Documents/TFCII/paintmanager_app/test/modules/auth/dados/modelos/usuario_modelo_test.dart: UsuarioModelo Tests deMapa deve retornar um UsuarioModelo valido
+00:02 +117: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/validadores/validador_cpf_test.dart: ValidadorCpf.ehValido rejeita tamanho diferente de 11 dígitos
+00:02 +118: C:/Users/janca/Documents/TFCII/paintmanager_app/test/modules/auth/dados/modelos/usuario_modelo_test.dart: UsuarioModelo Tests paraMapa deve retornar um Map contendo os dados corretos
+00:02 +119: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/validadores/validador_cpf_test.dart: ValidadorCpf.mensagemErro CPF válido não gera erro
+00:02 +120: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/validadores/validador_cpf_test.dart: ValidadorCpf.mensagemErro vazio é erro só quando obrigatório
+00:02 +121: C:/Users/janca/Documents/TFCII/paintmanager_app/test/core/validadores/validador_cpf_test.dart: ValidadorCpf.mensagemErro incompleto e inválido têm mensagens diferentes
+00:02 +122: C:/Users/janca/Documents/TFCII/paintmanager_app/test/modules/auth/dominio/validador_senha_test.dart: ValidadorSenha (RF002 e primeiro acesso) senha boa passa
+00:02 +123: C:/Users/janca/Documents/TFCII/paintmanager_app/test/modules/auth/dominio/validador_senha_test.dart: ValidadorSenha (RF002 e primeiro acesso) menos de 8 caracteres
+00:02 +124: C:/Users/janca/Documents/TFCII/paintmanager_app/test/modules/auth/dominio/validador_senha_test.dart: ValidadorSenha (RF002 e primeiro acesso) sem letra
+00:02 +125: C:/Users/janca/Documents/TFCII/paintmanager_app/test/modules/auth/dominio/validador_senha_test.dart: ValidadorSenha (RF002 e primeiro acesso) sem número
+00:02 +126: C:/Users/janca/Documents/TFCII/paintmanager_app/test/modules/auth/dominio/validador_senha_test.dart: ValidadorSenha (RF002 e primeiro acesso) senha igual ao CPF é recusada
+00:02 +127: C:/Users/janca/Documents/TFCII/paintmanager_app/test/modules/auth/dominio/validador_senha_test.dart: ValidadorSenha (RF002 e primeiro acesso) confirmação diferente
+00:02 +128: C:/Users/janca/Documents/TFCII/paintmanager_app/test/modules/clientes/apresentacao/controllers/cliente_controller_test.dart: inativar é soft delete: só muda o status e recarrega
+00:02 +129: C:/Users/janca/Documents/TFCII/paintmanager_app/test/modules/clientes/apresentacao/controllers/cliente_controller_test.dart: ativar devolve o status
+00:02 +130: C:/Users/janca/Documents/TFCII/paintmanager_app/test/modules/clientes/apresentacao/controllers/cliente_controller_test.dart: falha ao listar deixa a lista vazia e para de carregar
+00:02 +131: C:/Users/janca/Documents/TFCII/paintmanager_app/test/modules/clientes/dados/modelos/cliente_modelo_test.dart: ClienteModelo Tests deMapa deve retornar um ClienteModelo valido
+00:02 +132: C:/Users/janca/Documents/TFCII/paintmanager_app/test/modules/clientes/dados/modelos/cliente_modelo_test.dart: ClienteModelo Tests paraMapa deve retornar um Map contendo os dados corretos limitados (sem keys geradas)
+00:03 +133: C:/Users/janca/Documents/TFCII/paintmanager_app/test/modules/clientes/dados/modelos/cliente_modelo_test.dart: ClienteModelo Tests paraMapa envia cpf_cnpj como null quando o documento nao foi informado
+00:03 +134: C:/Users/janca/Documents/TFCII/paintmanager_app/test/modules/obras/apresentacao/controllers/obra_controller_test.dart: (setUpAll)
+00:03 +134: C:/Users/janca/Documents/TFCII/paintmanager_app/test/modules/obras/apresentacao/controllers/obra_controller_test.dart: atualizarStatus obra Concluída é definitiva: não muda de status nem salva
+00:03 +135: C:/Users/janca/Documents/TFCII/paintmanager_app/test/modules/obras/apresentacao/controllers/obra_controller_test.dart: atualizarStatus item 1.2: sem orçamento Aprovado a obra não inicia
+00:03 +136: C:/Users/janca/Documents/TFCII/paintmanager_app/test/modules/obras/apresentacao/controllers/obra_controller_test.dart: atualizarStatus com orçamento Aprovado inicia e mantém o endereço
+00:03 +137: C:/Users/janca/Documents/TFCII/paintmanager_app/test/modules/obras/apresentacao/controllers/obra_controller_test.dart: atualizarStatus concluir com etapas pendentes sem confirmação: recusa
+00:03 +138: C:/Users/janca/Documents/TFCII/paintmanager_app/test/modules/obras/apresentacao/controllers/obra_controller_test.dart: atualizarStatus concluir confirmando: marca todas as etapas, 100% e data de conclusão
+00:03 +139: C:/Users/janca/Documents/TFCII/paintmanager_app/test/modules/obras/apresentacao/controllers/obra_controller_test.dart: alternarEtapa (checklist) marca a etapa e recalcula o progresso
+00:03 +140: C:/Users/janca/Documents/TFCII/paintmanager_app/test/modules/obras/apresentacao/controllers/obra_controller_test.dart: alternarEtapa (checklist) obra Concluída: checklist travado, nada é salvo
+00:03 +141: C:/Users/janca/Documents/TFCII/paintmanager_app/test/modules/obras/apresentacao/controllers/obra_controller_test.dart: excluir tira a obra da lista sem recarregar tudo
+00:03 +142: C:/Users/janca/Documents/TFCII/paintmanager_app/test/modules/obras/apresentacao/controllers/obra_controller_test.dart: erro do banco ao excluir chega à tela (e a obra continua na lista)
+00:03 +143: C:/Users/janca/Documents/TFCII/paintmanager_app/test/modules/obras/apresentacao/controllers/obra_controller_test.dart: (tearDownAll)
+00:03 +143: C:/Users/janca/Documents/TFCII/paintmanager_app/test/modules/obras/dominio/entidades/item_material_test.dart: ItemMaterial paraMapa e deMapa preservam os dados
+00:03 +144: C:/Users/janca/Documents/TFCII/paintmanager_app/test/modules/obras/dominio/entidades/item_material_test.dart: ItemMaterial deMapa aceita quantidade inteira, decimal, texto com vírgula ou ausente
+00:03 +145: C:/Users/janca/Documents/TFCII/paintmanager_app/test/modules/obras/dominio/entidades/item_material_test.dart: ItemMaterial quantidade formatada no padrão brasileiro
+00:03 +146: C:/Users/janca/Documents/TFCII/paintmanager_app/test/modules/obras/dominio/entidades/item_material_test.dart: ItemMaterial quantidadeComUnidade omite partes vazias
+00:03 +147: C:/Users/janca/Documents/TFCII/paintmanager_app/test/modules/obras/dominio/entidades/obra_test.dart: endereço enderecoCompleto junta só as partes preenchidas
+00:03 +148: C:/Users/janca/Documents/TFCII/paintmanager_app/test/modules/obras/dominio/entidades/obra_test.dart: endereço enderecoParaRota leva CEP e Brasil e deixa quadra/lote de fora
+00:03 +149: C:/Users/janca/Documents/TFCII/paintmanager_app/test/modules/obras/dominio/entidades/obra_test.dart: endereço cepFormatado
+00:03 +150: C:/Users/janca/Documents/TFCII/paintmanager_app/test/modules/obras/dominio/entidades/obra_test.dart: endereço temCidade exige cidade e UF
+00:03 +151: C:/Users/janca/Documents/TFCII/paintmanager_app/test/modules/obras/dominio/entidades/obra_test.dart: endereço ponto exato só vale com coordenada E marcado como exato
+00:03 +152: C:/Users/janca/Documents/TFCII/paintmanager_app/test/modules/obras/dominio/entidades/obra_test.dart: progresso calculado pelas etapas concluídas
+00:06 +153: C:/Users/janca/Documents/TFCII/paintmanager_app/test/modules/obras/dominio/pdf_lista_materiais_test.dart: (setUpAll)
+00:06 +153: C:/Users/janca/Documents/TFCII/paintmanager_app/test/modules/obras/dominio/pdf_lista_materiais_test.dart: gerarPdfListaMateriais gera um PDF válido, com acentos e observação
+00:06 +154: C:/Users/janca/Documents/TFCII/paintmanager_app/test/modules/obras/dominio/pdf_lista_materiais_test.dart: gerarPdfListaMateriais lista vazia também gera PDF (sem quebrar)
+00:06 +155: C:/Users/janca/Documents/TFCII/paintmanager_app/test/modules/relatorios/dominio/pdf_relatorios_test.dart: (setUpAll)
+00:06 +156: C:/Users/janca/Documents/TFCII/paintmanager_app/test/modules/relatorios/dominio/pdf_relatorios_test.dart: (setUpAll)
+00:06 +156: C:/Users/janca/Documents/TFCII/paintmanager_app/test/modules/resumo/apresentacao/controllers/resumo_controller_test.dart: carrega o resumo do mês de "agora"
+00:06 +157: C:/Users/janca/Documents/TFCII/paintmanager_app/test/modules/resumo/apresentacao/controllers/resumo_controller_test.dart: carrega o resumo do mês de "agora"
+00:06 +158: C:/Users/janca/Documents/TFCII/paintmanager_app/test/modules/resumo/apresentacao/controllers/resumo_controller_test.dart: carrega o resumo do mês de "agora"
+00:06 +159: C:/Users/janca/Documents/TFCII/paintmanager_app/test/modules/relatorios/dominio/pdf_relatorios_test.dart: filtrarLancamentosValidos (regra do DERS) mantém sem obra e de obras Em Andamento/Concluída; tira as demais
+00:06 +160: C:/Users/janca/Documents/TFCII/paintmanager_app/test/modules/resumo/apresentacao/controllers/resumo_controller_test.dart: erro no resumo vira mensagem e os números ficam zerados
+00:06 +161: C:/Users/janca/Documents/TFCII/paintmanager_app/test/modules/relatorios/dominio/pdf_relatorios_test.dart: obraEmExecucaoNoPeriodo (relatório de progresso) Não Iniciada nunca entra
+00:06 +162: C:/Users/janca/Documents/TFCII/paintmanager_app/test/modules/resumo/apresentacao/controllers/resumo_controller_test.dart: alertas: uma consulta que falha não apaga os alertas da outra
+00:06 +163: C:/Users/janca/Documents/TFCII/paintmanager_app/test/modules/relatorios/dominio/pdf_relatorios_test.dart: obraEmExecucaoNoPeriodo (relatório de progresso) Em Andamento com início depois do período: não entra se ainda não chegou
+00:06 +164: C:/Users/janca/Documents/TFCII/paintmanager_app/test/modules/relatorios/dominio/pdf_relatorios_test.dart: obraEmExecucaoNoPeriodo (relatório de progresso) Em Andamento atrasada (previsão antes do período) entra
+00:06 +165: C:/Users/janca/Documents/TFCII/paintmanager_app/test/modules/relatorios/dominio/pdf_relatorios_test.dart: obraEmExecucaoNoPeriodo (relatório de progresso) Pausada que começou antes entra
+00:06 +166: C:/Users/janca/Documents/TFCII/paintmanager_app/test/modules/relatorios/dominio/pdf_relatorios_test.dart: obraEmExecucaoNoPeriodo (relatório de progresso) Concluída: entra se terminou no período ou depois; sai se terminou antes
+00:06 +167: C:/Users/janca/Documents/TFCII/paintmanager_app/test/modules/relatorios/dominio/pdf_relatorios_test.dart: obraEmExecucaoNoPeriodo (relatório de progresso) obraAIniciarAte: Não Iniciada cadastrada até o fim do período
+00:06 +168: C:/Users/janca/Documents/TFCII/paintmanager_app/test/modules/relatorios/dominio/pdf_relatorios_test.dart: obraEmExecucaoNoPeriodo (relatório de progresso) Concluída antes do início previsto entra pelo dia da conclusão
+00:06 +169: C:/Users/janca/Documents/TFCII/paintmanager_app/test/modules/relatorios/dominio/pdf_relatorios_test.dart: PDFs do RF012 Relatório Financeiro gera PDF válido
+00:06 +170: C:/Users/janca/Documents/TFCII/paintmanager_app/test/modules/relatorios/dominio/pdf_relatorios_test.dart: PDFs do RF012 Relatório Financeiro gera PDF válido
+00:06 +171: C:/Users/janca/Documents/TFCII/paintmanager_app/test/modules/relatorios/dominio/pdf_relatorios_test.dart: PDFs do RF012 Relatório Financeiro gera PDF válido
+00:06 +172: C:/Users/janca/Documents/TFCII/paintmanager_app/test/modules/relatorios/dominio/pdf_relatorios_test.dart: PDFs do RF012 Relatório Financeiro gera PDF válido
+00:06 +173: C:/Users/janca/Documents/TFCII/paintmanager_app/test/modules/relatorios/dominio/pdf_relatorios_test.dart: PDFs do RF012 Relatório Financeiro gera PDF válido
+00:06 +174: C:/Users/janca/Documents/TFCII/paintmanager_app/test/modules/relatorios/dominio/pdf_relatorios_test.dart: PDFs do RF012 Relatório de Progresso gera PDF válido, inclusive sem obras
+00:06 +175: C:/Users/janca/Documents/TFCII/paintmanager_app/test/modules/relatorios/dominio/pdf_relatorios_test.dart: (tearDownAll)
+00:07 +175: All tests passed!

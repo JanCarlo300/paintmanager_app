@@ -1,0 +1,9 @@
+﻿PaintManager - gerado em 24/10/2026 15:37
+Commit avaliado: af9dd31 - docs: README e relat├│rio de status com testes, CNPJ, pagina├º├úo e Gradle (23/10/2026 00:40)
+
+Arquivos medidos: 35
+Linhas executáveis: 1123
+Linhas cobertas pelos testes: 870
+Cobertura total: 77.5%
+
+Obs.: a cobertura mede só os arquivos de lib/ carregados pelos testes.
